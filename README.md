@@ -26,9 +26,25 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-That is the whole setup. There is no backend, no login, no API key and no
-network call — every number comes from `src/data/*.json` or is computed in the
-browser.
+That is the whole setup. There is no backend, no API key and no network call —
+every number comes from `src/data/*.json` or is computed in the browser.
+
+The app opens on a sign-in screen. Two demo logins are seeded so you never have
+to sign up first:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Seller | `ramesh@demo.in` | `sahidaam` |
+| Meesho admin | `admin@meesho.demo` | `sahidaam` |
+
+Or press **Enter as Ramesh** / **Enter as admin** on the page.
+
+> **This is not real authentication.** There is no server. Accounts live in this
+> browser's localStorage, the password is run through a non-cryptographic
+> digest, and anyone with the device can read them. It exists so the demo can
+> show *where a seller's numbers come from* — their own signup answers and the
+> platform defaults an admin sets — rather than hard-coding them. Do not reuse a
+> real password.
 
 ### Everything else
 
@@ -171,6 +187,18 @@ earns: for the kurti, the bottom of it loses ₹39 an order.
 
 **Numbers & sources** — all 136 configuration values, searchable, each badged
 CITED or ASSUMPTION, including the simulator's hidden demand parameters.
+
+**My shop** (seller) — the six signup questions, re-editable. Each one fills a
+field Screen 1 would otherwise have to guess at: what you sell picks the return
+rate and packaging, your parcel weight picks the shipping slab, and *where your
+buyers live* sets your COD share — which moves the floor more than anything
+else. A small-town seller's floor comes out genuinely higher than a metro
+seller's on the same product.
+
+**Admin** — the platform-wide numbers Meesho sets for every seller: the COD
+handling fee, GST on forward shipping, and RTO on COD and prepaid orders. Change
+one and the table underneath shows what it does to every registered seller's
+floor *before* you apply it.
 
 ---
 

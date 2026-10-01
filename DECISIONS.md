@@ -959,3 +959,85 @@ pinning the build command, the output directory and the catch-all rewrite in the
 repository means the deploy does not depend on dashboard settings someone has to
 remember to set. The rewrite matters only if routing is ever added; today there
 is a single entry point.
+
+---
+
+## Beyond the spec — accounts and onboarding
+
+Spec section 3 says "no backend, no login". This goes past that, on request. It
+is worth being clear about why it is an improvement rather than scope creep:
+until now the fields tagged *Meesho ne bhara* on Screen 1 were a category
+default the prototype picked. With a signed-in seller they are that seller's own
+answers, and the tag finally tells the truth.
+
+### 78. The sign-in page says, on the page, that it is not real authentication
+
+There is no server. Accounts sit in `localStorage`, the password goes through
+FNV-1a — which is a hash function, not a password hash — and anyone with the
+device can read all of it. A login box is the one thing in this prototype that
+could genuinely mislead someone, so the warning is on the sign-in card itself,
+in both languages, not only in a comment. There is a test asserting the page
+contains it.
+
+A stronger digest was considered and rejected. SubtleCrypto would make the
+stored value look respectable without making it safe, which is worse than an
+obviously weak digest next to an explicit warning. The honest fix is a server,
+and that is out of scope.
+
+Two demo accounts are seeded (`ramesh@demo.in` / `admin@meesho.demo`, password
+`sahidaam`) with one-tap buttons, so a judge never has to sign up before seeing
+anything.
+
+### 79. Six questions, each one replacing a guess
+
+Every question maps onto a field the floor calculation needs:
+
+| Question | Fills |
+| --- | --- |
+| What do you mostly sell? | category → return rate, packaging, write-off share |
+| What does one piece cost you? | COGS |
+| What does one parcel weigh? | the shipping slab |
+| Where do most of your buyers live? | COD share |
+| Do you discount for prepaid? | COD share, again |
+| How many orders a week? | stock cover |
+
+The buyer-location question is the one that earns its place. Metro / mixed /
+small-town maps to a COD share of 0.55 / 0.80 / 0.92, and a prepaid discount
+takes ten points off. COD orders are refused far more often than prepaid ones,
+so this single answer moves the floor more than anything else the seller tells
+us — there is a test asserting a small-town seller's floor comes out genuinely
+higher than a metro seller's on an identical product.
+
+The onboarding shows the floor being built as the questions are answered, using
+the real engine rather than a preview approximation. Answering is worth
+something before you have finished answering.
+
+### 80. The admin console is what makes "Meesho ne bhara" true
+
+An admin sets the platform-wide numbers — COD handling fee, GST on forward
+shipping, RTO on COD and on prepaid — and those flow into every seller's floor
+through `FloorInput.fees`, which already existed for exactly this.
+
+The table underneath shows each registered seller's floor **before and after**
+the pending change, struck through and in orange, so the admin can see what
+moving the COD fee by ₹2 does to real sellers before applying it. Each of those
+floors is computed with that seller's own category, cost, weight and buyer mix,
+by the same engine the seller sees.
+
+Shipping slabs, season indices and per-category return rates stay read-only.
+They are larger datasets that belong in a real admin tool, and the Numbers &
+sources screen already lists every one with its citation.
+
+### 81. The product state is keyed on the account
+
+`<ProductInputsProvider key={account.id}>`. Without the key, signing out of one
+seller and into another would carry the first seller's cost and weight across,
+because the provider's `useState` initialiser only runs once. Keying on the
+account id forces a rebuild from the new seller's answers.
+
+### 82. The alerts are addressed to the actual seller
+
+`nudgeFor` already took a `name` option from Phase 4, so the WhatsApp messages
+now say "Sunita ji" when Sunita is signed in, rather than always "Ramesh ji".
+The journey screen keeps Ramesh, because that is a fixed scripted story about a
+specific seller rather than about whoever is logged in.
