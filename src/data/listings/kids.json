@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "kids",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 3458390908,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 240,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "kids-01",
+      "title": "Munchkin Party Wear Dress - Soft Cotton",
+      "price": 140,
+      "rating": 3.6,
+      "ratingCount": 375
+    },
+    {
+      "id": "kids-02",
+      "title": "Pari Kids Dungaree Set - Pack of 3",
+      "price": 160,
+      "rating": 3.1,
+      "ratingCount": 80
+    },
+    {
+      "id": "kids-03",
+      "title": "Gudiya T-Shirt & Short Set - Age 4-5 Years",
+      "price": 168,
+      "rating": 3.3,
+      "ratingCount": 37
+    },
+    {
+      "id": "kids-04",
+      "title": "Chhotu Dungaree Set - Age 2-3 Years",
+      "price": 176,
+      "rating": 3.5,
+      "ratingCount": 860
+    },
+    {
+      "id": "kids-06",
+      "title": "Chhotu Ethnic Kurta Pyjama - Soft Cotton",
+      "price": 182,
+      "rating": 3.7,
+      "ratingCount": 28
+    },
+    {
+      "id": "kids-05",
+      "title": "Pari Kids Party Wear Dress - Pack of 3",
+      "price": 184,
+      "rating": 3.8,
+      "ratingCount": 283
+    },
+    {
+      "id": "kids-07",
+      "title": "Nanhe Ethnic Kurta Pyjama - Age 4-5 Years",
+      "price": 191,
+      "rating": 3.4,
+      "ratingCount": 1462
+    },
+    {
+      "id": "kids-09",
+      "title": "Chhotu Baby Romper - Pack of 3",
+      "price": 196,
+      "rating": 3.5,
+      "ratingCount": 63
+    },
+    {
+      "id": "kids-08",
+      "title": "Chhotu Winter Sweater - Unisex",
+      "price": 198,
+      "rating": 3.5,
+      "ratingCount": 2158
+    },
+    {
+      "id": "kids-10",
+      "title": "Little Star Cotton Frock - Combo Pack",
+      "price": 203,
+      "rating": 3.4,
+      "ratingCount": 184
+    },
+    {
+      "id": "kids-11",
+      "title": "Chhotu T-Shirt & Short Set - Unisex",
+      "price": 211,
+      "rating": 3.8,
+      "ratingCount": 15
+    },
+    {
+      "id": "kids-14",
+      "title": "Baby Bloom T-Shirt & Short Set - Cartoon Print",
+      "price": 213,
+      "rating": 3.9,
+      "ratingCount": 580
+    },
+    {
+      "id": "kids-12",
+      "title": "Munchkin Cotton Frock - Cartoon Print",
+      "price": 215,
+      "rating": 3.9,
+      "ratingCount": 37
+    },
+    {
+      "id": "kids-13",
+      "title": "Gudiya T-Shirt & Short Set - Combo Pack",
+      "price": 215,
+      "rating": 3.5,
+      "ratingCount": 4524
+    },
+    {
+      "id": "kids-15",
+      "title": "Little Star Ethnic Kurta Pyjama - Age 2-3 Years",
+      "price": 217,
+      "rating": 3.3,
+      "ratingCount": 49
+    },
+    {
+      "id": "kids-18",
+      "title": "Baby Bloom Ethnic Kurta Pyjama - Pack of 3",
+      "price": 226,
+      "rating": 4,
+      "ratingCount": 57
+    },
+    {
+      "id": "kids-16",
+      "title": "Little Star Printed Night Suit - Unisex",
+      "price": 230,
+      "rating": 3.4,
+      "ratingCount": 2287
+    },
+    {
+      "id": "kids-19",
+      "title": "Sunny Kids Party Wear Dress - Unisex",
+      "price": 231,
+      "rating": 3.8,
+      "ratingCount": 17
+    },
+    {
+      "id": "kids-17",
+      "title": "Pari Kids Winter Sweater - Daily Wear",
+      "price": 234,
+      "rating": 3.6,
+      "ratingCount": 3437
+    },
+    {
+      "id": "kids-21",
+      "title": "Chhotu Cotton Frock - Combo Pack",
+      "price": 239,
+      "rating": 3.9,
+      "ratingCount": 346
+    },
+    {
+      "id": "kids-22",
+      "title": "Sunny Kids Cotton Frock - Age 2-3 Years",
+      "price": 242,
+      "rating": 3.9,
+      "ratingCount": 10
+    },
+    {
+      "id": "kids-20",
+      "title": "Little Star Cotton Frock - Soft Cotton",
+      "price": 243,
+      "rating": 4,
+      "ratingCount": 409
+    },
+    {
+      "id": "kids-23",
+      "title": "Munchkin Party Wear Dress - Pack of 3",
+      "price": 246,
+      "rating": 3.6,
+      "ratingCount": 68
+    },
+    {
+      "id": "kids-24",
+      "title": "Little Star Party Wear Dress - Unisex",
+      "price": 253,
+      "rating": 3.5,
+      "ratingCount": 4612
+    },
+    {
+      "id": "kids-25",
+      "title": "Nanhe Party Wear Dress - Age 4-5 Years",
+      "price": 257,
+      "rating": 3.7,
+      "ratingCount": 7
+    },
+    {
+      "id": "kids-27",
+      "title": "Nanhe Dungaree Set - Unisex",
+      "price": 260,
+      "rating": 3.7,
+      "ratingCount": 4717
+    },
+    {
+      "id": "kids-26",
+      "title": "Baby Bloom Winter Sweater - Combo Pack",
+      "price": 261,
+      "rating": 3.8,
+      "ratingCount": 38
+    },
+    {
+      "id": "kids-29",
+      "title": "Pari Kids Dungaree Set - Combo Pack",
+      "price": 273,
+      "rating": 3.9,
+      "ratingCount": 630
+    },
+    {
+      "id": "kids-28",
+      "title": "Baby Bloom Winter Sweater - Soft Cotton",
+      "price": 275,
+      "rating": 3.8,
+      "ratingCount": 112
+    },
+    {
+      "id": "kids-30",
+      "title": "Sunny Kids Ethnic Kurta Pyjama - Daily Wear",
+      "price": 276,
+      "rating": 3.9,
+      "ratingCount": 87
+    },
+    {
+      "id": "kids-31",
+      "title": "Gudiya Printed Night Suit - Age 4-5 Years",
+      "price": 285,
+      "rating": 4,
+      "ratingCount": 18
+    },
+    {
+      "id": "kids-32",
+      "title": "Munchkin Winter Sweater - Age 4-5 Years",
+      "price": 287,
+      "rating": 4.2,
+      "ratingCount": 368
+    },
+    {
+      "id": "kids-33",
+      "title": "Nanhe T-Shirt & Short Set - Unisex",
+      "price": 291,
+      "rating": 4.3,
+      "ratingCount": 21
+    },
+    {
+      "id": "kids-34",
+      "title": "Chhotu Party Wear Dress - Pack of 3",
+      "price": 301,
+      "rating": 4.1,
+      "ratingCount": 216
+    },
+    {
+      "id": "kids-35",
+      "title": "Little Star Baby Romper - Soft Cotton",
+      "price": 318,
+      "rating": 4.1,
+      "ratingCount": 79
+    },
+    {
+      "id": "kids-37",
+      "title": "Baby Bloom Baby Romper - Daily Wear",
+      "price": 325,
+      "rating": 4.2,
+      "ratingCount": 158
+    },
+    {
+      "id": "kids-36",
+      "title": "Gudiya Baby Romper - Age 4-5 Years",
+      "price": 326,
+      "rating": 4.3,
+      "ratingCount": 934
+    },
+    {
+      "id": "kids-38",
+      "title": "Nanhe T-Shirt & Short Set - Soft Cotton",
+      "price": 352,
+      "rating": 3.8,
+      "ratingCount": 5613
+    },
+    {
+      "id": "kids-39",
+      "title": "Gudiya T-Shirt & Short Set - Daily Wear",
+      "price": 374,
+      "rating": 4.1,
+      "ratingCount": 743
+    },
+    {
+      "id": "kids-40",
+      "title": "Gudiya Baby Romper - Daily Wear",
+      "price": 405,
+      "rating": 4.1,
+      "ratingCount": 400
+    }
+  ]
+}

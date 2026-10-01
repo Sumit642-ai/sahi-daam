@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "ethnic_women",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 1040398123,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 320,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "ethnic_women-01",
+      "title": "Rangrez Cotton A-Line Kurti - Three Quarter Sleeve",
+      "price": 192,
+      "rating": 3.1,
+      "ratingCount": 3980
+    },
+    {
+      "id": "ethnic_women-02",
+      "title": "Anjani Georgette Saree - Three Quarter Sleeve",
+      "price": 215,
+      "rating": 3.7,
+      "ratingCount": 18
+    },
+    {
+      "id": "ethnic_women-03",
+      "title": "Saanvi Cotton Nighty - Festive Collection",
+      "price": 224,
+      "rating": 3.7,
+      "ratingCount": 643
+    },
+    {
+      "id": "ethnic_women-04",
+      "title": "Kalakari Printed Anarkali Kurti - Festive Collection",
+      "price": 231,
+      "rating": 3.8,
+      "ratingCount": 1236
+    },
+    {
+      "id": "ethnic_women-05",
+      "title": "Rangrez Printed Anarkali Kurti - Jaipuri Print",
+      "price": 240,
+      "rating": 3.7,
+      "ratingCount": 243
+    },
+    {
+      "id": "ethnic_women-07",
+      "title": "Shree Kurti with Palazzo Set - Combo Offer",
+      "price": 249,
+      "rating": 3.3,
+      "ratingCount": 405
+    },
+    {
+      "id": "ethnic_women-06",
+      "title": "Shree Kurti with Palazzo Set - Daily Wear",
+      "price": 253,
+      "rating": 3.4,
+      "ratingCount": 132
+    },
+    {
+      "id": "ethnic_women-08",
+      "title": "Rangrez Chiffon Saree with Blouse - Floral Print",
+      "price": 256,
+      "rating": 3.5,
+      "ratingCount": 125
+    },
+    {
+      "id": "ethnic_women-09",
+      "title": "Shree Cotton A-Line Kurti - Daily Wear",
+      "price": 259,
+      "rating": 3.3,
+      "ratingCount": 5511
+    },
+    {
+      "id": "ethnic_women-10",
+      "title": "Vastra Kurti with Palazzo Set - Combo Offer",
+      "price": 274,
+      "rating": 3.6,
+      "ratingCount": 15
+    },
+    {
+      "id": "ethnic_women-13",
+      "title": "Shree Printed Anarkali Kurti - Pack of 1",
+      "price": 281,
+      "rating": 3.8,
+      "ratingCount": 203
+    },
+    {
+      "id": "ethnic_women-11",
+      "title": "Shree Kurti with Palazzo Set - Three Quarter Sleeve",
+      "price": 282,
+      "rating": 3.9,
+      "ratingCount": 176
+    },
+    {
+      "id": "ethnic_women-12",
+      "title": "Anjani Cotton A-Line Kurti - Combo Offer",
+      "price": 282,
+      "rating": 3.7,
+      "ratingCount": 1698
+    },
+    {
+      "id": "ethnic_women-14",
+      "title": "Devi Creations Printed Anarkali Kurti - Three Quarter Sleeve",
+      "price": 286,
+      "rating": 3.4,
+      "ratingCount": 280
+    },
+    {
+      "id": "ethnic_women-16",
+      "title": "Devi Creations Rayon Straight Kurti - Pack of 1",
+      "price": 296,
+      "rating": 3.4,
+      "ratingCount": 262
+    },
+    {
+      "id": "ethnic_women-15",
+      "title": "Vastra Georgette Saree - Daily Wear",
+      "price": 297,
+      "rating": 3.8,
+      "ratingCount": 12
+    },
+    {
+      "id": "ethnic_women-17",
+      "title": "Bandhani House Rayon Straight Kurti - Free Size",
+      "price": 308,
+      "rating": 3.6,
+      "ratingCount": 1671
+    },
+    {
+      "id": "ethnic_women-19",
+      "title": "Anjani Printed Anarkali Kurti - Daily Wear",
+      "price": 309,
+      "rating": 3.6,
+      "ratingCount": 3333
+    },
+    {
+      "id": "ethnic_women-20",
+      "title": "Anjani Georgette Saree - Daily Wear",
+      "price": 313,
+      "rating": 3.5,
+      "ratingCount": 121
+    },
+    {
+      "id": "ethnic_women-18",
+      "title": "Shree Chiffon Saree with Blouse - Festive Collection",
+      "price": 315,
+      "rating": 3.7,
+      "ratingCount": 2909
+    },
+    {
+      "id": "ethnic_women-22",
+      "title": "Shree Embroidered Kurta - Pack of 1",
+      "price": 320,
+      "rating": 3.5,
+      "ratingCount": 11
+    },
+    {
+      "id": "ethnic_women-21",
+      "title": "Shree Cotton Nighty - Daily Wear",
+      "price": 324,
+      "rating": 3.5,
+      "ratingCount": 62
+    },
+    {
+      "id": "ethnic_women-23",
+      "title": "Anjani Kurti with Palazzo Set - Free Size",
+      "price": 328,
+      "rating": 4.1,
+      "ratingCount": 293
+    },
+    {
+      "id": "ethnic_women-25",
+      "title": "Shree Chiffon Saree with Blouse - Jaipuri Print",
+      "price": 334,
+      "rating": 3.9,
+      "ratingCount": 1016
+    },
+    {
+      "id": "ethnic_women-24",
+      "title": "Anjani Embroidered Kurta - Combo Offer",
+      "price": 339,
+      "rating": 3.7,
+      "ratingCount": 9
+    },
+    {
+      "id": "ethnic_women-26",
+      "title": "Devi Creations Georgette Saree - Pack of 1",
+      "price": 351,
+      "rating": 3.6,
+      "ratingCount": 8
+    },
+    {
+      "id": "ethnic_women-27",
+      "title": "Kalakari Chiffon Saree with Blouse - Pack of 1",
+      "price": 357,
+      "rating": 3.6,
+      "ratingCount": 2114
+    },
+    {
+      "id": "ethnic_women-28",
+      "title": "Bandhani House Printed Anarkali Kurti - Pack of 1",
+      "price": 365,
+      "rating": 3.8,
+      "ratingCount": 60
+    },
+    {
+      "id": "ethnic_women-29",
+      "title": "Bandhani House Georgette Saree - Festive Collection",
+      "price": 367,
+      "rating": 3.9,
+      "ratingCount": 182
+    },
+    {
+      "id": "ethnic_women-31",
+      "title": "Devi Creations Rayon Straight Kurti - Combo Offer",
+      "price": 368,
+      "rating": 4.1,
+      "ratingCount": 4829
+    },
+    {
+      "id": "ethnic_women-30",
+      "title": "Kalakari Embroidered Kurta - Floral Print",
+      "price": 379,
+      "rating": 3.8,
+      "ratingCount": 6
+    },
+    {
+      "id": "ethnic_women-32",
+      "title": "Devi Creations Rayon Straight Kurti - Festive Collection",
+      "price": 389,
+      "rating": 4.3,
+      "ratingCount": 343
+    },
+    {
+      "id": "ethnic_women-34",
+      "title": "Bandhani House Printed Anarkali Kurti - Floral Print",
+      "price": 399,
+      "rating": 4,
+      "ratingCount": 1551
+    },
+    {
+      "id": "ethnic_women-33",
+      "title": "Devi Creations Chiffon Saree with Blouse - Free Size",
+      "price": 405,
+      "rating": 4.2,
+      "ratingCount": 6
+    },
+    {
+      "id": "ethnic_women-35",
+      "title": "Devi Creations Kurti with Palazzo Set - Jaipuri Print",
+      "price": 412,
+      "rating": 4.3,
+      "ratingCount": 37
+    },
+    {
+      "id": "ethnic_women-36",
+      "title": "Saanvi Embroidered Kurta - Floral Print",
+      "price": 428,
+      "rating": 3.9,
+      "ratingCount": 135
+    },
+    {
+      "id": "ethnic_women-37",
+      "title": "Bandhani House Embroidered Kurta - Combo Offer",
+      "price": 443,
+      "rating": 4.4,
+      "ratingCount": 360
+    },
+    {
+      "id": "ethnic_women-38",
+      "title": "Anjani Rayon Straight Kurti - Three Quarter Sleeve",
+      "price": 447,
+      "rating": 4.3,
+      "ratingCount": 3560
+    },
+    {
+      "id": "ethnic_women-39",
+      "title": "Bandhani House Chiffon Saree with Blouse - Jaipuri Print",
+      "price": 474,
+      "rating": 4.2,
+      "ratingCount": 223
+    },
+    {
+      "id": "ethnic_women-40",
+      "title": "Devi Creations Rayon Straight Kurti - Jaipuri Print",
+      "price": 537,
+      "rating": 4.2,
+      "ratingCount": 106
+    }
+  ]
+}

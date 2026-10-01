@@ -1,0 +1,53 @@
+{
+  "_note": "Spec section 5.2. Forward / reverse shipping in ₹ per order, by parcel weight slab.",
+  "slabs": [
+    {
+      "id": "0-500",
+      "label_en": "0–500 g",
+      "label_hi": "0–500 ग्राम",
+      "minG": 0,
+      "maxG": 500,
+      "forward": 50,
+      "reverse": 120,
+      "source": "Valmo DICE data pack"
+    },
+    {
+      "id": "501-1000",
+      "label_en": "501–1000 g",
+      "label_hi": "501–1000 ग्राम",
+      "minG": 501,
+      "maxG": 1000,
+      "forward": 70,
+      "reverse": 150,
+      "source": "ASSUMPTION"
+    },
+    {
+      "id": "1001-1500",
+      "label_en": "1001–1500 g",
+      "label_hi": "1001–1500 ग्राम",
+      "minG": 1001,
+      "maxG": 1500,
+      "forward": 90,
+      "reverse": 180,
+      "source": "ASSUMPTION"
+    },
+    {
+      "id": "1501-2000",
+      "label_en": "1501–2000 g",
+      "label_hi": "1501–2000 ग्राम",
+      "minG": 1501,
+      "maxG": 2000,
+      "forward": 110,
+      "reverse": 210,
+      "source": "ASSUMPTION"
+    }
+  ],
+  "extraStep": {
+    "stepG": 500,
+    "forward": 20,
+    "reverse": 30,
+    "label_en": "each extra 500 g beyond 2000 g",
+    "label_hi": "2000 ग्राम के बाद हर अतिरिक्त 500 ग्राम",
+    "source": "ASSUMPTION"
+  }
+}

@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "jewellery",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 2158010810,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 160,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "jewellery-01",
+      "title": "Kundan Kala Kundan Necklace Set - Gold Plated",
+      "price": 95,
+      "rating": 3.1,
+      "ratingCount": 162
+    },
+    {
+      "id": "jewellery-02",
+      "title": "Alankar Kundan Necklace Set - Handcrafted",
+      "price": 106,
+      "rating": 3.2,
+      "ratingCount": 1511
+    },
+    {
+      "id": "jewellery-03",
+      "title": "Pearl Point Finger Ring - Combo of 3",
+      "price": 110,
+      "rating": 3.4,
+      "ratingCount": 1023
+    },
+    {
+      "id": "jewellery-04",
+      "title": "Mohini Pearl Earrings - Combo of 3",
+      "price": 116,
+      "rating": 3.2,
+      "ratingCount": 58
+    },
+    {
+      "id": "jewellery-05",
+      "title": "Alankar Nose Pin - Party Wear",
+      "price": 120,
+      "rating": 3.6,
+      "ratingCount": 207
+    },
+    {
+      "id": "jewellery-06",
+      "title": "Alankar Finger Ring - Party Wear",
+      "price": 125,
+      "rating": 3.8,
+      "ratingCount": 2184
+    },
+    {
+      "id": "jewellery-07",
+      "title": "Pearl Point Kundan Necklace Set - Anti-Tarnish",
+      "price": 127,
+      "rating": 3.8,
+      "ratingCount": 1838
+    },
+    {
+      "id": "jewellery-08",
+      "title": "Shringar Finger Ring - Lightweight",
+      "price": 130,
+      "rating": 3.9,
+      "ratingCount": 54
+    },
+    {
+      "id": "jewellery-09",
+      "title": "Mohini Pearl Earrings - Traditional",
+      "price": 135,
+      "rating": 3.5,
+      "ratingCount": 892
+    },
+    {
+      "id": "jewellery-10",
+      "title": "Kundan Kala Nose Pin - Traditional",
+      "price": 135,
+      "rating": 3.6,
+      "ratingCount": 163
+    },
+    {
+      "id": "jewellery-11",
+      "title": "Mohini Hair Clip Set - Party Wear",
+      "price": 140,
+      "rating": 3.4,
+      "ratingCount": 180
+    },
+    {
+      "id": "jewellery-13",
+      "title": "Mohini Kundan Necklace Set - Gold Plated",
+      "price": 140,
+      "rating": 3.8,
+      "ratingCount": 48
+    },
+    {
+      "id": "jewellery-14",
+      "title": "Meena Jewels Hair Clip Set - Combo of 3",
+      "price": 141,
+      "rating": 3.3,
+      "ratingCount": 9
+    },
+    {
+      "id": "jewellery-12",
+      "title": "Alankar Kundan Necklace Set - Combo of 3",
+      "price": 144,
+      "rating": 3.9,
+      "ratingCount": 17
+    },
+    {
+      "id": "jewellery-15",
+      "title": "Alankar Oxidised Jhumka - Party Wear",
+      "price": 145,
+      "rating": 3.8,
+      "ratingCount": 12
+    },
+    {
+      "id": "jewellery-16",
+      "title": "Shringar Pearl Earrings - Gold Plated",
+      "price": 147,
+      "rating": 3.5,
+      "ratingCount": 4017
+    },
+    {
+      "id": "jewellery-18",
+      "title": "Shringar Pearl Earrings - Combo of 3",
+      "price": 150,
+      "rating": 3.9,
+      "ratingCount": 7
+    },
+    {
+      "id": "jewellery-17",
+      "title": "Meena Jewels Hair Clip Set - Lightweight",
+      "price": 155,
+      "rating": 3.4,
+      "ratingCount": 67
+    },
+    {
+      "id": "jewellery-21",
+      "title": "Pearl Point Oxidised Jhumka - Combo of 3",
+      "price": 157,
+      "rating": 3.9,
+      "ratingCount": 62
+    },
+    {
+      "id": "jewellery-19",
+      "title": "Meena Jewels Finger Ring - Handcrafted",
+      "price": 160,
+      "rating": 3.8,
+      "ratingCount": 11
+    },
+    {
+      "id": "jewellery-20",
+      "title": "Shringar Nose Pin - Combo of 3",
+      "price": 160,
+      "rating": 3.5,
+      "ratingCount": 21
+    },
+    {
+      "id": "jewellery-22",
+      "title": "Kundan Kala Bangle Set - Traditional",
+      "price": 167,
+      "rating": 3.9,
+      "ratingCount": 1725
+    },
+    {
+      "id": "jewellery-23",
+      "title": "Meena Jewels Kundan Necklace Set - Traditional",
+      "price": 168,
+      "rating": 4,
+      "ratingCount": 62
+    },
+    {
+      "id": "jewellery-24",
+      "title": "Pearl Point Finger Ring - Traditional",
+      "price": 171,
+      "rating": 3.9,
+      "ratingCount": 2922
+    },
+    {
+      "id": "jewellery-26",
+      "title": "Meena Jewels Nose Pin - Party Wear",
+      "price": 174,
+      "rating": 4.1,
+      "ratingCount": 75
+    },
+    {
+      "id": "jewellery-25",
+      "title": "Meena Jewels Nose Pin - Anti-Tarnish",
+      "price": 175,
+      "rating": 3.8,
+      "ratingCount": 61
+    },
+    {
+      "id": "jewellery-27",
+      "title": "Gehna Ghar Bangle Set - Party Wear",
+      "price": 179,
+      "rating": 4.1,
+      "ratingCount": 3745
+    },
+    {
+      "id": "jewellery-28",
+      "title": "Alankar Kundan Necklace Set - Set of 6",
+      "price": 179,
+      "rating": 3.7,
+      "ratingCount": 1471
+    },
+    {
+      "id": "jewellery-29",
+      "title": "Kundan Kala Finger Ring - Combo of 3",
+      "price": 179,
+      "rating": 3.8,
+      "ratingCount": 89
+    },
+    {
+      "id": "jewellery-31",
+      "title": "Zevar Nose Pin - Traditional",
+      "price": 185,
+      "rating": 3.8,
+      "ratingCount": 20
+    },
+    {
+      "id": "jewellery-30",
+      "title": "Shringar Oxidised Jhumka - Set of 6",
+      "price": 189,
+      "rating": 4,
+      "ratingCount": 8
+    },
+    {
+      "id": "jewellery-32",
+      "title": "Pearl Point Anklet Pair - Gold Plated",
+      "price": 194,
+      "rating": 3.8,
+      "ratingCount": 46
+    },
+    {
+      "id": "jewellery-33",
+      "title": "Gehna Ghar Nose Pin - Party Wear",
+      "price": 199,
+      "rating": 3.8,
+      "ratingCount": 149
+    },
+    {
+      "id": "jewellery-34",
+      "title": "Pearl Point Oxidised Jhumka - Traditional",
+      "price": 206,
+      "rating": 3.8,
+      "ratingCount": 44
+    },
+    {
+      "id": "jewellery-35",
+      "title": "Shringar Pearl Earrings - Traditional",
+      "price": 212,
+      "rating": 3.9,
+      "ratingCount": 122
+    },
+    {
+      "id": "jewellery-36",
+      "title": "Shringar Hair Clip Set - Lightweight",
+      "price": 214,
+      "rating": 4.3,
+      "ratingCount": 108
+    },
+    {
+      "id": "jewellery-37",
+      "title": "Gehna Ghar Anklet Pair - Gold Plated",
+      "price": 220,
+      "rating": 3.7,
+      "ratingCount": 29
+    },
+    {
+      "id": "jewellery-38",
+      "title": "Kundan Kala Bangle Set - Party Wear",
+      "price": 231,
+      "rating": 4.2,
+      "ratingCount": 100
+    },
+    {
+      "id": "jewellery-39",
+      "title": "Mohini Pearl Earrings - Handcrafted",
+      "price": 241,
+      "rating": 3.8,
+      "ratingCount": 137
+    },
+    {
+      "id": "jewellery-40",
+      "title": "Meena Jewels Pearl Earrings - Gold Plated",
+      "price": 266,
+      "rating": 4.4,
+      "ratingCount": 829
+    }
+  ]
+}

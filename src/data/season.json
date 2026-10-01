@@ -1,0 +1,210 @@
+{
+  "_note": "Spec section 5.4. Seasonality is applied RELATIVE to the seller’s own baseline RTO, not as an absolute RTO. index = month industry RTO ÷ March industry RTO.",
+  "baseline": {
+    "month": "Mar",
+    "industryRtoPct": {
+      "value": 21,
+      "unit": "% of dispatched orders",
+      "label_en": "Industry RTO, March 2026 (index baseline)",
+      "label_hi": "उद्योग RTO, मार्च 2026 (आधार)",
+      "source": "Unicommerce via MediaBrief"
+    }
+  },
+  "observed": [
+    {
+      "month": "Nov",
+      "year": 2025,
+      "industryRtoPct": 39.2,
+      "source": "Unicommerce via MediaBrief"
+    },
+    {
+      "month": "Jan",
+      "year": 2026,
+      "industryRtoPct": 25.6,
+      "source": "Unicommerce via MediaBrief"
+    },
+    {
+      "month": "Mar",
+      "year": 2026,
+      "industryRtoPct": 21,
+      "source": "Unicommerce via MediaBrief"
+    }
+  ],
+  "maxRto": {
+    "value": 0.9,
+    "unit": "share of dispatched orders",
+    "label_en": "RTO cap after applying the season index",
+    "label_hi": "सीज़न इंडेक्स लगाने के बाद RTO की अधिकतम सीमा",
+    "source": "Model convention — spec section 6.1 caps rto at 0.90"
+  },
+  "months": [
+    {
+      "key": "Jan",
+      "monthIndex": 0,
+      "label_en": "January",
+      "label_hi": "जनवरी",
+      "index": {
+        "value": 1.219,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — January",
+        "label_hi": "RTO सीज़न इंडेक्स — जनवरी",
+        "source": "Unicommerce via MediaBrief (25.6 / 21.0 March 2026 baseline)"
+      },
+      "note": "Industry RTO 25.6% in January 2026."
+    },
+    {
+      "key": "Feb",
+      "monthIndex": 1,
+      "label_en": "February",
+      "label_hi": "फ़रवरी",
+      "index": {
+        "value": 1.1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — February",
+        "label_hi": "RTO सीज़न इंडेक्स — फ़रवरी",
+        "source": "ASSUMPTION"
+      },
+      "note": "Festive wind-down between January and the March baseline."
+    },
+    {
+      "key": "Mar",
+      "monthIndex": 2,
+      "label_en": "March",
+      "label_hi": "मार्च",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — March",
+        "label_hi": "RTO सीज़न इंडेक्स — मार्च",
+        "source": "Unicommerce via MediaBrief — March 2026 RTO 21.0% is the baseline (index 1.00)"
+      },
+      "note": "Baseline month. Index is defined as month RTO ÷ March RTO."
+    },
+    {
+      "key": "Apr",
+      "monthIndex": 3,
+      "label_en": "April",
+      "label_hi": "अप्रैल",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — April",
+        "label_hi": "RTO सीज़न इंडेक्स — अप्रैल",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "May",
+      "monthIndex": 4,
+      "label_en": "May",
+      "label_hi": "मई",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — May",
+        "label_hi": "RTO सीज़न इंडेक्स — मई",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "Jun",
+      "monthIndex": 5,
+      "label_en": "June",
+      "label_hi": "जून",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — June",
+        "label_hi": "RTO सीज़न इंडेक्स — जून",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "Jul",
+      "monthIndex": 6,
+      "label_en": "July",
+      "label_hi": "जुलाई",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — July",
+        "label_hi": "RTO सीज़न इंडेक्स — जुलाई",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "Aug",
+      "monthIndex": 7,
+      "label_en": "August",
+      "label_hi": "अगस्त",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — August",
+        "label_hi": "RTO सीज़न इंडेक्स — अगस्त",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "Sep",
+      "monthIndex": 8,
+      "label_en": "September",
+      "label_hi": "सितंबर",
+      "index": {
+        "value": 1,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — September",
+        "label_hi": "RTO सीज़न इंडेक्स — सितंबर",
+        "source": "ASSUMPTION"
+      },
+      "note": "Assumed flat at the March baseline."
+    },
+    {
+      "key": "Oct",
+      "monthIndex": 9,
+      "label_en": "October",
+      "label_hi": "अक्तूबर",
+      "index": {
+        "value": 1.6,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — October",
+        "label_hi": "RTO सीज़न इंडेक्स — अक्तूबर",
+        "source": "ASSUMPTION (festive ramp)"
+      },
+      "note": "Ramp into the November festive peak."
+    },
+    {
+      "key": "Nov",
+      "monthIndex": 10,
+      "label_en": "November",
+      "label_hi": "नवंबर",
+      "index": {
+        "value": 1.867,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — November",
+        "label_hi": "RTO सीज़न इंडेक्स — नवंबर",
+        "source": "Unicommerce via MediaBrief (39.2 / 21.0 March 2026 baseline)"
+      },
+      "note": "Festive peak. Industry RTO 39.2% in November 2025."
+    },
+    {
+      "key": "Dec",
+      "monthIndex": 11,
+      "label_en": "December",
+      "label_hi": "दिसंबर",
+      "index": {
+        "value": 1.4,
+        "unit": "multiplier on baseline RTO",
+        "label_en": "RTO season index — December",
+        "label_hi": "RTO सीज़न इंडेक्स — दिसंबर",
+        "source": "ASSUMPTION"
+      },
+      "note": "Post-festive decay towards the January observation."
+    }
+  ]
+}

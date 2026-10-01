@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "home_kitchen",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 205720733,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 380,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "home_kitchen-01",
+      "title": "Nirmal Door Mat Pack - Heavy Gauge",
+      "price": 230,
+      "rating": 3.5,
+      "ratingCount": 69
+    },
+    {
+      "id": "home_kitchen-02",
+      "title": "Steel Craft Water Bottle Set - Double Bed",
+      "price": 244,
+      "rating": 3.4,
+      "ratingCount": 1021
+    },
+    {
+      "id": "home_kitchen-03",
+      "title": "Utsav Home Stainless Steel Container Set - Leak Proof",
+      "price": 261,
+      "rating": 3.2,
+      "ratingCount": 2550
+    },
+    {
+      "id": "home_kitchen-04",
+      "title": "Rasoi Rani Casserole Set - Heavy Gauge",
+      "price": 282,
+      "rating": 3.4,
+      "ratingCount": 672
+    },
+    {
+      "id": "home_kitchen-05",
+      "title": "Kitchen Mate Cotton Bedsheet - Food Grade",
+      "price": 290,
+      "rating": 3.7,
+      "ratingCount": 13
+    },
+    {
+      "id": "home_kitchen-06",
+      "title": "Utsav Home Casserole Set - Food Grade",
+      "price": 300,
+      "rating": 3.8,
+      "ratingCount": 2346
+    },
+    {
+      "id": "home_kitchen-07",
+      "title": "Kitchen Mate Casserole Set - Leak Proof",
+      "price": 307,
+      "rating": 3.6,
+      "ratingCount": 437
+    },
+    {
+      "id": "home_kitchen-08",
+      "title": "Shubh Home Door Mat Pack - Dishwasher Safe",
+      "price": 310,
+      "rating": 3.3,
+      "ratingCount": 5063
+    },
+    {
+      "id": "home_kitchen-09",
+      "title": "Homeneed Stainless Steel Container Set - BPA Free",
+      "price": 312,
+      "rating": 3.6,
+      "ratingCount": 696
+    },
+    {
+      "id": "home_kitchen-10",
+      "title": "Shubh Home Stainless Steel Container Set - BPA Free",
+      "price": 313,
+      "rating": 3.8,
+      "ratingCount": 5
+    },
+    {
+      "id": "home_kitchen-11",
+      "title": "Steel Craft Door Mat Pack - Food Grade",
+      "price": 335,
+      "rating": 3.5,
+      "ratingCount": 2275
+    },
+    {
+      "id": "home_kitchen-12",
+      "title": "Shubh Home Cotton Bedsheet - Leak Proof",
+      "price": 341,
+      "rating": 3.9,
+      "ratingCount": 438
+    },
+    {
+      "id": "home_kitchen-14",
+      "title": "Kitchen Mate Water Bottle Set - Set of 3",
+      "price": 343,
+      "rating": 3.7,
+      "ratingCount": 397
+    },
+    {
+      "id": "home_kitchen-13",
+      "title": "Grihini Plastic Storage Jar Set - BPA Free",
+      "price": 346,
+      "rating": 3.8,
+      "ratingCount": 110
+    },
+    {
+      "id": "home_kitchen-16",
+      "title": "Homeneed Casserole Set - Set of 3",
+      "price": 351,
+      "rating": 3.5,
+      "ratingCount": 16
+    },
+    {
+      "id": "home_kitchen-15",
+      "title": "Kitchen Mate Casserole Set - Food Grade",
+      "price": 354,
+      "rating": 3.6,
+      "ratingCount": 15
+    },
+    {
+      "id": "home_kitchen-18",
+      "title": "Steel Craft Non-Stick Tawa - Set of 3",
+      "price": 358,
+      "rating": 4,
+      "ratingCount": 7
+    },
+    {
+      "id": "home_kitchen-17",
+      "title": "Utsav Home Pressure Cooker 3L - Leak Proof",
+      "price": 365,
+      "rating": 3.8,
+      "ratingCount": 4379
+    },
+    {
+      "id": "home_kitchen-19",
+      "title": "Steel Craft Non-Stick Tawa - Food Grade",
+      "price": 369,
+      "rating": 3.9,
+      "ratingCount": 778
+    },
+    {
+      "id": "home_kitchen-20",
+      "title": "Steel Craft Casserole Set - Dishwasher Safe",
+      "price": 372,
+      "rating": 3.6,
+      "ratingCount": 199
+    },
+    {
+      "id": "home_kitchen-21",
+      "title": "Rasoi Rani Non-Stick Tawa - Food Grade",
+      "price": 386,
+      "rating": 3.5,
+      "ratingCount": 44
+    },
+    {
+      "id": "home_kitchen-22",
+      "title": "Steel Craft Pressure Cooker 3L - Dishwasher Safe",
+      "price": 392,
+      "rating": 4,
+      "ratingCount": 11
+    },
+    {
+      "id": "home_kitchen-23",
+      "title": "Kitchen Mate Plastic Storage Jar Set - Dishwasher Safe",
+      "price": 400,
+      "rating": 4.1,
+      "ratingCount": 5061
+    },
+    {
+      "id": "home_kitchen-24",
+      "title": "Steel Craft Casserole Set - Leak Proof",
+      "price": 403,
+      "rating": 4.1,
+      "ratingCount": 16
+    },
+    {
+      "id": "home_kitchen-27",
+      "title": "Grihini Water Bottle Set - Double Bed",
+      "price": 409,
+      "rating": 4,
+      "ratingCount": 617
+    },
+    {
+      "id": "home_kitchen-26",
+      "title": "Homeneed Stainless Steel Container Set - Leak Proof",
+      "price": 417,
+      "rating": 3.8,
+      "ratingCount": 176
+    },
+    {
+      "id": "home_kitchen-25",
+      "title": "Nirmal Stainless Steel Container Set - Dishwasher Safe",
+      "price": 418,
+      "rating": 3.9,
+      "ratingCount": 358
+    },
+    {
+      "id": "home_kitchen-29",
+      "title": "Grihini Plastic Storage Jar Set - Food Grade",
+      "price": 434,
+      "rating": 3.8,
+      "ratingCount": 137
+    },
+    {
+      "id": "home_kitchen-28",
+      "title": "Homeneed Casserole Set - Heavy Gauge",
+      "price": 438,
+      "rating": 4.1,
+      "ratingCount": 547
+    },
+    {
+      "id": "home_kitchen-31",
+      "title": "Grihini Stainless Steel Container Set - Food Grade",
+      "price": 446,
+      "rating": 4.1,
+      "ratingCount": 655
+    },
+    {
+      "id": "home_kitchen-32",
+      "title": "Utsav Home Water Bottle Set - BPA Free",
+      "price": 448,
+      "rating": 4.2,
+      "ratingCount": 205
+    },
+    {
+      "id": "home_kitchen-30",
+      "title": "Rasoi Rani Cotton Bedsheet - Leak Proof",
+      "price": 449,
+      "rating": 3.8,
+      "ratingCount": 5546
+    },
+    {
+      "id": "home_kitchen-33",
+      "title": "Nirmal Plastic Storage Jar Set - Double Bed",
+      "price": 464,
+      "rating": 3.8,
+      "ratingCount": 2278
+    },
+    {
+      "id": "home_kitchen-34",
+      "title": "Steel Craft Stainless Steel Container Set - Leak Proof",
+      "price": 487,
+      "rating": 3.7,
+      "ratingCount": 170
+    },
+    {
+      "id": "home_kitchen-35",
+      "title": "Nirmal Stainless Steel Container Set - Set of 3",
+      "price": 488,
+      "rating": 4,
+      "ratingCount": 2910
+    },
+    {
+      "id": "home_kitchen-37",
+      "title": "Steel Craft Pressure Cooker 3L - Heavy Gauge",
+      "price": 510,
+      "rating": 4.1,
+      "ratingCount": 304
+    },
+    {
+      "id": "home_kitchen-36",
+      "title": "Grihini Casserole Set - Food Grade",
+      "price": 511,
+      "rating": 3.9,
+      "ratingCount": 402
+    },
+    {
+      "id": "home_kitchen-38",
+      "title": "Nirmal Stainless Steel Container Set - Pack of 6",
+      "price": 560,
+      "rating": 4.1,
+      "ratingCount": 21
+    },
+    {
+      "id": "home_kitchen-39",
+      "title": "Grihini Plastic Storage Jar Set - Double Bed",
+      "price": 566,
+      "rating": 4.4,
+      "ratingCount": 253
+    },
+    {
+      "id": "home_kitchen-40",
+      "title": "Utsav Home Cotton Bedsheet - Food Grade",
+      "price": 659,
+      "rating": 4.3,
+      "ratingCount": 33
+    }
+  ]
+}

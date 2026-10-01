@@ -1,0 +1,45 @@
+{
+  "_note": "Spec section 5.1. Every value carries a source: a citation string or the literal \"ASSUMPTION\". Rendered by Screen 6 (Assumptions & sources).",
+  "codShare": {
+    "value": 0.8,
+    "unit": "share of orders",
+    "label_en": "COD share (share of orders that are COD)",
+    "label_hi": "COD हिस्सा (कितने ऑर्डर COD पर आते हैं)",
+    "source": "Valmo DICE data pack"
+  },
+  "rtoCod": {
+    "value": 0.2,
+    "unit": "share of COD orders",
+    "label_en": "RTO rate on COD orders",
+    "label_hi": "COD ऑर्डर पर RTO दर",
+    "source": "Valmo DICE data pack"
+  },
+  "rtoPrepaid": {
+    "value": 0.05,
+    "unit": "share of prepaid orders",
+    "label_en": "RTO rate on prepaid orders",
+    "label_hi": "प्रीपेड ऑर्डर पर RTO दर",
+    "source": "Valmo DICE data pack"
+  },
+  "codFee": {
+    "value": 7,
+    "unit": "₹ per COD order",
+    "label_en": "COD handling fee",
+    "label_hi": "COD हैंडलिंग शुल्क",
+    "source": "ASSUMPTION"
+  },
+  "gstRate": {
+    "value": 0.18,
+    "unit": "share of forward shipping",
+    "label_en": "GST (applied to forward shipping only)",
+    "label_hi": "GST (केवल आगे की शिपिंग पर)",
+    "source": "ASSUMPTION, matches deck"
+  },
+  "unitsBasis": {
+    "value": 100,
+    "unit": "units dispatched",
+    "label_en": "Units basis (model convention: compute per 100 dispatched)",
+    "label_hi": "इकाई आधार (मॉडल नियम: प्रति 100 भेजे गए ऑर्डर)",
+    "source": "Model convention — compute per 100 dispatched"
+  }
+}

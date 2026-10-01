@@ -1,0 +1,312 @@
+{
+  "_note": "Spec section 7.2 — scripted events for the 26-week kurti journey. The simulator (phase 5) reads these; phase 1 only ships the data.",
+  "product": {
+    "categoryId": "ethnic_women",
+    "name_en": "kurti",
+    "name_hi": "कुर्ती",
+    "sellerName": "Ramesh",
+    "cogs": {
+      "value": 150,
+      "unit": "₹ per unit",
+      "label_en": "Starting product cost (COGS)",
+      "label_hi": "शुरुआती लागत (COGS)",
+      "source": "Deck worked example"
+    },
+    "weightG": {
+      "value": 350,
+      "unit": "g",
+      "label_en": "Parcel weight",
+      "label_hi": "पार्सल वज़न",
+      "source": "Deck worked example"
+    },
+    "startingStock": {
+      "value": 1500,
+      "unit": "units",
+      "label_en": "Starting stock",
+      "label_hi": "शुरुआती स्टॉक",
+      "source": "ASSUMPTION"
+    },
+    "restockAt": {
+      "value": 120,
+      "unit": "units",
+      "label_en": "Reorder when stock falls below",
+      "label_hi": "इतना स्टॉक बचने पर दोबारा मँगाएँ",
+      "source": "ASSUMPTION — sellers reorder; without it a seller who underprices sells out and the journey stops early"
+    },
+    "restockQuantity": {
+      "value": 500,
+      "unit": "units",
+      "label_en": "Reorder quantity",
+      "label_hi": "दोबारा मँगाने की मात्रा",
+      "source": "ASSUMPTION"
+    },
+    "restockLimit": {
+      "value": 1,
+      "unit": "reorders",
+      "label_en": "How many times the seller reorders",
+      "label_hi": "विक्रेता कितनी बार दोबारा माल मँगाता है",
+      "source": "ASSUMPTION — one reorder. Unlimited reordering lets an underpriced listing run up a loss no real seller could fund; none at all stops the journey before the festive season."
+    }
+  },
+  "calendar": {
+    "week1StartDate": {
+      "value": "2026-07-06",
+      "unit": "ISO date (Monday)",
+      "label_en": "Week 1 starts",
+      "label_hi": "सप्ताह 1 शुरू",
+      "source": "Model convention — chosen so weeks 16–21 cover the Oct–Nov festive season"
+    },
+    "weeks": {
+      "value": 26,
+      "unit": "weeks",
+      "label_en": "Journey length",
+      "label_hi": "यात्रा की लंबाई",
+      "source": "Model convention"
+    },
+    "diwali": {
+      "value": "2026-11-08",
+      "unit": "ISO date",
+      "label_en": "Diwali 2026",
+      "label_hi": "दिवाली 2026",
+      "source": "Hindu calendar — 8 November 2026"
+    }
+  },
+  "hiddenDemand": {
+    "_note": "ASSUMPTION — spec section 7.1. Used only to generate synthetic weekly data. learner.ts must never read these.",
+    "epsilon": {
+      "value": 2.2,
+      "unit": "price elasticity",
+      "label_en": "True price sensitivity (hidden)",
+      "label_hi": "असली दाम-संवेदनशीलता (छिपी हुई)",
+      "source": "ASSUMPTION"
+    },
+    "noisePct": {
+      "value": 0.08,
+      "unit": "± share",
+      "label_en": "Impression noise",
+      "label_hi": "इंप्रेशन में उतार-चढ़ाव",
+      "source": "ASSUMPTION"
+    },
+    "rtoNoisePp": {
+      "value": 1,
+      "unit": "± percentage points",
+      "label_en": "Realised RTO / return noise",
+      "label_hi": "वास्तविक RTO / वापसी में उतार-चढ़ाव",
+      "source": "ASSUMPTION"
+    },
+    "festiveTrend": {
+      "value": 1.5,
+      "unit": "multiplier",
+      "label_en": "Category demand trend, weeks 16–21",
+      "label_hi": "श्रेणी मांग, सप्ताह 16–21",
+      "source": "ASSUMPTION"
+    },
+    "declineTrend": {
+      "value": 0.6,
+      "unit": "multiplier",
+      "label_en": "Category demand trend by week 26",
+      "label_hi": "श्रेणी मांग, सप्ताह 26 तक",
+      "source": "ASSUMPTION"
+    },
+    "visibilityFloor": {
+      "value": 0.3,
+      "unit": "multiplier at the 100th percentile",
+      "label_en": "Visibility at the top of the band",
+      "label_hi": "बाज़ार के सबसे ऊपर दृश्यता",
+      "source": "ASSUMPTION"
+    },
+    "visibilityKneePercentile": {
+      "value": 40,
+      "unit": "band percentile",
+      "label_en": "Visibility is full up to this percentile",
+      "label_hi": "इस परसेंटाइल तक पूरी दृश्यता",
+      "source": "ASSUMPTION"
+    },
+    "seed": {
+      "value": 20260706,
+      "unit": "PRNG seed",
+      "label_en": "Simulator seed (fixed, so every run is identical)",
+      "label_hi": "सिम्युलेटर सीड (स्थिर)",
+      "source": "Model convention"
+    },
+    "baseImpressionsPlateau": {
+      "value": 20000,
+      "unit": "impressions per week",
+      "label_en": "Impressions at full maturity",
+      "label_hi": "पूरी परिपक्वता पर इंप्रेशन",
+      "source": "ASSUMPTION"
+    },
+    "launchImpressionShare": {
+      "value": 0.22,
+      "unit": "share of plateau",
+      "label_en": "Impressions at zero ratings",
+      "label_hi": "शून्य रेटिंग पर इंप्रेशन",
+      "source": "ASSUMPTION"
+    },
+    "ratingHalfPoint": {
+      "value": 70,
+      "unit": "ratings",
+      "label_en": "Ratings at which impressions are halfway to plateau",
+      "label_hi": "आधी दूरी तक पहुँचने के लिए रेटिंग",
+      "source": "ASSUMPTION"
+    },
+    "launchStageMultiplier": {
+      "value": 0.7,
+      "unit": "multiplier",
+      "label_en": "New-listing impression penalty during Launch",
+      "label_hi": "नई लिस्टिंग पर इंप्रेशन में कमी",
+      "source": "ASSUMPTION"
+    },
+    "baseCvr": {
+      "value": 0.021,
+      "unit": "orders per impression",
+      "label_en": "Conversion rate at the band median price",
+      "label_hi": "बाज़ार के मध्य दाम पर रूपांतरण दर",
+      "source": "ASSUMPTION"
+    },
+    "ratingBoostFloor": {
+      "value": 0.82,
+      "unit": "multiplier",
+      "label_en": "Conversion multiplier with no ratings",
+      "label_hi": "बिना रेटिंग के रूपांतरण गुणक",
+      "source": "ASSUMPTION"
+    },
+    "ratingBoostHalfPoint": {
+      "value": 150,
+      "unit": "ratings",
+      "label_en": "Ratings at which the boost is halfway",
+      "label_hi": "रेटिंग बूस्ट की आधी दूरी",
+      "source": "ASSUMPTION"
+    },
+    "ratingRate": {
+      "value": 0.12,
+      "unit": "share of clean sales",
+      "label_en": "Clean sales that leave a rating",
+      "label_hi": "रेटिंग देने वाली बिक्री का हिस्सा",
+      "source": "ASSUMPTION"
+    },
+    "orderNoisePct": {
+      "value": 0.06,
+      "unit": "± share",
+      "label_en": "Order-count noise, on top of impression noise",
+      "label_hi": "ऑर्डर संख्या में उतार-चढ़ाव",
+      "source": "ASSUMPTION"
+    }
+  },
+  "events": [
+    {
+      "week": 1,
+      "id": "launch",
+      "type": "STAGE",
+      "stage": "LAUNCH",
+      "title_en": "Launch, 0 ratings",
+      "title_hi": "लिस्टिंग शुरू, 0 रेटिंग",
+      "detail_en": "The kurti goes live with no ratings and no sales history, so there is no price-vs-sales data to learn from yet.",
+      "detail_hi": "कुर्ती बिना किसी रेटिंग और बिक्री के शुरू होती है, इसलिए अभी दाम और बिक्री का कोई डेटा नहीं है।",
+      "triggers": [],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 4,
+      "id": "enter-ramp",
+      "type": "STAGE",
+      "stage": "RAMP",
+      "title_en": "Enough data; enter Ramp",
+      "title_hi": "पर्याप्त डेटा; Ramp शुरू",
+      "detail_en": "Three weeks of impressions and orders are on the board, so the learner can start one ₹10–20 price step per week.",
+      "detail_hi": "तीन हफ़्ते का डेटा आ गया है, तो अब हर हफ़्ते ₹10–20 का एक कदम आज़माया जा सकता है।",
+      "triggers": [],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 12,
+      "id": "competitor-undercut",
+      "type": "MARKET",
+      "title_en": "Competitor undercut: nearby listings drop 10%",
+      "title_hi": "प्रतियोगी ने दाम घटाया: आसपास की लिस्टिंग 10% सस्ती",
+      "detail_en": "The five closest listings cut their prices by 10%, pulling the local band down.",
+      "detail_hi": "पाँच सबसे नज़दीकी लिस्टिंग ने दाम 10% घटा दिए, जिससे आसपास का बाज़ार नीचे आ गया।",
+      "effect": {
+        "nearbyListingPriceMultiplier": 0.9
+      },
+      "triggers": [
+        "T3"
+      ],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 14,
+      "id": "cogs-rise",
+      "type": "COST",
+      "title_en": "COGS rises 6% (fabric price increase)",
+      "title_hi": "लागत 6% बढ़ी (कपड़ा महँगा हुआ)",
+      "detail_en": "The supplier raises fabric prices, so COGS goes from ₹150 to ₹159 and the floor moves with it.",
+      "detail_hi": "सप्लायर ने कपड़े का दाम बढ़ाया, लागत ₹150 से ₹159 हो गई और सही न्यूनतम दाम भी बढ़ गया।",
+      "effect": {
+        "cogsMultiplier": 1.06
+      },
+      "triggers": [
+        "T5"
+      ],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 16,
+      "id": "size-complaints",
+      "type": "QUALITY",
+      "title_en": "Size complaints: return rate +6pp for 3 weeks",
+      "title_hi": "साइज़ की शिकायतें: वापसी दर 3 हफ़्ते के लिए +6pp",
+      "detail_en": "A batch runs small. The return rate climbs 6 percentage points for weeks 16, 17 and 18.",
+      "detail_hi": "एक बैच छोटा निकला। सप्ताह 16, 17 और 18 में वापसी दर 6 पॉइंट बढ़ जाती है।",
+      "effect": {
+        "returnRateDelta": 0.06,
+        "durationWeeks": 3
+      },
+      "triggers": [
+        "T1"
+      ],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 16,
+      "weekEnd": 21,
+      "id": "festive-season",
+      "type": "SEASON",
+      "title_en": "Festive season (season index from season.json)",
+      "title_hi": "त्योहार का मौसम (season.json से सीज़न इंडेक्स)",
+      "detail_en": "Weeks 16–21 fall in October and November 2026. RTO rises with the season index and category demand lifts 1.5x.",
+      "detail_hi": "सप्ताह 16–21 अक्तूबर–नवंबर 2026 में आते हैं। सीज़न इंडेक्स से RTO बढ़ता है और मांग 1.5 गुना हो जाती है।",
+      "effect": {
+        "useSeasonIndex": true,
+        "categoryTrend": 1.5
+      },
+      "triggers": [
+        "T2"
+      ],
+      "source": "Unicommerce via MediaBrief (season index); demand lift is an ASSUMPTION"
+    },
+    {
+      "week": 22,
+      "id": "enter-decline",
+      "type": "STAGE",
+      "stage": "DECLINE",
+      "title_en": "Stock ageing; enter Decline",
+      "title_hi": "स्टॉक पुराना हो रहा है; Decline शुरू",
+      "detail_en": "Festive demand is gone and stock cover is above four weeks, so the markdown ladder starts.",
+      "detail_hi": "त्योहार की मांग ख़त्म, स्टॉक चार हफ़्ते से ज़्यादा का बचा है, इसलिए दाम घटाने की सीढ़ी शुरू होती है।",
+      "triggers": [],
+      "source": "ASSUMPTION"
+    },
+    {
+      "week": 26,
+      "id": "end",
+      "type": "END",
+      "title_en": "End; report remaining stock",
+      "title_hi": "अंत; बचा हुआ स्टॉक बताएँ",
+      "detail_en": "The journey closes. Report total profit, weeks spent below the floor, units sold and stock left for each strategy.",
+      "detail_hi": "यात्रा पूरी। हर रणनीति का कुल मुनाफ़ा, नुकसान वाले हफ़्ते, बिकी इकाइयाँ और बचा स्टॉक बताएँ।",
+      "triggers": [],
+      "source": "Model convention"
+    }
+  ]
+}

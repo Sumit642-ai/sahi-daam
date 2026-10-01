@@ -1,0 +1,557 @@
+{
+  "_note": "Spec section 5.3. One object per category. Every numeric field is { value, unit, label_en, label_hi, source }; source is a citation or the literal \"ASSUMPTION\".",
+  "categories": [
+    {
+      "id": "ethnic_women",
+      "name_en": "Women's ethnic (kurtis, sarees)",
+      "name_hi": "महिलाओं के एथनिक कपड़े (कुर्ती, साड़ी)",
+      "defaultWeightG": {
+        "value": 350,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 8,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.15,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "IBEF fashion return rates 25–40%; team used 15% as a conservative base."
+      },
+      "returnRateExpected": {
+        "value": 0.157,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "Deck worked example — 13 of 83 delivered orders were returned (13/83 = 0.157), the same source as writeOffShare 6/13. IBEF reports fashion return rates of 25-40%; the team used a conservative base."
+      },
+      "returnRateHigh": {
+        "value": 0.25,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "IBEF fashion return rates 25–40%; team used 15% as a conservative base."
+      },
+      "writeOffShare": {
+        "value": 0.46,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "Deck worked example — 6 of 13 returns were unsellable (6/13 = 0.46)."
+      },
+      "exampleCogs": {
+        "value": 150,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 320,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Highest-volume Meesho category and the deck worked example. Size and colour mismatch drive both RTO and post-delivery returns; COD share is high outside metros."
+    },
+    {
+      "id": "western_women",
+      "name_en": "Women's western wear",
+      "name_hi": "महिलाओं के वेस्टर्न कपड़े",
+      "defaultWeightG": {
+        "value": 300,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 8,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.15,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.2,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.25,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.4,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 120,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 280,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Fit-sensitive like ethnic wear, but a slightly more metro and prepaid buyer mix, so a little less RTO drag."
+    },
+    {
+      "id": "men_apparel",
+      "name_en": "Men's apparel",
+      "name_hi": "पुरुषों के कपड़े",
+      "defaultWeightG": {
+        "value": 350,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 8,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.12,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.18,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.22,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.4,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 180,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 380,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Men buy to a known size more often than women, so returns run a few points lower than women’s wear."
+    },
+    {
+      "id": "kids",
+      "name_en": "Kids wear",
+      "name_hi": "बच्चों के कपड़े",
+      "defaultWeightG": {
+        "value": 250,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 8,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.12,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.16,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.2,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.4,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 100,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 240,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Low ticket size, so flat per-order costs bite hardest here. Light parcels keep shipping in the cheapest slab."
+    },
+    {
+      "id": "footwear",
+      "name_en": "Footwear",
+      "name_hi": "जूते-चप्पल",
+      "defaultWeightG": {
+        "value": 800,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 20,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.15,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.2,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.25,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.35,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 250,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 520,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Heavy parcels push into the 501–1000 g slab, and size returns are frequent. Returned shoes are often resellable, so the write-off share is lower."
+    },
+    {
+      "id": "home_kitchen",
+      "name_en": "Home & kitchen",
+      "name_hi": "घर और रसोई",
+      "defaultWeightG": {
+        "value": 900,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 25,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.06,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.1,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.14,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.6,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 180,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 380,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Few size-driven returns, but what comes back is usually damaged in transit, so most returns are unsellable."
+    },
+    {
+      "id": "beauty",
+      "name_en": "Beauty & personal care",
+      "name_hi": "सौंदर्य और व्यक्तिगत देखभाल",
+      "defaultWeightG": {
+        "value": 200,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 10,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.03,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.05,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.08,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.8,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 70,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 180,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Lowest return rate of all categories, but hygiene rules mean almost nothing returned can be resold. Very low ticket size, so flat costs dominate — this is the category most likely to be NOT_VIABLE."
+    },
+    {
+      "id": "jewellery",
+      "name_en": "Jewellery & accessories",
+      "name_hi": "आभूषण और एक्सेसरीज़",
+      "defaultWeightG": {
+        "value": 100,
+        "unit": "g",
+        "label_en": "Default parcel weight",
+        "label_hi": "सामान्य पार्सल वज़न",
+        "source": "ASSUMPTION"
+      },
+      "packagingCost": {
+        "value": 6,
+        "unit": "₹ per order",
+        "label_en": "Packaging cost per order",
+        "label_hi": "प्रति ऑर्डर पैकेजिंग लागत",
+        "source": "ASSUMPTION"
+      },
+      "returnRateLow": {
+        "value": 0.08,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — low",
+        "label_hi": "वापसी दर — कम",
+        "source": "ASSUMPTION"
+      },
+      "returnRateExpected": {
+        "value": 0.12,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — expected",
+        "label_hi": "वापसी दर — अपेक्षित",
+        "source": "ASSUMPTION"
+      },
+      "returnRateHigh": {
+        "value": 0.16,
+        "unit": "share of delivered orders",
+        "label_en": "Return rate — high",
+        "label_hi": "वापसी दर — ज़्यादा",
+        "source": "ASSUMPTION"
+      },
+      "writeOffShare": {
+        "value": 0.3,
+        "unit": "share of returns",
+        "label_en": "Unsellable share of returns",
+        "label_hi": "वापस आए माल में बिक न सकने वाला हिस्सा",
+        "source": "ASSUMPTION"
+      },
+      "exampleCogs": {
+        "value": 60,
+        "unit": "₹ per unit",
+        "label_en": "Example product cost (COGS)",
+        "label_hi": "उदाहरण लागत (COGS)",
+        "source": "ASSUMPTION"
+      },
+      "bandMedian": {
+        "value": 160,
+        "unit": "₹",
+        "label_en": "Competitor band median price",
+        "label_hi": "बाज़ार का मध्य दाम",
+        "source": "ASSUMPTION"
+      },
+      "bandSpread": {
+        "value": 0.35,
+        "unit": "share of median (±)",
+        "label_en": "Competitor band spread (±)",
+        "label_hi": "बाज़ार दाम का फैलाव (±)",
+        "source": "ASSUMPTION"
+      },
+      "rtoNote": "Lightest parcels and cheapest packaging. Returns are mostly \"looks different from the photo\" and the item usually goes back into stock."
+    }
+  ]
+}

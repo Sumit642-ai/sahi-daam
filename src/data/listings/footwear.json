@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "footwear",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 2359562482,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 520,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "footwear-01",
+      "title": "Stepwell Block Heel - Daily Use",
+      "price": 311,
+      "rating": 3.2,
+      "ratingCount": 140
+    },
+    {
+      "id": "footwear-02",
+      "title": "Paduka Casual Sneakers - Anti-Skid Sole",
+      "price": 334,
+      "rating": 3.1,
+      "ratingCount": 1134
+    },
+    {
+      "id": "footwear-03",
+      "title": "Paduka Block Heel - Anti-Skid Sole",
+      "price": 357,
+      "rating": 3.2,
+      "ratingCount": 1057
+    },
+    {
+      "id": "footwear-05",
+      "title": "Walkmate Flat Sandal - Lightweight",
+      "price": 383,
+      "rating": 3.5,
+      "ratingCount": 54
+    },
+    {
+      "id": "footwear-04",
+      "title": "Rishi Footwear Running Shoes - Handmade",
+      "price": 385,
+      "rating": 3.6,
+      "ratingCount": 133
+    },
+    {
+      "id": "footwear-06",
+      "title": "Urban Sole Casual Sneakers - For Men",
+      "price": 395,
+      "rating": 3.4,
+      "ratingCount": 5
+    },
+    {
+      "id": "footwear-08",
+      "title": "Paduka Running Shoes - For Men",
+      "price": 412,
+      "rating": 3.3,
+      "ratingCount": 4026
+    },
+    {
+      "id": "footwear-07",
+      "title": "Stepwell Flip Flops - For Men",
+      "price": 424,
+      "rating": 3.8,
+      "ratingCount": 5
+    },
+    {
+      "id": "footwear-09",
+      "title": "Urban Sole Running Shoes - Lightweight",
+      "price": 441,
+      "rating": 3.5,
+      "ratingCount": 8
+    },
+    {
+      "id": "footwear-11",
+      "title": "Walkmate Formal Derby - Handmade",
+      "price": 444,
+      "rating": 3.5,
+      "ratingCount": 5589
+    },
+    {
+      "id": "footwear-12",
+      "title": "Paduka Running Shoes - For Women",
+      "price": 446,
+      "rating": 3.5,
+      "ratingCount": 92
+    },
+    {
+      "id": "footwear-10",
+      "title": "Walkmate Casual Sneakers - Anti-Skid Sole",
+      "price": 451,
+      "rating": 3.4,
+      "ratingCount": 288
+    },
+    {
+      "id": "footwear-13",
+      "title": "Mochi Lite Casual Sneakers - For Women",
+      "price": 453,
+      "rating": 3.5,
+      "ratingCount": 20
+    },
+    {
+      "id": "footwear-14",
+      "title": "Trekker Formal Derby - For Men",
+      "price": 467,
+      "rating": 3.6,
+      "ratingCount": 995
+    },
+    {
+      "id": "footwear-15",
+      "title": "Rishi Footwear Flat Sandal - Water Resistant",
+      "price": 487,
+      "rating": 3.5,
+      "ratingCount": 205
+    },
+    {
+      "id": "footwear-16",
+      "title": "Urban Sole Flip Flops - Handmade",
+      "price": 492,
+      "rating": 3.9,
+      "ratingCount": 13
+    },
+    {
+      "id": "footwear-17",
+      "title": "Paduka Flip Flops - For Women",
+      "price": 494,
+      "rating": 3.6,
+      "ratingCount": 1159
+    },
+    {
+      "id": "footwear-18",
+      "title": "Stepwell Running Shoes - Lightweight",
+      "price": 495,
+      "rating": 3.7,
+      "ratingCount": 381
+    },
+    {
+      "id": "footwear-19",
+      "title": "Rishi Footwear Flat Sandal - Anti-Skid Sole",
+      "price": 501,
+      "rating": 3.9,
+      "ratingCount": 11
+    },
+    {
+      "id": "footwear-21",
+      "title": "Trekker Ethnic Juti - Handmade",
+      "price": 518,
+      "rating": 3.5,
+      "ratingCount": 739
+    },
+    {
+      "id": "footwear-20",
+      "title": "Rishi Footwear Flip Flops - Anti-Skid Sole",
+      "price": 519,
+      "rating": 3.5,
+      "ratingCount": 390
+    },
+    {
+      "id": "footwear-23",
+      "title": "Trekker Kolhapuri Chappal - Cushioned",
+      "price": 532,
+      "rating": 3.9,
+      "ratingCount": 277
+    },
+    {
+      "id": "footwear-22",
+      "title": "Rishi Footwear Casual Sneakers - For Women",
+      "price": 534,
+      "rating": 3.7,
+      "ratingCount": 1064
+    },
+    {
+      "id": "footwear-24",
+      "title": "Rishi Footwear Casual Sneakers - Water Resistant",
+      "price": 542,
+      "rating": 3.7,
+      "ratingCount": 5
+    },
+    {
+      "id": "footwear-26",
+      "title": "Walkmate Kolhapuri Chappal - For Women",
+      "price": 556,
+      "rating": 4,
+      "ratingCount": 703
+    },
+    {
+      "id": "footwear-28",
+      "title": "Mochi Lite Running Shoes - Daily Use",
+      "price": 569,
+      "rating": 4,
+      "ratingCount": 2778
+    },
+    {
+      "id": "footwear-25",
+      "title": "Trekker Flip Flops - Handmade",
+      "price": 570,
+      "rating": 4.1,
+      "ratingCount": 15
+    },
+    {
+      "id": "footwear-27",
+      "title": "Urban Sole Block Heel - Lightweight",
+      "price": 579,
+      "rating": 3.8,
+      "ratingCount": 18
+    },
+    {
+      "id": "footwear-30",
+      "title": "Mochi Lite Flip Flops - Lightweight",
+      "price": 597,
+      "rating": 3.7,
+      "ratingCount": 411
+    },
+    {
+      "id": "footwear-29",
+      "title": "Rishi Footwear Kolhapuri Chappal - Handmade",
+      "price": 601,
+      "rating": 4.1,
+      "ratingCount": 1640
+    },
+    {
+      "id": "footwear-33",
+      "title": "Urban Sole Running Shoes - For Women",
+      "price": 622,
+      "rating": 4.2,
+      "ratingCount": 24
+    },
+    {
+      "id": "footwear-32",
+      "title": "Mochi Lite Ethnic Juti - Lightweight",
+      "price": 628,
+      "rating": 4.2,
+      "ratingCount": 90
+    },
+    {
+      "id": "footwear-31",
+      "title": "Paduka Kolhapuri Chappal - Handmade",
+      "price": 632,
+      "rating": 3.8,
+      "ratingCount": 75
+    },
+    {
+      "id": "footwear-34",
+      "title": "Urban Sole Ethnic Juti - Lightweight",
+      "price": 673,
+      "rating": 3.9,
+      "ratingCount": 1035
+    },
+    {
+      "id": "footwear-36",
+      "title": "Walkmate Kolhapuri Chappal - Anti-Skid Sole",
+      "price": 673,
+      "rating": 4,
+      "ratingCount": 20
+    },
+    {
+      "id": "footwear-35",
+      "title": "Urban Sole Formal Derby - Handmade",
+      "price": 676,
+      "rating": 3.7,
+      "ratingCount": 1447
+    },
+    {
+      "id": "footwear-37",
+      "title": "Chappal Bazaar Ethnic Juti - Lightweight",
+      "price": 696,
+      "rating": 3.7,
+      "ratingCount": 61
+    },
+    {
+      "id": "footwear-38",
+      "title": "Chappal Bazaar Flat Sandal - For Men",
+      "price": 756,
+      "rating": 4.4,
+      "ratingCount": 561
+    },
+    {
+      "id": "footwear-39",
+      "title": "Chappal Bazaar Flat Sandal - Lightweight",
+      "price": 775,
+      "rating": 4.2,
+      "ratingCount": 235
+    },
+    {
+      "id": "footwear-40",
+      "title": "Paduka Running Shoes - Anti-Skid Sole",
+      "price": 865,
+      "rating": 3.8,
+      "ratingCount": 235
+    }
+  ]
+}

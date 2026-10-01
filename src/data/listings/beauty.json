@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "beauty",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 712643601,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 180,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "beauty-01",
+      "title": "Glow Up Matte Liquid Lipstick - For All Skin Types",
+      "price": 106,
+      "rating": 3.4,
+      "ratingCount": 11
+    },
+    {
+      "id": "beauty-02",
+      "title": "Glow Up Face Serum 30ml - Waterproof",
+      "price": 117,
+      "rating": 3.1,
+      "ratingCount": 139
+    },
+    {
+      "id": "beauty-03",
+      "title": "Herbal Veda Hair Oil 200ml - Travel Size",
+      "price": 127,
+      "rating": 3.6,
+      "ratingCount": 354
+    },
+    {
+      "id": "beauty-04",
+      "title": "Herbal Veda Matte Liquid Lipstick - Paraben Free",
+      "price": 130,
+      "rating": 3.1,
+      "ratingCount": 1450
+    },
+    {
+      "id": "beauty-05",
+      "title": "Rupa Cosmetics Kajal Pencil - Ayurvedic",
+      "price": 135,
+      "rating": 3.2,
+      "ratingCount": 504
+    },
+    {
+      "id": "beauty-06",
+      "title": "Keshya Kajal Pencil - Waterproof",
+      "price": 141,
+      "rating": 3.7,
+      "ratingCount": 821
+    },
+    {
+      "id": "beauty-08",
+      "title": "Keshya Sunscreen SPF 50 - Long Lasting",
+      "price": 143,
+      "rating": 3.8,
+      "ratingCount": 23
+    },
+    {
+      "id": "beauty-07",
+      "title": "Aroma Leaf Kajal Pencil - For All Skin Types",
+      "price": 146,
+      "rating": 3.6,
+      "ratingCount": 156
+    },
+    {
+      "id": "beauty-09",
+      "title": "Blush Box Kajal Pencil - For All Skin Types",
+      "price": 146,
+      "rating": 3.7,
+      "ratingCount": 30
+    },
+    {
+      "id": "beauty-12",
+      "title": "Nisha Beauty Aloe Vera Gel - Ayurvedic",
+      "price": 154,
+      "rating": 3.9,
+      "ratingCount": 2076
+    },
+    {
+      "id": "beauty-10",
+      "title": "Rupa Cosmetics Nail Polish Set - Paraben Free",
+      "price": 156,
+      "rating": 3.5,
+      "ratingCount": 900
+    },
+    {
+      "id": "beauty-11",
+      "title": "Aroma Leaf Nail Polish Set - Long Lasting",
+      "price": 156,
+      "rating": 3.6,
+      "ratingCount": 8
+    },
+    {
+      "id": "beauty-13",
+      "title": "Glow Up Kajal Pencil - Ayurvedic",
+      "price": 157,
+      "rating": 3.8,
+      "ratingCount": 265
+    },
+    {
+      "id": "beauty-14",
+      "title": "Herbal Veda Aloe Vera Gel - Combo",
+      "price": 159,
+      "rating": 3.8,
+      "ratingCount": 365
+    },
+    {
+      "id": "beauty-15",
+      "title": "Glow Up Aloe Vera Gel - Ayurvedic",
+      "price": 162,
+      "rating": 3.6,
+      "ratingCount": 36
+    },
+    {
+      "id": "beauty-16",
+      "title": "Glow Up Kajal Pencil - Travel Size",
+      "price": 167,
+      "rating": 3.6,
+      "ratingCount": 2423
+    },
+    {
+      "id": "beauty-17",
+      "title": "Keshya Nail Polish Set - Travel Size",
+      "price": 170,
+      "rating": 3.8,
+      "ratingCount": 8
+    },
+    {
+      "id": "beauty-19",
+      "title": "Aroma Leaf Face Serum 30ml - Long Lasting",
+      "price": 172,
+      "rating": 3.9,
+      "ratingCount": 614
+    },
+    {
+      "id": "beauty-18",
+      "title": "Herbal Veda Sunscreen SPF 50 - Ayurvedic",
+      "price": 176,
+      "rating": 3.8,
+      "ratingCount": 2190
+    },
+    {
+      "id": "beauty-20",
+      "title": "Aroma Leaf Nail Polish Set - Waterproof",
+      "price": 177,
+      "rating": 3.7,
+      "ratingCount": 184
+    },
+    {
+      "id": "beauty-21",
+      "title": "Nisha Beauty Aloe Vera Gel - Combo",
+      "price": 180,
+      "rating": 3.7,
+      "ratingCount": 46
+    },
+    {
+      "id": "beauty-23",
+      "title": "Keshya Matte Liquid Lipstick - Combo",
+      "price": 183,
+      "rating": 3.9,
+      "ratingCount": 2065
+    },
+    {
+      "id": "beauty-24",
+      "title": "Herbal Veda Hair Oil 200ml - Long Lasting",
+      "price": 186,
+      "rating": 3.8,
+      "ratingCount": 20
+    },
+    {
+      "id": "beauty-25",
+      "title": "Keshya Matte Liquid Lipstick - Travel Size",
+      "price": 187,
+      "rating": 3.9,
+      "ratingCount": 3585
+    },
+    {
+      "id": "beauty-22",
+      "title": "Rupa Cosmetics Nail Polish Set - For All Skin Types",
+      "price": 188,
+      "rating": 4.1,
+      "ratingCount": 264
+    },
+    {
+      "id": "beauty-26",
+      "title": "Shine On Compact Powder - Ayurvedic",
+      "price": 192,
+      "rating": 3.9,
+      "ratingCount": 48
+    },
+    {
+      "id": "beauty-27",
+      "title": "Herbal Veda Sunscreen SPF 50 - Travel Size",
+      "price": 197,
+      "rating": 3.5,
+      "ratingCount": 60
+    },
+    {
+      "id": "beauty-28",
+      "title": "Glow Up Compact Powder - Ayurvedic",
+      "price": 201,
+      "rating": 3.9,
+      "ratingCount": 20
+    },
+    {
+      "id": "beauty-29",
+      "title": "Blush Box Nail Polish Set - For All Skin Types",
+      "price": 208,
+      "rating": 3.9,
+      "ratingCount": 1234
+    },
+    {
+      "id": "beauty-32",
+      "title": "Herbal Veda Face Serum 30ml - Waterproof",
+      "price": 211,
+      "rating": 3.9,
+      "ratingCount": 330
+    },
+    {
+      "id": "beauty-30",
+      "title": "Keshya Kajal Pencil - Ayurvedic",
+      "price": 214,
+      "rating": 3.7,
+      "ratingCount": 194
+    },
+    {
+      "id": "beauty-31",
+      "title": "Keshya Aloe Vera Gel - Paraben Free",
+      "price": 215,
+      "rating": 3.9,
+      "ratingCount": 224
+    },
+    {
+      "id": "beauty-33",
+      "title": "Shine On Nail Polish Set - Long Lasting",
+      "price": 221,
+      "rating": 3.6,
+      "ratingCount": 587
+    },
+    {
+      "id": "beauty-34",
+      "title": "Keshya Kajal Pencil - Long Lasting",
+      "price": 230,
+      "rating": 4,
+      "ratingCount": 4669
+    },
+    {
+      "id": "beauty-35",
+      "title": "Rupa Cosmetics Compact Powder - Long Lasting",
+      "price": 237,
+      "rating": 4.1,
+      "ratingCount": 3545
+    },
+    {
+      "id": "beauty-36",
+      "title": "Shine On Matte Liquid Lipstick - Waterproof",
+      "price": 240,
+      "rating": 4,
+      "ratingCount": 2049
+    },
+    {
+      "id": "beauty-37",
+      "title": "Shine On Kajal Pencil - Long Lasting",
+      "price": 240,
+      "rating": 4.4,
+      "ratingCount": 9
+    },
+    {
+      "id": "beauty-38",
+      "title": "Glow Up Aloe Vera Gel - Combo",
+      "price": 259,
+      "rating": 4,
+      "ratingCount": 220
+    },
+    {
+      "id": "beauty-39",
+      "title": "Nisha Beauty Nail Polish Set - Paraben Free",
+      "price": 277,
+      "rating": 4.2,
+      "ratingCount": 6
+    },
+    {
+      "id": "beauty-40",
+      "title": "Herbal Veda Face Serum 30ml - Long Lasting",
+      "price": 302,
+      "rating": 4,
+      "ratingCount": 683
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "men_apparel",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 3406339505,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 380,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "men_apparel-01",
+      "title": "Sunshine Men Polo T-Shirt - Pack of 2",
+      "price": 231,
+      "rating": 3.6,
+      "ratingCount": 109
+    },
+    {
+      "id": "men_apparel-02",
+      "title": "Hindustan Wear Round Neck T-Shirt - Breathable Cotton",
+      "price": 257,
+      "rating": 3.2,
+      "ratingCount": 558
+    },
+    {
+      "id": "men_apparel-03",
+      "title": "Rockfield Formal Trouser - Checked",
+      "price": 269,
+      "rating": 3.3,
+      "ratingCount": 634
+    },
+    {
+      "id": "men_apparel-04",
+      "title": "Sagar Garments Formal Trouser - Regular Fit",
+      "price": 274,
+      "rating": 3.6,
+      "ratingCount": 225
+    },
+    {
+      "id": "men_apparel-05",
+      "title": "Sagar Garments Slim Fit Jeans - Checked",
+      "price": 290,
+      "rating": 3.7,
+      "ratingCount": 2338
+    },
+    {
+      "id": "men_apparel-07",
+      "title": "Sunshine Men Round Neck T-Shirt - Regular Fit",
+      "price": 294,
+      "rating": 3.5,
+      "ratingCount": 231
+    },
+    {
+      "id": "men_apparel-06",
+      "title": "Veer Track Pant - Office Wear",
+      "price": 295,
+      "rating": 3.5,
+      "ratingCount": 2034
+    },
+    {
+      "id": "men_apparel-08",
+      "title": "Rockfield Cotton Casual Shirt - Office Wear",
+      "price": 313,
+      "rating": 3.6,
+      "ratingCount": 2743
+    },
+    {
+      "id": "men_apparel-09",
+      "title": "Raahi Printed Kurta - Slim Fit",
+      "price": 322,
+      "rating": 3.7,
+      "ratingCount": 7
+    },
+    {
+      "id": "men_apparel-11",
+      "title": "Ambar Formal Trouser - Solid",
+      "price": 322,
+      "rating": 3.7,
+      "ratingCount": 1356
+    },
+    {
+      "id": "men_apparel-10",
+      "title": "Sagar Garments Cotton Casual Shirt - Combo",
+      "price": 325,
+      "rating": 3.9,
+      "ratingCount": 28
+    },
+    {
+      "id": "men_apparel-13",
+      "title": "Denim Co Polo T-Shirt - Solid",
+      "price": 330,
+      "rating": 3.5,
+      "ratingCount": 6
+    },
+    {
+      "id": "men_apparel-12",
+      "title": "Ambar Round Neck T-Shirt - Breathable Cotton",
+      "price": 341,
+      "rating": 3.6,
+      "ratingCount": 1631
+    },
+    {
+      "id": "men_apparel-14",
+      "title": "Hindustan Wear Cotton Casual Shirt - Breathable Cotton",
+      "price": 345,
+      "rating": 3.7,
+      "ratingCount": 118
+    },
+    {
+      "id": "men_apparel-15",
+      "title": "Rockfield Track Pant - Office Wear",
+      "price": 345,
+      "rating": 3.6,
+      "ratingCount": 629
+    },
+    {
+      "id": "men_apparel-17",
+      "title": "Veer Printed Kurta - Pack of 2",
+      "price": 354,
+      "rating": 3.9,
+      "ratingCount": 15
+    },
+    {
+      "id": "men_apparel-16",
+      "title": "Veer Printed Kurta - Solid",
+      "price": 359,
+      "rating": 3.9,
+      "ratingCount": 222
+    },
+    {
+      "id": "men_apparel-18",
+      "title": "Ambar Slim Fit Jeans - Breathable Cotton",
+      "price": 362,
+      "rating": 3.8,
+      "ratingCount": 16
+    },
+    {
+      "id": "men_apparel-19",
+      "title": "Hindustan Wear Round Neck T-Shirt - Office Wear",
+      "price": 372,
+      "rating": 4.1,
+      "ratingCount": 166
+    },
+    {
+      "id": "men_apparel-21",
+      "title": "Denim Co Slim Fit Jeans - Pack of 2",
+      "price": 381,
+      "rating": 3.8,
+      "ratingCount": 569
+    },
+    {
+      "id": "men_apparel-20",
+      "title": "Hindustan Wear Cotton Casual Shirt - Slim Fit",
+      "price": 383,
+      "rating": 3.9,
+      "ratingCount": 29
+    },
+    {
+      "id": "men_apparel-22",
+      "title": "Denim Co Slim Fit Jeans - Office Wear",
+      "price": 383,
+      "rating": 3.9,
+      "ratingCount": 733
+    },
+    {
+      "id": "men_apparel-25",
+      "title": "Rockfield Formal Trouser - Breathable Cotton",
+      "price": 402,
+      "rating": 3.7,
+      "ratingCount": 21
+    },
+    {
+      "id": "men_apparel-23",
+      "title": "Hindustan Wear Cotton Casual Shirt - Pack of 2",
+      "price": 405,
+      "rating": 3.9,
+      "ratingCount": 2196
+    },
+    {
+      "id": "men_apparel-26",
+      "title": "Rockfield Round Neck T-Shirt - Regular Fit",
+      "price": 408,
+      "rating": 3.7,
+      "ratingCount": 8
+    },
+    {
+      "id": "men_apparel-24",
+      "title": "Ambar Cotton Casual Shirt - Regular Fit",
+      "price": 409,
+      "rating": 4.2,
+      "ratingCount": 302
+    },
+    {
+      "id": "men_apparel-27",
+      "title": "Hindustan Wear Nehru Jacket - Combo",
+      "price": 412,
+      "rating": 4,
+      "ratingCount": 338
+    },
+    {
+      "id": "men_apparel-30",
+      "title": "Denim Co Track Pant - Slim Fit",
+      "price": 434,
+      "rating": 4.1,
+      "ratingCount": 3319
+    },
+    {
+      "id": "men_apparel-28",
+      "title": "Raahi Nehru Jacket - Pack of 2",
+      "price": 438,
+      "rating": 4,
+      "ratingCount": 581
+    },
+    {
+      "id": "men_apparel-31",
+      "title": "Sunshine Men Formal Trouser - Solid",
+      "price": 439,
+      "rating": 3.9,
+      "ratingCount": 469
+    },
+    {
+      "id": "men_apparel-29",
+      "title": "Sagar Garments Formal Trouser - Solid",
+      "price": 445,
+      "rating": 3.8,
+      "ratingCount": 35
+    },
+    {
+      "id": "men_apparel-32",
+      "title": "Rockfield Formal Trouser - Slim Fit",
+      "price": 464,
+      "rating": 3.7,
+      "ratingCount": 71
+    },
+    {
+      "id": "men_apparel-33",
+      "title": "Hindustan Wear Round Neck T-Shirt - Combo",
+      "price": 473,
+      "rating": 3.8,
+      "ratingCount": 23
+    },
+    {
+      "id": "men_apparel-35",
+      "title": "Raahi Printed Kurta - Regular Fit",
+      "price": 484,
+      "rating": 3.9,
+      "ratingCount": 239
+    },
+    {
+      "id": "men_apparel-34",
+      "title": "Raahi Track Pant - Office Wear",
+      "price": 488,
+      "rating": 3.8,
+      "ratingCount": 305
+    },
+    {
+      "id": "men_apparel-36",
+      "title": "Raahi Round Neck T-Shirt - Breathable Cotton",
+      "price": 503,
+      "rating": 3.9,
+      "ratingCount": 7
+    },
+    {
+      "id": "men_apparel-37",
+      "title": "Sunshine Men Slim Fit Jeans - Breathable Cotton",
+      "price": 531,
+      "rating": 4,
+      "ratingCount": 3890
+    },
+    {
+      "id": "men_apparel-38",
+      "title": "Ambar Round Neck T-Shirt - Checked",
+      "price": 559,
+      "rating": 4.3,
+      "ratingCount": 127
+    },
+    {
+      "id": "men_apparel-39",
+      "title": "Rockfield Cotton Casual Shirt - Solid",
+      "price": 583,
+      "rating": 4,
+      "ratingCount": 2563
+    },
+    {
+      "id": "men_apparel-40",
+      "title": "Ambar Round Neck T-Shirt - Slim Fit",
+      "price": 644,
+      "rating": 4.2,
+      "ratingCount": 8
+    }
+  ]
+}

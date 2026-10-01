@@ -1,0 +1,297 @@
+{
+  "_note": "Sample market data (synthetic) — in production this comes from Meesho’s similar-product search. Nothing here was scraped.",
+  "synthetic": true,
+  "categoryId": "western_women",
+  "count": 40,
+  "generator": {
+    "script": "scripts/generate-listings.mjs",
+    "prng": "mulberry32",
+    "seed": 1532353252,
+    "distribution": "log-normal about bandMedian; sigma = ln(1 + bandSpread) / z90",
+    "bandMedian": 280,
+    "bandSpread": 0.35,
+    "source": "ASSUMPTION — synthetic sample data generated for the prototype"
+  },
+  "listings": [
+    {
+      "id": "western_women-01",
+      "title": "Trendy Tales Crepe Top - Casual Fit",
+      "price": 166,
+      "rating": 3.3,
+      "ratingCount": 466
+    },
+    {
+      "id": "western_women-02",
+      "title": "Trendy Tales Bodycon Dress - Stretchable",
+      "price": 184,
+      "rating": 3.7,
+      "ratingCount": 2152
+    },
+    {
+      "id": "western_women-03",
+      "title": "Trendy Tales Co-ord Set - Pack of 2",
+      "price": 199,
+      "rating": 3.6,
+      "ratingCount": 44
+    },
+    {
+      "id": "western_women-04",
+      "title": "Urbane Ribbed T-Shirt - Solid",
+      "price": 199,
+      "rating": 3.7,
+      "ratingCount": 24
+    },
+    {
+      "id": "western_women-05",
+      "title": "Nikita Fashion Denim Jeggings - Casual Fit",
+      "price": 210,
+      "rating": 3.3,
+      "ratingCount": 3300
+    },
+    {
+      "id": "western_women-06",
+      "title": "Dressy Co-ord Set - Pack of 2",
+      "price": 213,
+      "rating": 3.2,
+      "ratingCount": 290
+    },
+    {
+      "id": "western_women-07",
+      "title": "Dressy Co-ord Set - Stretchable",
+      "price": 221,
+      "rating": 3.6,
+      "ratingCount": 5575
+    },
+    {
+      "id": "western_women-08",
+      "title": "Casa Moda Bodycon Dress - Stretchable",
+      "price": 227,
+      "rating": 3.8,
+      "ratingCount": 566
+    },
+    {
+      "id": "western_women-09",
+      "title": "Casa Moda Crepe Top - Trending Now",
+      "price": 236,
+      "rating": 3.6,
+      "ratingCount": 2680
+    },
+    {
+      "id": "western_women-10",
+      "title": "Trendy Tales Printed Jumpsuit - Trending Now",
+      "price": 241,
+      "rating": 3.4,
+      "ratingCount": 396
+    },
+    {
+      "id": "western_women-12",
+      "title": "Trendy Tales Crepe Top - Slim Fit",
+      "price": 244,
+      "rating": 3.5,
+      "ratingCount": 11
+    },
+    {
+      "id": "western_women-11",
+      "title": "Dressy Printed Jumpsuit - Slim Fit",
+      "price": 246,
+      "rating": 3.6,
+      "ratingCount": 5
+    },
+    {
+      "id": "western_women-13",
+      "title": "Urbane Denim Jeggings - Solid",
+      "price": 249,
+      "rating": 3.4,
+      "ratingCount": 420
+    },
+    {
+      "id": "western_women-14",
+      "title": "Nikita Fashion Ribbed T-Shirt - Western Wear",
+      "price": 258,
+      "rating": 3.9,
+      "ratingCount": 4225
+    },
+    {
+      "id": "western_women-15",
+      "title": "Trendy Tales Bodycon Dress - Trending Now",
+      "price": 264,
+      "rating": 4,
+      "ratingCount": 121
+    },
+    {
+      "id": "western_women-17",
+      "title": "Nova Fab Co-ord Set - Slim Fit",
+      "price": 264,
+      "rating": 3.7,
+      "ratingCount": 325
+    },
+    {
+      "id": "western_women-16",
+      "title": "Casa Moda Bodycon Dress - Full Sleeve",
+      "price": 269,
+      "rating": 3.4,
+      "ratingCount": 57
+    },
+    {
+      "id": "western_women-18",
+      "title": "Dressy Denim Jeggings - Western Wear",
+      "price": 274,
+      "rating": 3.6,
+      "ratingCount": 183
+    },
+    {
+      "id": "western_women-21",
+      "title": "Urbane Oversized Shirt - Stretchable",
+      "price": 274,
+      "rating": 3.5,
+      "ratingCount": 309
+    },
+    {
+      "id": "western_women-19",
+      "title": "Elvira Crepe Top - Full Sleeve",
+      "price": 276,
+      "rating": 3.5,
+      "ratingCount": 7
+    },
+    {
+      "id": "western_women-20",
+      "title": "Elvira Denim Jeggings - Western Wear",
+      "price": 276,
+      "rating": 3.9,
+      "ratingCount": 397
+    },
+    {
+      "id": "western_women-22",
+      "title": "Urbane Oversized Shirt - Solid",
+      "price": 282,
+      "rating": 3.6,
+      "ratingCount": 26
+    },
+    {
+      "id": "western_women-23",
+      "title": "Dressy Denim Jeggings - Full Sleeve",
+      "price": 289,
+      "rating": 4,
+      "ratingCount": 52
+    },
+    {
+      "id": "western_women-24",
+      "title": "Zuri Palazzo Trouser - Trending Now",
+      "price": 295,
+      "rating": 3.5,
+      "ratingCount": 1436
+    },
+    {
+      "id": "western_women-25",
+      "title": "Nikita Fashion Oversized Shirt - Solid",
+      "price": 297,
+      "rating": 4.2,
+      "ratingCount": 6
+    },
+    {
+      "id": "western_women-26",
+      "title": "Zuri Denim Jeggings - Trending Now",
+      "price": 306,
+      "rating": 3.9,
+      "ratingCount": 281
+    },
+    {
+      "id": "western_women-27",
+      "title": "Trendy Tales Oversized Shirt - Trending Now",
+      "price": 311,
+      "rating": 3.5,
+      "ratingCount": 920
+    },
+    {
+      "id": "western_women-29",
+      "title": "Zuri Printed Jumpsuit - Casual Fit",
+      "price": 318,
+      "rating": 4,
+      "ratingCount": 997
+    },
+    {
+      "id": "western_women-28",
+      "title": "Trendy Tales Co-ord Set - Full Sleeve",
+      "price": 322,
+      "rating": 3.9,
+      "ratingCount": 746
+    },
+    {
+      "id": "western_women-30",
+      "title": "Nova Fab Ribbed T-Shirt - Pack of 2",
+      "price": 330,
+      "rating": 4.1,
+      "ratingCount": 598
+    },
+    {
+      "id": "western_women-32",
+      "title": "Nova Fab Denim Jeggings - Casual Fit",
+      "price": 335,
+      "rating": 4.2,
+      "ratingCount": 13
+    },
+    {
+      "id": "western_women-31",
+      "title": "Nova Fab Co-ord Set - Trending Now",
+      "price": 340,
+      "rating": 3.8,
+      "ratingCount": 40
+    },
+    {
+      "id": "western_women-33",
+      "title": "Nikita Fashion Oversized Shirt - Stretchable",
+      "price": 344,
+      "rating": 4.1,
+      "ratingCount": 8
+    },
+    {
+      "id": "western_women-34",
+      "title": "Nova Fab Co-ord Set - Stretchable",
+      "price": 352,
+      "rating": 3.8,
+      "ratingCount": 9
+    },
+    {
+      "id": "western_women-36",
+      "title": "Nikita Fashion Denim Jeggings - Full Sleeve",
+      "price": 365,
+      "rating": 3.8,
+      "ratingCount": 912
+    },
+    {
+      "id": "western_women-35",
+      "title": "Nova Fab Oversized Shirt - Full Sleeve",
+      "price": 371,
+      "rating": 4.1,
+      "ratingCount": 3553
+    },
+    {
+      "id": "western_women-37",
+      "title": "Casa Moda Printed Jumpsuit - Western Wear",
+      "price": 394,
+      "rating": 3.8,
+      "ratingCount": 54
+    },
+    {
+      "id": "western_women-38",
+      "title": "Nikita Fashion Bodycon Dress - Trending Now",
+      "price": 406,
+      "rating": 3.9,
+      "ratingCount": 89
+    },
+    {
+      "id": "western_women-39",
+      "title": "Elvira Crepe Top - Western Wear",
+      "price": 437,
+      "rating": 4.4,
+      "ratingCount": 1406
+    },
+    {
+      "id": "western_women-40",
+      "title": "Casa Moda Denim Jeggings - Pack of 2",
+      "price": 463,
+      "rating": 3.8,
+      "ratingCount": 191
+    }
+  ]
+}
