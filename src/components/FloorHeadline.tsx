@@ -58,12 +58,29 @@ export function FloorHeadline({
       formula: `${inr(expected.totalOverhead)} ÷ ${expected.cleanSales.toFixed(1)} clean sales`,
       value: inr(expected.overheadPerCleanSale, 2),
     },
-    {
-      label: 'Your floor (what you pay)',
-      formula: `${inr(expected.input.cogs)} COGS + ${inr(expected.overheadPerCleanSale, 2)} overhead`,
-      value: inr(range.expected, 2),
-      emphasis: true,
-    },
+    ...(expected.outputGstRate > 0
+      ? [
+          {
+            label: 'What each sale must net (before output GST)',
+            formula: `${inr(expected.input.cogs)} COGS + ${inr(expected.overheadPerCleanSale, 2)} overhead`,
+            value: inr(expected.netFloor, 2),
+            note: 'GST on Meesho’s fees is claimed back as input credit, so it is not in the overhead.',
+          },
+          {
+            label: 'Your floor as a listed price (what you pay)',
+            formula: `${inr(expected.netFloor, 2)} × (1 + ${pct(expected.outputGstRate, 0)} output GST)`,
+            value: inr(range.expected, 2),
+            emphasis: true,
+          },
+        ]
+      : [
+          {
+            label: 'Your floor (what you pay)',
+            formula: `${inr(expected.input.cogs)} COGS + ${inr(expected.overheadPerCleanSale, 2)} overhead`,
+            value: inr(range.expected, 2),
+            emphasis: true,
+          },
+        ]),
     {
       label: 'Full cost-to-serve, whoever pays it',
       formula: 'every shipping leg on every order + COD handling',
@@ -105,6 +122,15 @@ export function FloorHeadline({
               {t('floor.atReturnRate', { rate: pct(range.returnRates.expected, 0) })}
             </span>
           </p>
+          {expected.outputGstRate > 0 ? (
+            <p className="mt-2 text-xs text-white/85">
+              {t('floor.gstBothWays', {
+                listed: inr(range.expected),
+                rate: pct(expected.outputGstRate, 0),
+                net: inr(expected.netFloor),
+              })}
+            </p>
+          ) : null}
           <p className="mt-2 text-xs text-white/70">
             {t('floor.costToServe', { cts: inr(costToServe.expected) })}
             <span className="text-white/40"> · </span>

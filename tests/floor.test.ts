@@ -4,6 +4,7 @@ import {
   defaultFloorInput,
   costToServe as floor,
   costToServeRange as floorRange,
+  keepPerCleanSale,
   meeshoAbsorbs,
   sellerFloor,
   fwd,
@@ -384,5 +385,30 @@ describe('sellerFloor — what the seller pays under the supplier policy', () =>
   it('still rises with RTO, because every order is packed', () => {
     const at = (rtoCod: number) => sellerFloor({ ...kurti(), rtoCod }).floor
     expect(at(0.3)).toBeGreaterThan(at(0.2))
+  })
+})
+
+describe('sellerFloor — "I am GST-registered" (default off)', () => {
+  it('leaves the default kurti unchanged when off', () => {
+    const r = sellerFloor(kurti())
+    expect(r.outputGstRate).toBe(0)
+    expect(r.netFloor).toBe(r.floor)
+    expect(keepPerCleanSale(300, r)).toBeCloseTo(300 - r.floor, 9)
+  })
+
+  it('claims back the GST on Meesho’s fees and lists with 5% output GST when on', () => {
+    const off = sellerFloor(kurti())
+    const on = sellerFloor({ ...kurti(), policy: { gstRegistered: true } })
+    const gstLine = on.costLines.find((l) => l.key === 'gst')!
+    expect(gstLine.amount).toBe(0)
+    expect(gstLine.working).toMatch(/claimed back as input credit/)
+    // Net floor: COGS + overhead without the ₹1,028 of GST.
+    const net = 150 + (off.totalOverhead - off.gstCost) / off.cleanSales
+    expect(on.netFloor).toBeCloseTo(net, 6)
+    expect(on.floor).toBeCloseTo(net * 1.05, 6)
+    expect(Math.round(on.netFloor * 100) / 100).toBe(255.94)
+    expect(Math.round(on.floor * 100) / 100).toBe(268.74)
+    // At ₹300 the seller nets ₹300 ÷ 1.05 against the net floor.
+    expect(keepPerCleanSale(300, on)).toBeCloseTo(300 / 1.05 - on.netFloor, 9)
   })
 })

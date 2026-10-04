@@ -127,9 +127,22 @@ export interface SellerPolicy {
    */
   forwardOnRto: boolean
   rateSource: RateSource
+  /**
+   * The seller is GST-registered. The listed price then includes output GST
+   * (they net price ÷ 1.05), and the GST on Meesho's fees comes back as input
+   * tax credit, so it is not a cost.
+   */
+  gstRegistered: boolean
 }
 
-export const DEFAULT_POLICY: SellerPolicy = { forwardOnRto: false, rateSource: 'dice' }
+export const DEFAULT_POLICY: SellerPolicy = {
+  forwardOnRto: false,
+  rateSource: 'dice',
+  gstRegistered: false,
+}
+
+/** Output GST inside a GST-registered seller's listed price. ASSUMPTION: apparel's 5%. */
+export const OUTPUT_GST = policyJson.outputGst.value
 
 /** ₹65 / ₹155 at ≤ 500 g, expressed as the uplift over DICE's ₹50 / ₹120. */
 const REPORTED_2026 = {
@@ -244,8 +257,15 @@ export interface FloorResult {
   absorbedPerCleanSale: number
   totalOverhead: number
   overheadPerCleanSale: number
-  /** COGS + overhead per clean sale. The answer. */
+  /**
+   * The answer: the lowest LISTED price that loses nothing. For a
+   * GST-registered seller this includes output GST (netFloor × 1.05).
+   */
   floor: number
+  /** COGS + overhead per clean sale — what each sale must net, before output GST. */
+  netFloor: number
+  /** Output GST inside the listed price: 0, or 0.05 for a GST-registered seller. */
+  outputGstRate: number
 
   /** cleanSales / unitsBasis — of 100 dispatched, how many are a clean sale. */
   survivalRate: number
@@ -392,6 +412,8 @@ export function costToServe(input: FloorInput): FloorResult {
     totalOverhead,
     overheadPerCleanSale,
     floor: floorValue,
+    netFloor: floorValue,
+    outputGstRate: 0,
     survivalRate: cleanSales / N,
     slab,
     viable,
@@ -456,7 +478,10 @@ export function sellerFloor(input: FloorInput): FloorResult {
   const forwardUnits = policy.forwardOnRto ? N : deliveredUnits
   const forwardCost = forwardUnits * slab.forward
   const reverseCost = returnUnits * slab.reverse
-  const gstCost = gstRate * (forwardCost + reverseCost)
+  const gstOnFees = gstRate * (forwardCost + reverseCost)
+  // A GST-registered seller claims this back as input tax credit.
+  const gstCost = policy.gstRegistered ? 0 : gstOnFees
+  const outputGstRate = policy.gstRegistered ? OUTPUT_GST : 0
   const packagingTotal = N * input.packagingCost
   const writeOffCost = writeOffUnits * input.cogs
   const adCost = N * adSpendPerOrder
@@ -485,7 +510,9 @@ export function sellerFloor(input: FloorInput): FloorResult {
       payer: 'seller',
       label: 'GST on your shipping fees',
       labelKey: 'cost.gstFees',
-      working: `${pct(gstRate, 0)} × (${inr(forwardCost)} + ${inr(reverseCost)})`,
+      working: policy.gstRegistered
+        ? `${inr(gstOnFees)} claimed back as input credit`
+        : `${pct(gstRate, 0)} × (${inr(forwardCost)} + ${inr(reverseCost)})`,
       amount: gstCost,
     },
     {
@@ -560,7 +587,9 @@ export function sellerFloor(input: FloorInput): FloorResult {
   const absorbedTotal = absorbedLines.reduce((sum, line) => sum + line.amount, 0)
   const viable = cleanSales > 0
   const overheadPerCleanSale = viable ? totalOverhead / cleanSales : Number.POSITIVE_INFINITY
-  const floorValue = viable ? input.cogs + overheadPerCleanSale : Number.POSITIVE_INFINITY
+  const netFloor = viable ? input.cogs + overheadPerCleanSale : Number.POSITIVE_INFINITY
+  // The listed price has to carry output GST on top of what each sale must net.
+  const floorValue = netFloor * (1 + outputGstRate)
 
   return {
     model: 'seller',
@@ -585,6 +614,8 @@ export function sellerFloor(input: FloorInput): FloorResult {
     totalOverhead,
     overheadPerCleanSale,
     floor: floorValue,
+    netFloor,
+    outputGstRate,
     survivalRate: cleanSales / N,
     slab,
     viable,
@@ -688,6 +719,16 @@ function rangeOf(
 }
 
 // -------------------------------------------------------------- profit helpers
+
+/**
+ * What the seller keeps from one clean sale at `price`, ₹, given a floor
+ * result. Negative below the floor.
+ */
+export function keepPerCleanSale(price: number, result: FloorResult): number {
+  // A GST-registered seller nets price ÷ (1 + output GST) and must cover the
+  // net floor; for everyone else this is simply price − floor.
+  return price / (1 + result.outputGstRate) - result.netFloor
+}
 
 /** What one surviving sale actually earns, ₹. Negative below the floor. */
 export function profitPerCleanSale(price: number, floorValue: number): number {

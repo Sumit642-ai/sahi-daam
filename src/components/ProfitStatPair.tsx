@@ -1,5 +1,5 @@
 import type { FloorRange, FloorResult } from '../engine/floor'
-import { profitPer100Dispatched } from '../engine/floor'
+import { keepPerCleanSale, profitPer100Dispatched } from '../engine/floor'
 import { inr, pct, signedInr } from '../engine/format'
 import { Card } from './Card'
 import { useI18n } from '../i18n'
@@ -21,10 +21,13 @@ interface ProfitStatPairProps {
 export function ProfitStatPair({ price, cogs, range, deck }: ProfitStatPairProps) {
   const { t } = useI18n()
   const imagined = price - cogs
-  const actual = price - range.expected
-  const atLow = price - range.low
-  const atHigh = price - range.high
-  const perHundred = profitPer100Dispatched(price, range.results.expected)
+  // GST-aware: a registered seller nets price ÷ 1.05 against the net floor.
+  const actual = keepPerCleanSale(price, range.results.expected)
+  const atLow = keepPerCleanSale(price, range.results.low)
+  const atHigh = keepPerCleanSale(price, range.results.high)
+  const perHundred = range.results.expected.viable
+    ? range.results.expected.cleanSales * actual
+    : profitPer100Dispatched(price, range.results.expected)
   const losing = actual < 0
 
   const steps: WorkingStep[] = [

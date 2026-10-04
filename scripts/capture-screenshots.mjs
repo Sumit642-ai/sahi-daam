@@ -1,7 +1,10 @@
 /**
  * Captures the submission screenshots from the LIVE deploy.
  *
- *   node scripts/capture-screenshots.mjs [baseUrl]
+ *   node scripts/capture-screenshots.mjs [baseUrl] [name ...]
+ *
+ * With names (floor, band, beauty, whatsapp_hi, journey, sale_check,
+ * meesho_view) only those are captured; with none, all of them.
  *
  * Every shot is cropped to the cards it is about, not the full page, at
  * device scale factor 2. Each capture waits for network idle plus 1.5 s so
@@ -13,7 +16,10 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const BASE = process.argv[2] ?? 'https://sahi-daam-beta.vercel.app/?demo=ramesh'
+const args = process.argv.slice(2)
+const BASE = args.find((a) => a.startsWith('http')) ?? 'https://sahi-daam-beta.vercel.app/?demo=ramesh'
+const only = args.filter((a) => !a.startsWith('http'))
+const want = (name) => only.length === 0 || only.includes(name)
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'screenshots')
 const DESKTOP = { width: 1440, height: 900 }
 const PHONE = { width: 390, height: 844 }
@@ -69,7 +75,7 @@ const written = []
 
 try {
   // ---------------------------------------------------------- 1. floor.png
-  {
+  if (want('floor')) {
     const { context, page } = await open(browser, DESKTOP)
     await tab(page, /Aapki Laagat/)
     const headline = page.locator('div.space-y-4', { hasText: 'You think you earn' }).first()
@@ -86,7 +92,7 @@ try {
   }
 
   // ----------------------------------------------------------- 2. band.png
-  {
+  if (want('band')) {
     const { context, page } = await open(browser, DESKTOP)
     await tab(page, /Bazaar Ka Daam/)
     // The stage cards sit under "At this price", inside the crop's height
@@ -103,7 +109,7 @@ try {
   }
 
   // --------------------------------------------------------- 3. beauty.png
-  {
+  if (want('beauty')) {
     const { context, page } = await open(browser, DESKTOP)
     await tab(page, /Bazaar Ka Daam/)
     const product = card(page, 'Carried from Aapki Laagat')
@@ -122,7 +128,7 @@ try {
   }
 
   // ---------------------------------------------------- 4. whatsapp_hi.png
-  {
+  if (want('whatsapp_hi')) {
     const { context, page } = await open(browser, PHONE)
     await tab(page, /Daam Badlo/)
     await page.getByRole('button', { name: 'हिं' }).first().click()
@@ -135,7 +141,7 @@ try {
   }
 
   // -------------------------------------------------------- 5. journey.png
-  {
+  if (want('journey')) {
     const { context, page } = await open(browser, DESKTOP)
     await tab(page, /Ramesh ki Kahani/)
     const chart = card(page, 'Cumulative profit')
@@ -150,6 +156,30 @@ try {
       throw new Error('The cumulative chart does not show all three strategies.')
     }
     written.push(await shootUnion(page, [chart], 'journey.png'))
+    await context.close()
+  }
+
+  // ------------------------------------------------------ 6. sale_check.png
+  if (want('sale_check')) {
+    const { context, page } = await open(browser, DESKTOP)
+    await tab(page, /Bazaar Ka Daam/)
+    const sale = card(page, 'Should I join this sale?')
+    await sale.waitFor()
+    const text = await sale.innerText()
+    if (!text.includes('Skip — every sale order loses ₹31.')) {
+      throw new Error('The sale check does not show the default example (Skip — every sale order loses ₹31).')
+    }
+    written.push(await shootUnion(page, [sale], 'sale_check.png'))
+    await context.close()
+  }
+
+  // ----------------------------------------------------- 7. meesho_view.png
+  if (want('meesho_view')) {
+    const { context, page } = await open(browser, DESKTOP)
+    await tab(page, /Meesho view/)
+    const table = card(page, 'By category, at category defaults')
+    await table.waitFor()
+    written.push(await shootUnion(page, [table], 'meesho_view.png'))
     await context.close()
   }
 } finally {

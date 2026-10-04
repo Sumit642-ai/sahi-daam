@@ -59,6 +59,8 @@ export interface ProductInputs {
   forwardOnRto: boolean
   /** DICE data pack rates, or the 2026 rates reported by seller guides. */
   rateSource: RateSource
+  /** Listed price includes output GST; GST on Meesho's fees is claimed back. */
+  gstRegistered: boolean
 }
 
 /**
@@ -101,6 +103,7 @@ export function inputsForCategory(
     packagingCost: category.packagingCost,
     forwardOnRto: DEFAULT_POLICY.forwardOnRto,
     rateSource: DEFAULT_POLICY.rateSource,
+    gstRegistered: DEFAULT_POLICY.gstRegistered,
     ...carryOver,
   }
 }
@@ -191,6 +194,7 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
           adSpendPerOrder: d.adSpendPerOrder,
           forwardOnRto: d.forwardOnRto,
           rateSource: d.rateSource,
+          gstRegistered: d.gstRegistered,
         }),
       )
 
@@ -221,7 +225,11 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       packagingCost: inputs.packagingCost ?? 0,
       adSpendPerOrder: inputs.adSpendPerOrder ?? 0,
       seasonIndex: season,
-      policy: { forwardOnRto: inputs.forwardOnRto, rateSource: inputs.rateSource },
+      policy: {
+        forwardOnRto: inputs.forwardOnRto,
+        rateSource: inputs.rateSource,
+        gstRegistered: inputs.gstRegistered,
+      },
       // The admin's platform-wide fees, when an admin has set them.
       ...(platform ? { fees: { codFee: platform.codFee, gstRate: platform.gstRate } } : {}),
     }
@@ -245,6 +253,7 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       inputs.packagingCost === 8 &&
       (inputs.adSpendPerOrder ?? 0) === 0 &&
       inputs.rateSource === 'dice' &&
+      !inputs.gstRegistered &&
       season === 1
 
     return {

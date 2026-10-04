@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { SYNTHETIC_LABEL, categories } from '../data'
 import { nearestMedian, percentileOf } from '../engine/band'
-import { profitPer100Dispatched } from '../engine/floor'
+import { keepPerCleanSale, profitPer100Dispatched } from '../engine/floor'
 import { inr, pct, signedInr } from '../engine/format'
 import {
   CHEAP_END_WARNING,
@@ -15,12 +15,17 @@ import { BandChart } from '../components/BandChart'
 import { Card, CardTitle } from '../components/Card'
 import { NumberField, SelectField } from '../components/Field'
 import { NotViableCard } from '../components/NotViableCard'
+import { SaleCheckCard } from '../components/SaleCheckCard'
 import { ShowWorking } from '../components/ShowWorking'
 import { SourceTag } from '../components/SourceTag'
 import { StageCard } from '../components/StageCard'
 import { VerdictBadge } from '../components/VerdictBadge'
 import { useI18n } from '../i18n'
 import { useProduct } from '../state/productInputs'
+import { useAuth } from '../auth'
+
+/** A normal week's orders when the seller has not told us theirs. */
+const DEFAULT_WEEKLY_ORDERS = 70
 
 /**
  * Screen 2 — Bazaar Ka Daam.
@@ -33,6 +38,7 @@ export function MarketBand() {
   const { inputs, set, changeCategory, category, range, band, floorInput, returnRates, monthRow, season } =
     useProduct()
   const { t, lang } = useI18n()
+  const { account } = useAuth()
   const [stage, setStage] = useState<Stage>('LAUNCH')
 
   const recommendations = useMemo(
@@ -55,8 +61,11 @@ export function MarketBand() {
     [price, floorInput, range, band, returnRates],
   )
 
-  const perSale = price - range.expected
-  const per100 = profitPer100Dispatched(price, range.results.expected)
+  // GST-aware: for a registered seller this is price ÷ 1.05 − the net floor.
+  const perSale = keepPerCleanSale(price, range.results.expected)
+  const per100 = range.results.expected.viable
+    ? range.results.expected.cleanSales * perSale
+    : profitPer100Dispatched(price, range.results.expected)
   const percentile = percentileOf(band, price)
   const nearMedian = nearestMedian(band, price)
 
@@ -349,6 +358,13 @@ export function MarketBand() {
               ))}
             </div>
           </Card>
+
+          <SaleCheckCard
+            price={price}
+            input={floorInput}
+            returnRates={returnRates}
+            weeklyOrders={account?.profile?.ordersPerWeek || DEFAULT_WEEKLY_ORDERS}
+          />
 
           <Card tone="lilac">
             <p className="text-xs leading-relaxed text-body">

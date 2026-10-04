@@ -55,5 +55,19 @@
     "label_en": "2026 reported reverse rate, ≤ 500 g",
     "label_hi": "2026 की बताई गई वापसी दर, ≤ 500 ग्राम",
     "source": "ASSUMPTION — third-party 2026 seller guides. Heavier slabs add the same +₹35 to the DICE rate."
+  },
+  "gstRegistered": {
+    "value": "Off — not GST-registered",
+    "unit": "setting",
+    "label_en": "I am GST-registered",
+    "label_hi": "मैं GST में रजिस्टर्ड हूँ",
+    "source": "Seller setting under Advanced. When on: the listed price includes output GST, and GST paid on Meesho's fees is claimed back as input tax credit."
+  },
+  "outputGst": {
+    "value": 0.05,
+    "unit": "share of the listed price",
+    "label_en": "Output GST in the listed price (GST-registered sellers)",
+    "label_hi": "लिस्ट दाम में आउटपुट GST (रजिस्टर्ड विक्रेता)",
+    "source": "ASSUMPTION — 5% is the GST rate on apparel under ₹1,000; other categories carry different rates."
   }
 }

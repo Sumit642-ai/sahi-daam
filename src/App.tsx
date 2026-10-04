@@ -11,6 +11,7 @@ import { FloorCalculator } from './pages/FloorCalculator'
 import { Home } from './pages/Home'
 import { MarketBand } from './pages/MarketBand'
 import { MeeshoComparison } from './pages/MeeshoComparison'
+import { MeeshoView } from './pages/MeeshoView'
 import { SellerOnboarding } from './pages/SellerOnboarding'
 import { SignIn } from './pages/SignIn'
 import { ProductInputsProvider } from './state/productInputs'
@@ -49,6 +50,7 @@ type Screen =
   | 'journey'
   | 'alerts'
   | 'compare'
+  | 'platform'
   | 'assumptions'
   | 'admin'
   | 'profile'
@@ -66,6 +68,7 @@ function Shell() {
     { id: 'journey', label: t('nav.journey'), sub: t('nav.journeySub') },
     { id: 'alerts', label: t('nav.alerts'), sub: t('nav.alertsSub') },
     { id: 'compare', label: t('nav.compare'), sub: t('nav.compareSub') },
+    { id: 'platform', label: t('nav.platform'), sub: t('nav.platformSub') },
     { id: 'assumptions', label: t('nav.assumptions'), sub: t('nav.assumptionsSub') },
     ...(isAdmin
       ? [{ id: 'admin' as const, label: t('nav.admin'), sub: t('nav.adminSub') }]
@@ -120,6 +123,8 @@ function Shell() {
           </Suspense>
         ) : screen === 'compare' ? (
           <MeeshoComparison onOpenBand={() => setScreen('band')} />
+        ) : screen === 'platform' ? (
+          <MeeshoView />
         ) : screen === 'assumptions' ? (
           <Assumptions />
         ) : screen === 'admin' ? (

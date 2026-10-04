@@ -165,3 +165,24 @@ describe('Screen 1 — the disputed "forward fee on RTOs" setting', () => {
     expect(html).not.toContain('Forward shipping on RTO orders')
   })
 })
+
+describe('Screen 1 — the cost stays private', () => {
+  const html = renderToStaticMarkup(
+    <I18nProvider>
+      <AuthProvider>
+        <ProductInputsProvider>
+          <ExpandAllContext.Provider value={false}>
+            <FloorCalculator />
+          </ExpandAllContext.Provider>
+        </ProductInputsProvider>
+      </AuthProvider>
+    </I18nProvider>,
+  )
+
+  it('says how the product cost is used, under the field, with a way to delete it', () => {
+    expect(html).toContain(
+      'Your cost stays private: used only to compute your floor, never shown to buyers or competitors, never used for Meesho’s own price recommendations or ranking.',
+    )
+    expect(html).toContain('Delete my cost')
+  })
+})

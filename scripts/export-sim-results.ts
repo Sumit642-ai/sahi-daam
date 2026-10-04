@@ -24,7 +24,9 @@ import {
   sellerFloor,
 } from '../src/engine/floor'
 import { inr, pct } from '../src/engine/format'
+import { platformView } from '../src/engine/platform'
 import { recommend, verdictFor } from '../src/engine/recommend'
+import { saleCheck } from '../src/engine/sale'
 import { seasonIndex } from '../src/engine/season'
 import {
   type StrategyRun,
@@ -333,6 +335,43 @@ const tests = testCounts()
 out('i) TESTS')
 kv('Passed / total', `${tests.passed} / ${tests.total}${tests.failed ? ` (${tests.failed} FAILED)` : ''}`)
 
+// ============================================================== NUMBERS-2
+const sale = saleCheck({ price: PRICE, discount: 0.2, orderLift: 0.3, weeklyOrders: 70, input: KURTI })
+const platform = platformView()
+const gstOn = sellerFloor({ ...KURTI, policy: { gstRegistered: true } })
+
+out()
+out('NUMBERS-2')
+out()
+out('Sale check — default kurti listed at ₹300, sale discount 20%, expected order lift 30% (ASSUMPTION), 70 orders a week')
+kv('Verdict', sale.headline)
+kv('Sale price', inr(sale.salePrice))
+kv('Seller floor', money(sale.floor))
+kv('Kept per clean sale — today at ₹300', signed(sale.perSaleNow))
+kv('Kept per clean sale — at the sale price', signed(sale.perSaleAtSale))
+kv('Loss on every sale order', money(sale.lossPerSaleOrder))
+kv('Week not joining (70 orders × clean-sale rate × kept)', signed(sale.weekNotJoining))
+kv(`Sale week joining (${sale.saleWeekOrders.toFixed(0)} orders)`, signed(sale.weekJoining))
+kv('Floor with the prepaid fix (COD 80% → 60%)', money(sale.prepaidFloor))
+out()
+out('Meesho view — category defaults (each row is the category example product, an ASSUMPTION)')
+out(`  ${'Category (COGS, weight)'.padEnd(46)} ${'Seller floor'.padStart(12)} ${'Cost-to-serve'.padStart(14)} ${'Absorbs/sale'.padStart(13)} ${'Saving/shift'.padStart(13)}`)
+for (const r of platform.rows) {
+  out(`  ${`${r.name_en} (₹${r.cogs}, ${r.weightG} g)`.padEnd(46)} ${money(r.sellerFloor).padStart(12)} ${money(r.costToServe).padStart(14)} ${money(r.absorbsPerCleanSale).padStart(13)} ${money(r.shiftSavingPerOrder).padStart(13)}`)
+}
+kv('Average saving per order shifted COD → prepaid (equal category mix, ASSUMPTION)', money(platform.averageShiftSaving))
+kv('Saving per 1% of 2,522 Mn annual orders shifted — equal category mix', `₹${platform.savingPerOnePercentCr.toFixed(1)} Cr a year`)
+kv('Saving per 1% of 2,522 Mn annual orders shifted — ≤500 g parcels only', `₹${platform.lightParcelSavingPerOnePercentCr.toFixed(1)} Cr a year`)
+out()
+out('GST-registered seller — default kurti (setting off by default; 5% output GST is an ASSUMPTION for apparel)')
+kv('Floor as a listed price (incl. 5% output GST)', money(gstOn.floor))
+kv('Floor net of GST (what each sale must net)', money(gstOn.netFloor))
+kv('GST on fees claimed back as input credit, per 100 dispatched', money(seller.gstCost))
+kv('Not registered (default), for comparison', money(seller.floor))
+kv('Kept per clean sale at ₹300, GST-registered', signed(PRICE / (1 + gstOn.outputGstRate) - gstOn.netFloor))
+out()
+kv('Tests passed / total', `${tests.passed} / ${tests.total}${tests.failed ? ` (${tests.failed} FAILED)` : ''}`)
+
 // ================================================================== write
 const md = lines.join('\n') + '\n'
 writeFileSync(join(root, 'NUMBERS.md'), md)
@@ -389,6 +428,35 @@ const json = {
     annualOrdersMn: ANNUAL_ORDERS_MN,
     savingPerShiftedOrder: r2(perShiftedOrder),
     savingPerOnePercentCrPerYear: r2(savingCr),
+  },
+  numbers2: {
+    saleCheck: {
+      price: PRICE,
+      discount: 0.2,
+      orderLift: 0.3,
+      weeklyOrders: 70,
+      verdict: sale.verdict,
+      headline: sale.headline,
+      salePrice: sale.salePrice,
+      floor: r2(sale.floor),
+      perSaleNow: r2(sale.perSaleNow),
+      perSaleAtSale: r2(sale.perSaleAtSale),
+      weekNotJoining: r0(sale.weekNotJoining),
+      weekJoining: r0(sale.weekJoining),
+      prepaidFloor: r2(sale.prepaidFloor),
+    },
+    meeshoView: platform.rows.map((r) => ({
+      categoryId: r.categoryId,
+      sellerFloor: r2(r.sellerFloor),
+      costToServe: r2(r.costToServe),
+      absorbsPerCleanSale: r2(r.absorbsPerCleanSale),
+      shiftSavingPerOrder: r2(r.shiftSavingPerOrder),
+    })),
+    savingPerOnePercentCr: {
+      equalCategoryMix: r2(platform.savingPerOnePercentCr),
+      lightParcels: r2(platform.lightParcelSavingPerOnePercentCr),
+    },
+    gstRegisteredKurti: { listedFloor: r2(gstOn.floor), netFloor: r2(gstOn.netFloor) },
   },
   tests,
 }

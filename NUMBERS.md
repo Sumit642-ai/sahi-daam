@@ -1,5 +1,5 @@
 SAHI DAAM — NUMBERS FOR THE DECK
-Generated 2026-10-04T19:31:12.750Z by npm run export:sim. Every number below comes from the app's own engine.
+Generated 2026-10-04T20:05:05.283Z by npm run export:sim. Every number below comes from the app's own engine.
 Seller floor = what Meesho's published supplier policy charges the seller (no COD fee, no shipping on RTOs,
 forward fee on delivered orders, reverse fee on customer returns, 18% GST on both). Cost-to-serve = every
 logistics cost on every order plus COD handling, whoever pays it (the deck's original ₹318 model).
@@ -168,4 +168,40 @@ h) BUSINESS CASE — moving one order from COD to prepaid (≤500 g, DICE rates)
   Meesho saving per 1% of orders moved to prepaid            ₹85.4 Cr a year
 
 i) TESTS
-  Passed / total                                             268 / 268
+  Passed / total                                             278 / 278
+
+NUMBERS-2
+
+Sale check — default kurti listed at ₹300, sale discount 20%, expected order lift 30% (ASSUMPTION), 70 orders a week
+  Verdict                                                    Skip — every sale order loses ₹31.
+  Sale price                                                 ₹240
+  Seller floor                                               ₹270.64
+  Kept per clean sale — today at ₹300                        +₹29.36
+  Kept per clean sale — at the sale price                    −₹30.64
+  Loss on every sale order                                   ₹30.64
+  Week not joining (70 orders × clean-sale rate × kept)      +₹1,437.81
+  Sale week joining (91 orders)                              −₹1,951.15
+  Floor with the prepaid fix (COD 80% → 60%)                 ₹270.24
+
+Meesho view — category defaults (each row is the category example product, an ASSUMPTION)
+  Category (COGS, weight)                        Seller floor  Cost-to-serve  Absorbs/sale  Saving/shift
+  Women's ethnic (kurtis, sarees) (₹150, 350 g)       ₹270.64        ₹318.12        ₹51.49        ₹33.85
+  Women's western wear (₹120, 300 g)                  ₹253.20        ₹302.06        ₹54.26        ₹33.85
+  Men's apparel (₹180, 350 g)                         ₹310.59        ₹358.79        ₹52.94        ₹33.85
+  Kids wear (₹100, 250 g)                             ₹216.30        ₹263.87        ₹51.68        ₹33.85
+  Footwear (₹250, 800 g)                              ₹449.50        ₹510.73        ₹67.98        ₹41.89
+  Home & kitchen (₹180, 900 g)                        ₹336.91        ₹394.34        ₹60.43        ₹41.89
+  Beauty & personal care (₹70, 200 g)                 ₹155.19        ₹199.75        ₹45.69        ₹33.85
+  Jewellery & accessories (₹60, 100 g)                ₹157.02        ₹203.41        ₹49.33        ₹33.85
+  Average saving per order shifted COD → prepaid (equal category mix, ASSUMPTION) ₹35.86
+  Saving per 1% of 2,522 Mn annual orders shifted — equal category mix ₹90.4 Cr a year
+  Saving per 1% of 2,522 Mn annual orders shifted — ≤500 g parcels only ₹85.4 Cr a year
+
+GST-registered seller — default kurti (setting off by default; 5% output GST is an ASSUMPTION for apparel)
+  Floor as a listed price (incl. 5% output GST)              ₹268.74
+  Floor net of GST (what each sale must net)                 ₹255.94
+  GST on fees claimed back as input credit, per 100 dispatched ₹1,028.47
+  Not registered (default), for comparison                   ₹270.64
+  Kept per clean sale at ₹300, GST-registered                +₹29.77
+
+  Tests passed / total                                       278 / 278

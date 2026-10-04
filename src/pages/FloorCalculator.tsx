@@ -14,6 +14,7 @@ import { ProfitStatPair } from '../components/ProfitStatPair'
 import { ShowWorking } from '../components/ShowWorking'
 import type { Provider } from '../components/SourceTag'
 import { useProduct } from '../state/productInputs'
+import { useAuth } from '../auth'
 
 /**
  * Screen 1 — Aapki Laagat.
@@ -77,7 +78,14 @@ export function FloorCalculator() {
   } = useProduct()
 
   const { t, lang } = useI18n()
+  const { account, saveProfile } = useAuth()
   const [scenario, setScenario] = useState<Scenario>('expected')
+
+  /** Clears the cost here and from the seller's saved answers. */
+  const deleteMyCost = () => {
+    set('cogs', null)
+    if (account?.profile) saveProfile({ ...account.profile, typicalCogs: 0 })
+  }
   const [advancedOpen, setAdvancedOpen] = useState(false)
 
   const active = range.results[scenario]
@@ -167,7 +175,21 @@ export function FloorCalculator() {
                   min={0}
                   step={5}
                   prefix="₹"
-                  hint="What you pay your supplier."
+                  hint={
+                    <>
+                      What you pay your supplier.
+                      <span className="mt-1 block rounded-md bg-white/70 px-2 py-1 text-body/80">
+                        {t('floor.costPrivacy')}{' '}
+                        <button
+                          type="button"
+                          onClick={deleteMyCost}
+                          className="font-semibold text-magenta underline"
+                        >
+                          {t('floor.deleteCost')}
+                        </button>
+                      </span>
+                    </>
+                  }
                 />
                 <NumberField
                   label={t('label.weight')}
@@ -512,6 +534,22 @@ export function FloorCalculator() {
                       </span>
                       <span className="block text-[11px] leading-snug text-body/60">
                         {t('policy.forwardOnRtoHint')}
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={draft.gstRegistered}
+                      onChange={(e) => set('gstRegistered', e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-orange"
+                    />
+                    <span>
+                      <span className="block text-xs font-medium text-plum-deep">
+                        {t('policy.gstRegistered')}
+                      </span>
+                      <span className="block text-[11px] leading-snug text-body/60">
+                        {t('policy.gstRegisteredHint')}
                       </span>
                     </span>
                   </label>

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T19:31:22.027Z",
+  "generatedAt": "2026-10-04T20:05:14.917Z",
   "model": "sellerFloor (Meesho supplier policy); costToServe shown alongside",
   "kurti": {
     "sellerFloor": {
@@ -1004,9 +1004,92 @@
     "savingPerShiftedOrder": 33.85,
     "savingPerOnePercentCrPerYear": 85.37
   },
+  "numbers2": {
+    "saleCheck": {
+      "price": 300,
+      "discount": 0.2,
+      "orderLift": 0.3,
+      "weeklyOrders": 70,
+      "verdict": "SKIP_LOSS",
+      "headline": "Skip — every sale order loses ₹31.",
+      "salePrice": 240,
+      "floor": 270.64,
+      "perSaleNow": 29.36,
+      "perSaleAtSale": -30.64,
+      "weekNotJoining": 1438,
+      "weekJoining": -1951,
+      "prepaidFloor": 270.24
+    },
+    "meeshoView": [
+      {
+        "categoryId": "ethnic_women",
+        "sellerFloor": 270.64,
+        "costToServe": 318.12,
+        "absorbsPerCleanSale": 51.49,
+        "shiftSavingPerOrder": 33.85
+      },
+      {
+        "categoryId": "western_women",
+        "sellerFloor": 253.2,
+        "costToServe": 302.06,
+        "absorbsPerCleanSale": 54.26,
+        "shiftSavingPerOrder": 33.85
+      },
+      {
+        "categoryId": "men_apparel",
+        "sellerFloor": 310.59,
+        "costToServe": 358.79,
+        "absorbsPerCleanSale": 52.94,
+        "shiftSavingPerOrder": 33.85
+      },
+      {
+        "categoryId": "kids",
+        "sellerFloor": 216.3,
+        "costToServe": 263.87,
+        "absorbsPerCleanSale": 51.68,
+        "shiftSavingPerOrder": 33.85
+      },
+      {
+        "categoryId": "footwear",
+        "sellerFloor": 449.5,
+        "costToServe": 510.73,
+        "absorbsPerCleanSale": 67.98,
+        "shiftSavingPerOrder": 41.89
+      },
+      {
+        "categoryId": "home_kitchen",
+        "sellerFloor": 336.91,
+        "costToServe": 394.34,
+        "absorbsPerCleanSale": 60.43,
+        "shiftSavingPerOrder": 41.89
+      },
+      {
+        "categoryId": "beauty",
+        "sellerFloor": 155.19,
+        "costToServe": 199.75,
+        "absorbsPerCleanSale": 45.69,
+        "shiftSavingPerOrder": 33.85
+      },
+      {
+        "categoryId": "jewellery",
+        "sellerFloor": 157.02,
+        "costToServe": 203.41,
+        "absorbsPerCleanSale": 49.33,
+        "shiftSavingPerOrder": 33.85
+      }
+    ],
+    "savingPerOnePercentCr": {
+      "equalCategoryMix": 90.44,
+      "lightParcels": 85.37
+    },
+    "gstRegisteredKurti": {
+      "listedFloor": 268.74,
+      "netFloor": 255.94
+    }
+  },
   "tests": {
-    "passed": 268,
+    "passed": 278,
     "failed": 0,
-    "total": 268
+    "total": 278
   }
 }
