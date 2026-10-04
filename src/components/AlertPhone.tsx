@@ -97,7 +97,8 @@ export function AlertBubble({ alert, lang, onCheckPrice, time, sellerName }: Ale
 
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <span className="text-[9px] text-body/40">
-          {WEEK_LABEL[lang]} {alert.week} · {SEVERITY_LABEL_BY_LANG[lang][alert.severity]}
+          {alert.week > 0 ? `${WEEK_LABEL[lang]} ${alert.week} · ` : ''}
+          {SEVERITY_LABEL_BY_LANG[lang][alert.severity]}
         </span>
         <span className="text-[9px] text-body/40">{time}</span>
       </div>

@@ -36,12 +36,28 @@ interface AlertsProps {
 
 /** What each Fire button is pretending has just happened. */
 const DEMO_SCENARIO: Record<TriggerId, string> = {
-  T1: 'A batch runs small and returns jump 6 points for two weeks — the journey’s week-16 event.',
+  T1: 'A batch runs small and returns jump 6 points from week 16 — the alert fires in week 17 of the journey.',
   T2: 'Two weeks out from the November festive peak, where RTO runs 1.867× the March baseline.',
   T3: 'The five listings nearest yours cut their prices 10% — the journey’s week-12 event.',
-  T4: 'Your impressions fall a quarter while category demand holds steady.',
+  T4: 'Your impressions fall a quarter while category demand holds steady. Not part of the 26-week journey.',
   T5: 'Your supplier raises fabric 6% — the journey’s week-14 event.',
-  T6: 'You panic-cut the price 15% without checking the floor.',
+  T6: 'You panic-cut the price 15% without checking the floor. Fires whenever you change the price by hand.',
+}
+
+/**
+ * The week each trigger actually fires in the 26-week journey, so a demo
+ * alert never claims a week it did not happen in. T2 fires twice (weeks 12
+ * and 16); the demo is the November warning, week 16. T4 and T6 never fire in
+ * the journey — they are shown without a week (0) rather than an invented one.
+ * tests/alerts.test.ts checks every entry against runSimulation().
+ */
+export const JOURNEY_WEEK: Record<TriggerId, number> = {
+  T1: 17,
+  T2: 16,
+  T3: 12,
+  T4: 0,
+  T5: 14,
+  T6: 0,
 }
 
 type Delivered = Alert & { key: string; time: string }
@@ -76,8 +92,8 @@ export function Alerts({ onOpenBand }: AlertsProps) {
    */
   function demoContext(id: TriggerId): TriggerContext {
     const base: TriggerContext = {
-      week: { T1: 16, T2: 15, T3: 12, T4: 9, T5: 14, T6: 22 }[id],
-      date: new Date(2026, 9, 19), // mid-October 2026, two weeks before the peak
+      week: JOURNEY_WEEK[id],
+      date: new Date(2026, 9, 19), // Monday of journey week 16, two weeks before the peak
       input: floorInput,
       range,
       band,

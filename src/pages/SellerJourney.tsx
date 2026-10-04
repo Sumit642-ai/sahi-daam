@@ -159,7 +159,8 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
           <span className="text-base font-medium text-body/60">· {t('nav.journeySub')}</span>
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-body">
-          The same product, the same market, the same 1,500 units of stock — priced three ways.
+          The same product, the same market, the same 1,500 units of starting stock (plus one
+          500-unit reorder) — priced three ways.
           Sahi Daam checks the floor every week and learns from its own price steps. Seller
           instinct lists at cost × 2 and matches the week-12 undercut. Meesho range lists at the
           middle of the similar-listing band every week. Profit is what the seller actually keeps,
@@ -361,7 +362,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
       {/* ----------------------------------------------------- Chart C, the hero */}
       <Card tone="white" className="mt-4">
         <CardTitle
-          hint="Same product, same market, same 1,500 units of stock. The only difference is how each one priced."
+          hint="Same product, same market, same 1,500 units of starting stock (plus one 500-unit reorder). The only difference is how each one priced."
           aside={
             <div className="flex gap-4 text-right">
               {(
