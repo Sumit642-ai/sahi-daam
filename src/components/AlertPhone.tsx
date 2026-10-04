@@ -116,7 +116,7 @@ export function AlertBubble({ alert, lang, onCheckPrice, time, sellerName }: Ale
                 : String(value),
           })),
         ]}
-        source="Spec section 6.6 — trigger rules; section 8 — message templates"
+        source="Sahi Daam trigger rules and message templates"
       />
     </div>
   )

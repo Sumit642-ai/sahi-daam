@@ -128,25 +128,45 @@ export const DEMO_SELLER_EMAIL = 'ramesh@demo.in'
 export const DEMO_ADMIN_EMAIL = 'admin@meesho.demo'
 export const DEMO_PASSWORD = 'sahidaam'
 
+export const DEMO_SELLER_ID = 'demo-seller'
+
+/**
+ * Ramesh as the deck describes him. No prepaid discount, so his COD share is
+ * the mixed-buyer 80% and his kurti's floor is exactly the deck's ₹318.
+ */
+export function demoSellerProfile(): SellerProfile {
+  return {
+    sellerName: 'Ramesh',
+    shopName: 'Ramesh Textiles',
+    categoryId: 'ethnic_women',
+    typicalCogs: 150,
+    typicalWeightG: 350,
+    buyerMix: 'mixed',
+    prepaidDiscount: false,
+    ordersPerWeek: 70,
+    completed: true,
+  }
+}
+
+/** `?demo=ramesh` in the URL skips the sign-in screen entirely. */
+export function demoRequestedByUrl(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return new URLSearchParams(window.location.search).get('demo')?.toLowerCase() === 'ramesh'
+  } catch {
+    return false
+  }
+}
+
 function seedAccounts(): Account[] {
   return [
     {
-      id: 'demo-seller',
+      id: DEMO_SELLER_ID,
       email: DEMO_SELLER_EMAIL,
       role: 'seller',
       secret: digest(DEMO_PASSWORD),
       createdAt: new Date(2026, 6, 6).toISOString(),
-      profile: {
-        sellerName: 'Ramesh',
-        shopName: 'Ramesh Textiles',
-        categoryId: 'ethnic_women',
-        typicalCogs: 150,
-        typicalWeightG: 350,
-        buyerMix: 'mixed',
-        prepaidDiscount: false,
-        ordersPerWeek: 70,
-        completed: true,
-      },
+      profile: demoSellerProfile(),
     },
     {
       id: 'demo-admin',
@@ -157,6 +177,14 @@ function seedAccounts(): Account[] {
       profile: null,
     },
   ]
+}
+
+/** The list with Ramesh present and back on his seeded profile. */
+function withDemoSeller(list: Account[]): Account[] {
+  const seeded = seedAccounts().find((a) => a.id === DEMO_SELLER_ID)!
+  return list.some((a) => a.id === DEMO_SELLER_ID)
+    ? list.map((a) => (a.id === DEMO_SELLER_ID ? seeded : a))
+    : [seeded, ...list]
 }
 
 // ------------------------------------------------------------------ provider
@@ -172,6 +200,11 @@ export interface AuthValue {
     role: Role,
   ) => { ok: true } | { ok: false; error: string }
   signOut: () => void
+  /**
+   * Straight in as Ramesh, with his profile put back to the seeded one — so a
+   * demo always opens on the deck's numbers, whatever the last visitor edited.
+   */
+  enterDemo: () => void
   saveProfile: (profile: SellerProfile) => void
   savePlatform: (platform: PlatformDefaults) => void
   /** Wipes every prototype account back to the two demo logins. */
@@ -181,12 +214,15 @@ export interface AuthValue {
 const Context = createContext<AuthValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Read once: whether this visit arrived on a `?demo=ramesh` link.
+  const [demoLink] = useState(demoRequestedByUrl)
   const [accounts, setAccounts] = useState<Account[]>(() => {
     const stored = readJson<Account[]>(ACCOUNTS_KEY, [])
-    return stored.length > 0 ? stored : seedAccounts()
+    const list = stored.length > 0 ? stored : seedAccounts()
+    return demoLink ? withDemoSeller(list) : list
   })
   const [sessionId, setSessionId] = useState<string | null>(() =>
-    readJson<string | null>(SESSION_KEY, null),
+    demoLink ? DEMO_SELLER_ID : readJson<string | null>(SESSION_KEY, null),
   )
   const [platform, setPlatform] = useState<PlatformDefaults>(() =>
     readJson<PlatformDefaults>(PLATFORM_KEY, PLATFORM_FALLBACK),
@@ -234,6 +270,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       signOut() {
         setSessionId(null)
+      },
+
+      enterDemo() {
+        setAccounts((list) => withDemoSeller(list))
+        setSessionId(DEMO_SELLER_ID)
       },
 
       saveProfile(profile) {

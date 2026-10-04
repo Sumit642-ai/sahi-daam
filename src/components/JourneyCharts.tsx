@@ -17,7 +17,7 @@ import { inr } from '../engine/format'
 import type { StrategyRun, WeekRow } from '../engine/simulator'
 
 /**
- * Charts A, B and C from spec section 9.4.
+ * Charts A, B and C of the seller journey.
  *
  * This is where Recharts earns its place in the stack: three real time series
  * over 26 weeks, which is exactly the shape it is good at (Screen 2's band is a
@@ -42,6 +42,16 @@ const tooltipStyle = {
     padding: '8px 10px',
   },
   labelStyle: { color: PLUM, fontWeight: 600, marginBottom: 2 },
+}
+
+/**
+ * Y-axis ticks: whole rupees with Indian grouping (₹10,000, -₹20,000).
+ *
+ * Never abbreviated. Rounding to "₹3k" turns ticks 2,500 and 3,000 into the
+ * same label twice, and a duplicated axis label reads as a broken chart.
+ */
+export function inrTick(value: number): string {
+  return value === 0 ? '₹0' : inr(value)
 }
 
 /** Only the weeks up to where the journey has been played. */
@@ -72,18 +82,18 @@ export function PriceVsFloorChart({ run, week }: ChartAProps) {
       <LineChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -8 }}>
         <CartesianGrid stroke={LILAC} vertical={false} />
         <XAxis dataKey="week" {...axis} />
-        <YAxis {...axis} width={48} tickFormatter={(v: number) => `₹${v}`} />
+        <YAxis {...axis} width={52} allowDecimals={false} tickFormatter={inrTick} />
         <Tooltip
           {...tooltipStyle}
           formatter={(value: number, name: string) => [inr(value), name]}
           labelFormatter={(w) => `Week ${w}`}
         />
         <Legend wrapperStyle={{ fontSize: 11 }} iconType="plainline" />
-        <Line dataKey="p90" name="band p90" stroke={PLUM} strokeOpacity={0.25} dot={false} strokeWidth={1} />
-        <Line dataKey="p50" name="band median" stroke={PLUM} strokeOpacity={0.45} dot={false} strokeWidth={1} strokeDasharray="4 3" />
-        <Line dataKey="p10" name="band p10" stroke={PLUM} strokeOpacity={0.25} dot={false} strokeWidth={1} />
-        <Line dataKey="floor" name="your floor" stroke={MAGENTA} dot={false} strokeWidth={2} />
-        <Line dataKey="price" name="your price" stroke={ORANGE} dot={false} strokeWidth={2.5} />
+        <Line dataKey="p90" name="band p90" stroke={PLUM} strokeOpacity={0.25} dot={false} strokeWidth={1} isAnimationActive={false} />
+        <Line dataKey="p50" name="band median" stroke={PLUM} strokeOpacity={0.45} dot={false} strokeWidth={1} strokeDasharray="4 3" isAnimationActive={false} />
+        <Line dataKey="p10" name="band p10" stroke={PLUM} strokeOpacity={0.25} dot={false} strokeWidth={1} isAnimationActive={false} />
+        <Line dataKey="floor" name="your floor" stroke={MAGENTA} dot={false} strokeWidth={2} isAnimationActive={false} />
+        <Line dataKey="price" name="your price" stroke={ORANGE} dot={false} strokeWidth={2.5} isAnimationActive={false} />
       </LineChart>
     </ResponsiveContainer>
   )
@@ -103,14 +113,14 @@ export function WeeklyProfitChart({ run, week }: ChartAProps) {
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: -8 }}>
         <CartesianGrid stroke={LILAC} vertical={false} />
         <XAxis dataKey="week" {...axis} />
-        <YAxis {...axis} width={56} tickFormatter={(v: number) => (v === 0 ? '0' : `₹${v / 1000}k`)} />
+        <YAxis {...axis} width={64} allowDecimals={false} tickFormatter={inrTick} />
         <Tooltip
           {...tooltipStyle}
           formatter={(value: number) => [inr(value), 'profit that week']}
           labelFormatter={(w) => `Week ${w}`}
         />
         <ReferenceLine y={0} stroke={BODY} strokeOpacity={0.3} />
-        <Bar dataKey="profit" radius={[3, 3, 0, 0]}>
+        <Bar dataKey="profit" radius={[3, 3, 0, 0]} isAnimationActive={false}>
           {data.map((d) => (
             <Cell key={d.week} fill={d.profit < 0 ? MAGENTA : PROFIT} />
           ))}
@@ -152,11 +162,7 @@ export function CumulativeProfitChart({
       <LineChart data={data} margin={{ top: 8, right: 8, bottom: 4, left: 4 }}>
         <CartesianGrid stroke={LILAC} vertical={false} />
         <XAxis dataKey="week" {...axis} label={{ value: 'week', position: 'insideBottomRight', fontSize: 10, fill: BODY }} />
-        <YAxis
-          {...axis}
-          width={60}
-          tickFormatter={(v: number) => (v === 0 ? '0' : `₹${Math.round(v / 1000)}k`)}
-        />
+        <YAxis {...axis} width={72} allowDecimals={false} tickFormatter={inrTick} />
         <Tooltip
           {...tooltipStyle}
           formatter={(value: number, name: string) => [inr(value), name]}

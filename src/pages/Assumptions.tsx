@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 
-import { type SourcedEntry, sourcedEntries } from '../data'
+import { type SourceKind, type SourcedEntry, sourcedEntries } from '../data'
 import { num } from '../engine/format'
-import { useI18n } from '../i18n'
+import { type TranslationKey, useI18n } from '../i18n'
 import { Card, CardTitle } from '../components/Card'
 
 /**
- * Screen 6 — Assumptions & sources (spec section 9.7).
+ * Screen 6 — Numbers & sources.
  *
  * Every configuration value in the prototype, searchable, each with the
  * citation it came from or an ASSUMPTION badge. This is the screen that makes
@@ -14,6 +14,13 @@ import { Card, CardTitle } from '../components/Card'
  * the simulator's hidden demand parameters, which the learner is not allowed to
  * see but a judge certainly should.
  */
+
+const BADGE: Record<SourceKind, { key: TranslationKey; className: string }> = {
+  CITED: { key: 'assumptions.cited', className: 'bg-profit/15 text-profit' },
+  DERIVED: { key: 'assumptions.derived', className: 'bg-plum/10 text-plum' },
+  CONVENTION: { key: 'assumptions.convention', className: 'bg-orange/15 text-[#8A4408]' },
+  ASSUMPTION: { key: 'tag.assumption', className: 'bg-body/10 text-body' },
+}
 
 function formatValue(entry: SourcedEntry): string {
   if (typeof entry.value === 'string') return entry.value
@@ -51,7 +58,12 @@ export function Assumptions() {
     return [...map.entries()]
   }, [filtered])
 
-  const assumedCount = all.filter((e) => e.isAssumption).length
+  // The pricing model is what a seller's floor is built from, so its sourcing
+  // is what gets counted. Conventions are modelling choices, not claims, and
+  // are left out of both sides of the count.
+  const pricing = all.filter((e) => e.domain === 'pricing' && e.kind !== 'CONVENTION')
+  const pricingBacked = pricing.filter((e) => e.kind === 'CITED' || e.kind === 'DERIVED').length
+  const conventions = all.filter((e) => e.kind === 'CONVENTION').length
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7">
@@ -78,12 +90,17 @@ export function Assumptions() {
             className="w-full rounded-lg bg-lilac px-4 py-3 text-sm text-plum-deep outline-none ring-0 transition-shadow placeholder:text-body/50 focus:ring-2 focus:ring-plum/40"
           />
         </label>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <p className="rounded-lg bg-profit/10 px-3 py-2 text-xs font-semibold text-plum-deep">
+            {t('assumptions.pricingSummary', { backed: pricingBacked, total: pricing.length })}
+          </p>
+          <p className="rounded-lg bg-lilac px-3 py-2 text-xs font-semibold text-plum-deep">
+            {t('assumptions.simSummary')}
+          </p>
+        </div>
         <p className="mt-2 text-[11px] text-body/60">
-          {t('assumptions.showing', {
-            shown: filtered.length,
-            total: all.length,
-            assumed: assumedCount,
-          })}
+          {t('assumptions.showingOnly', { shown: filtered.length, total: all.length })} ·{' '}
+          {t('assumptions.conventionNote', { count: conventions })}
         </p>
       </Card>
 
@@ -96,11 +113,15 @@ export function Assumptions() {
           {grouped.map(([group, entries]) => (
             <Card key={group} tone="white">
               <CardTitle
-                hint={t('assumptions.showing', {
-                  shown: entries.length,
-                  total: all.length,
-                  assumed: entries.filter((e) => e.isAssumption).length,
-                })}
+                hint={
+                  entries[0]?.domain === 'simulator'
+                    ? t('assumptions.simSummary')
+                    : t('assumptions.groupCount', {
+                        backed: entries.filter((e) => e.kind === 'CITED' || e.kind === 'DERIVED')
+                          .length,
+                        total: entries.length,
+                      })
+                }
               >
                 {group}
               </CardTitle>
@@ -151,13 +172,9 @@ export function Assumptions() {
                         </td>
                         <td className="px-2 py-2 align-top text-[11px] leading-snug text-body/70">
                           <span
-                            className={`mr-1.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                              entry.isAssumption
-                                ? 'bg-body/10 text-body'
-                                : 'bg-profit/15 text-profit'
-                            }`}
+                            className={`mr-1.5 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${BADGE[entry.kind].className}`}
                           >
-                            {entry.isAssumption ? t('tag.assumption') : t('assumptions.cited')}
+                            {t(BADGE[entry.kind].key)}
                           </span>
                           {entry.source.trim().toUpperCase() === 'ASSUMPTION' ? null : (
                             <span>{entry.source}</span>

@@ -42,7 +42,9 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
   const totalWeeks = sim.sahiDaam.weeks.length
 
   const { t, lang: uiLang } = useI18n()
-  const [week, setWeek] = useState(1)
+  // Opens on the finished story — both lines at week 26, the gap already
+  // visible. Play and Reset replay it from week 1.
+  const [week, setWeek] = useState(totalWeeks)
   const [view, setView] = useState<View>('both')
   const [playing, setPlaying] = useState(false)
   const lang: Lang = uiLang
@@ -107,6 +109,15 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
 
   const learner = sim.sahiDaam.learner
   const stepsSoFar = sim.sahiDaam.learnerSteps.filter((s) => s.week <= week)
+  // The estimate as it stood at this week — not the final one — so scrubbing
+  // back to before the ramp shows nothing learned yet.
+  const estimatesSoFar = stepsSoFar
+    .map((s) => s.elasticity)
+    .filter((e): e is number => e !== null)
+  const learnedSoFar =
+    estimatesSoFar.length > 0
+      ? estimatesSoFar.reduce((sum, e) => sum + e, 0) / estimatesSoFar.length
+      : null
   const finished = week >= totalWeeks
 
   const manualAlert = useMemo(() => {
@@ -138,7 +149,13 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <button
             type="button"
-            onClick={() => setPlaying((p) => !p)}
+            onClick={() => {
+              if (!playing && finished) {
+                setWeek(1)
+                setManualPrice(null)
+              }
+              setPlaying((p) => !p)
+            }}
             className="rounded-lg bg-plum px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-plum-deep"
           >
             {playing ? 'Pause' : finished ? 'Replay' : 'Play'}
@@ -391,19 +408,17 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
             tone="peach"
             hint="One ₹10–20 step a week during Ramp. Keep it if profit per 1,000 impressions improves more than 2%, revert if it falls."
             aside={
-              learner?.elasticityAverage != null ? (
-                <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-body/60">
-                    ε̂ learned
-                  </p>
-                  <p className="text-lg font-bold tabular-nums text-plum-deep">
-                    {learner.elasticityAverage.toFixed(2)}
-                  </p>
-                  {judgeMode ? (
-                    <p className="text-[10px] text-body/60">true ε = {sim.hidden.epsilon}</p>
-                  ) : null}
-                </div>
-              ) : null
+              <div className="text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-body/60">
+                  Price sensitivity learned
+                </p>
+                <p className="text-lg font-bold tabular-nums text-plum-deep">
+                  {learnedSoFar !== null ? learnedSoFar.toFixed(2) : '—'}
+                </p>
+                {judgeMode ? (
+                  <p className="text-[10px] text-body/60">true value = {sim.hidden.epsilon}</p>
+                ) : null}
+              </div>
             }
           >
             What the price steps learned
@@ -434,7 +449,9 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
                   <p className="mt-0.5 text-[11px] leading-snug text-body/70">
                     Profit per 1,000 impressions {step.normalisedBefore.toFixed(1)} →{' '}
                     {step.normalisedAfter.toFixed(1)} (category trend divided out)
-                    {step.elasticity !== null ? ` · ε̂ ${step.elasticity.toFixed(2)}` : ''}
+                    {step.elasticity !== null
+                      ? ` · sensitivity ${step.elasticity.toFixed(2)}`
+                      : ''}
                   </p>
                 </li>
               ))}
@@ -445,7 +462,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
             <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-[11px] text-body">
               Profit peak found at <span className="font-bold text-plum">{inr(learner.bestPrice)}</span>
               . The running estimate of price sensitivity came to{' '}
-              <span className="font-bold text-plum">{learner.elasticityAverage?.toFixed(2)}</span>,
+              <span className="font-bold text-plum">{learnedSoFar?.toFixed(2) ?? '—'}</span>,
               learned entirely from Ramesh&rsquo;s own ₹10 steps — no price-vs-sales history
               existed when this listing went live.
             </p>
@@ -492,8 +509,8 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
 
       {/* --------------------------------------------------------- alert detail */}
       {/*
-        Spec section 13's demo stops at week 16 "to show the alert on the phone",
-        so the alert detail opens in the same phone mock-up Screen 4 uses rather
+        The demo stops at week 16 "to show the alert on the phone", so the alert
+        detail opens in the same phone mock-up Screen 4 uses rather
         than as another card. It is the same message the seller actually gets.
       */}
       {openAlert ? (

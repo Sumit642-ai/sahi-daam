@@ -1,14 +1,18 @@
 import { useI18n, type TranslationKey } from '../i18n'
 
 /**
- * The input-provenance chip (spec section 9: "Every input field shows a small
- * tag"). Full input/output transparency is a mentor requirement, so the chip is
+ * The input-provenance chip: every input field shows a small tag saying who
+ * provides it. Full input/output transparency is a mentor requirement, so the chip is
  * never optional — a field without one is a bug.
  *
  * The spec names the three tags in Hinglish ("Aap bhariye", "Meesho ne bhara");
  * the dictionary carries both languages.
  */
-export type Provider = 'seller' | 'meesho' | 'assumption'
+/**
+ * `listing` is for what Meesho already knows from the product listing itself —
+ * its category and its packed weight — so the seller is never asked twice.
+ */
+export type Provider = 'seller' | 'listing' | 'meesho' | 'assumption'
 
 interface TagSpec {
   labelKey: TranslationKey
@@ -18,6 +22,11 @@ interface TagSpec {
 
 export const PROVIDERS: Record<Provider, TagSpec> = {
   seller: { labelKey: 'tag.seller', helpKey: 'tag.sellerHelp', className: 'bg-plum/10 text-plum' },
+  listing: {
+    labelKey: 'tag.listing',
+    helpKey: 'tag.listingHelp',
+    className: 'bg-profit/10 text-profit',
+  },
   meesho: {
     labelKey: 'tag.meesho',
     helpKey: 'tag.meeshoHelp',

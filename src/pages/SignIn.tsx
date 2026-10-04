@@ -1,12 +1,6 @@
 import { useState } from 'react'
 
-import {
-  DEMO_ADMIN_EMAIL,
-  DEMO_PASSWORD,
-  DEMO_SELLER_EMAIL,
-  type Role,
-  useAuth,
-} from '../auth'
+import { type Role, useAuth } from '../auth'
 import { useI18n, type TranslationKey } from '../i18n'
 import { Card } from '../components/Card'
 
@@ -20,7 +14,7 @@ import { Card } from '../components/Card'
  */
 export function SignIn() {
   const { t } = useI18n()
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, enterDemo } = useAuth()
 
   const [mode, setMode] = useState<'in' | 'up'>('in')
   const [role, setRole] = useState<Role>('seller')
@@ -33,15 +27,6 @@ export function SignIn() {
     const result = mode === 'in' ? signIn(email, password) : signUp(email, password, role)
     if (!result.ok) setError(result.error as TranslationKey)
     else setError(null)
-  }
-
-  function useDemo(as: Role) {
-    const demoEmail = as === 'seller' ? DEMO_SELLER_EMAIL : DEMO_ADMIN_EMAIL
-    setEmail(demoEmail)
-    setPassword(DEMO_PASSWORD)
-    setMode('in')
-    const result = signIn(demoEmail, DEMO_PASSWORD)
-    if (!result.ok) setError(result.error as TranslationKey)
   }
 
   const field =
@@ -80,8 +65,23 @@ export function SignIn() {
       </div>
 
       {/* --------------------------------------------------------- the form */}
-      <Card tone="peach">
-        <div className="flex gap-1 rounded-lg bg-white/70 p-1">
+      {/* First on a phone too: the demo button is the first thing anyone sees. */}
+      <Card tone="peach" className="order-first lg:order-none">
+        {/* The demo is the main way in: one tap, no form. */}
+        <button
+          type="button"
+          onClick={enterDemo}
+          className="w-full rounded-lg bg-orange px-4 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90"
+        >
+          {t('auth.demoSeller')} →
+        </button>
+        <p className="mt-1.5 text-center text-[11px] text-body/70">{t('auth.demoSellerSub')}</p>
+
+        <p className="mt-4 text-center text-[11px] font-semibold uppercase tracking-wide text-plum/70">
+          {t('auth.orSignIn')}
+        </p>
+
+        <div className="mt-2 flex gap-1 rounded-lg bg-white/70 p-1">
           {(['in', 'up'] as const).map((m) => (
             <button
               key={m}
@@ -171,28 +171,6 @@ export function SignIn() {
             {mode === 'in' ? t('auth.signIn') : t('auth.createAccount')}
           </button>
         </form>
-
-        <div className="mt-4 rounded-card bg-white/70 p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-plum">
-            {t('auth.tryItNow')}
-          </p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => useDemo('seller')}
-              className="rounded-lg bg-orange px-3 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
-            >
-              {t('auth.demoSeller')}
-            </button>
-            <button
-              type="button"
-              onClick={() => useDemo('admin')}
-              className="rounded-lg bg-plum/10 px-3 py-2 text-[11px] font-semibold text-plum transition-colors hover:bg-plum/15"
-            >
-              {t('auth.demoAdmin')}
-            </button>
-          </div>
-        </div>
 
         <p className="mt-3 rounded-lg bg-magenta/10 px-3 py-2 text-[11px] leading-snug text-body">
           <span className="font-bold text-magenta">{t('auth.warningTitle')}</span>{' '}

@@ -35,7 +35,7 @@
     "unit": "share of dispatched orders",
     "label_en": "RTO cap after applying the season index",
     "label_hi": "सीज़न इंडेक्स लगाने के बाद RTO की अधिकतम सीमा",
-    "source": "Model convention — spec section 6.1 caps rto at 0.90"
+    "source": "Model convention — blended RTO is capped at 90%"
   },
   "months": [
     {

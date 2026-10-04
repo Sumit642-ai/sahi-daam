@@ -137,11 +137,26 @@ export function categoryTrend(week: number): number {
 }
 
 /** The price-sensitivity curve. ε is hidden; this is the only place it is used. */
-function conversionRate(price: number, bandP50: number, ratingCount: number): number {
+function conversionRate(
+  price: number,
+  bandP50: number,
+  ratingCount: number,
+  epsilon: number,
+): number {
   const ratingBoost =
     H.ratingBoostFloor +
     (1 - H.ratingBoostFloor) * (ratingCount / (ratingCount + H.ratingBoostHalfPoint))
-  return H.baseCvr * Math.pow(price / bandP50, -H.epsilon) * ratingBoost
+  return H.baseCvr * Math.pow(price / bandP50, -epsilon) * ratingBoost
+}
+
+/**
+ * The two hidden parameters a robustness check varies. Defaults are the
+ * journey's own (ε = 2.2, the fixed seed), so `runSimulation()` with no
+ * arguments is exactly the journey every screen shows.
+ */
+export interface WorldOptions {
+  epsilon?: number
+  seed?: number
 }
 
 // ------------------------------------------------------------------- outputs
@@ -271,8 +286,8 @@ function stageFor(week: number, learnerPeaked: boolean): Stage {
  * Both strategies are run with the same seed and draw the same random values in
  * the same order, so the noise they experience is identical week by week.
  */
-function runStrategy(strategy: StrategyId): StrategyRun {
-  const rnd = mulberry32(H.seed)
+function runStrategy(strategy: StrategyId, world_: Required<WorldOptions>): StrategyRun {
+  const rnd = mulberry32(world_.seed)
   const baseBand = bandFor(PRODUCT.categoryId)
 
   // Week-1 setup, shared by both strategies.
@@ -389,7 +404,7 @@ function runStrategy(strategy: StrategyId): StrategyRun {
       0,
       baseImpressions(stage, ratingCount) * visibility(percentile) * trend * impressionNoise,
     )
-    const cvr = conversionRate(price, world.band.p50, ratingCount)
+    const cvr = conversionRate(price, world.band.p50, ratingCount, world_.epsilon)
     let orders = Math.max(0, impressions * cvr * orderNoise)
 
     // Realised RTO and returns: the model, plus +/- 1 percentage point.
@@ -533,11 +548,12 @@ function runStrategy(strategy: StrategyId): StrategyRun {
 }
 
 /** The whole 26-week journey, both strategies, deterministic. */
-export function runSimulation(): Simulation {
+export function runSimulation(options: WorldOptions = {}): Simulation {
+  const world = { epsilon: options.epsilon ?? H.epsilon, seed: options.seed ?? H.seed }
   return {
-    sahiDaam: runStrategy('sahi_daam'),
-    sellerInstinct: runStrategy('seller_instinct'),
+    sahiDaam: runStrategy('sahi_daam', world),
+    sellerInstinct: runStrategy('seller_instinct', world),
     events: JOURNEY_EVENTS as JourneyEvent[],
-    hidden: { epsilon: H.epsilon, seed: H.seed },
+    hidden: world,
   }
 }

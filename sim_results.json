@@ -1,0 +1,646 @@
+{
+  "generatedAt": "2026-10-04T15:27:51.701Z",
+  "world": {
+    "weeks": 26,
+    "seed": 20260706,
+    "trueSensitivity": 2.2,
+    "note": "Synthetic world. Same seed, same noise draws and same scripted events for both strategies."
+  },
+  "strategies": {
+    "sahi_daam": {
+      "week26CumulativeProfit": 46058,
+      "profitPerUnitSold": 39.72,
+      "weeksBelowFloor": 0,
+      "unitsSold": 1160,
+      "averagePrice": 382.45,
+      "finalPrice": 388,
+      "stockLeft": 236,
+      "unitsRestocked": 0,
+      "alertsRaised": 6,
+      "alertsActedOn": 6,
+      "firedTriggers": [
+        {
+          "week": 12,
+          "id": "T2",
+          "title": "Festive RTO is coming"
+        },
+        {
+          "week": 12,
+          "id": "T3",
+          "title": "A competitor has undercut you"
+        },
+        {
+          "week": 14,
+          "id": "T4",
+          "title": "You have dropped out of view"
+        },
+        {
+          "week": 14,
+          "id": "T5",
+          "title": "Your product cost changed"
+        },
+        {
+          "week": 16,
+          "id": "T2",
+          "title": "Festive RTO is coming"
+        },
+        {
+          "week": 17,
+          "id": "T1",
+          "title": "Returns are climbing"
+        }
+      ],
+      "weeklyPrices": [
+        {
+          "week": 1,
+          "stage": "LAUNCH",
+          "price": 324,
+          "floor": 318.41
+        },
+        {
+          "week": 2,
+          "stage": "LAUNCH",
+          "price": 324,
+          "floor": 321.06
+        },
+        {
+          "week": 3,
+          "stage": "LAUNCH",
+          "price": 324,
+          "floor": 314.11
+        },
+        {
+          "week": 4,
+          "stage": "RAMP",
+          "price": 325,
+          "floor": 312.19
+        },
+        {
+          "week": 5,
+          "stage": "RAMP",
+          "price": 335,
+          "floor": 319.25
+        },
+        {
+          "week": 6,
+          "stage": "RAMP",
+          "price": 345,
+          "floor": 320.81
+        },
+        {
+          "week": 7,
+          "stage": "RAMP",
+          "price": 355,
+          "floor": 322.37
+        },
+        {
+          "week": 8,
+          "stage": "RAMP",
+          "price": 365,
+          "floor": 320.47
+        },
+        {
+          "week": 9,
+          "stage": "RAMP",
+          "price": 375,
+          "floor": 319.98
+        },
+        {
+          "week": 10,
+          "stage": "RAMP",
+          "price": 385,
+          "floor": 317.64
+        },
+        {
+          "week": 11,
+          "stage": "RAMP",
+          "price": 395,
+          "floor": 318.93
+        },
+        {
+          "week": 12,
+          "stage": "MATURE",
+          "price": 385,
+          "floor": 320.8
+        },
+        {
+          "week": 13,
+          "stage": "MATURE",
+          "price": 385,
+          "floor": 320.07
+        },
+        {
+          "week": 14,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 360.23
+        },
+        {
+          "week": 15,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 375.46
+        },
+        {
+          "week": 16,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 395.08
+        },
+        {
+          "week": 17,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 402.34
+        },
+        {
+          "week": 18,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 419.96
+        },
+        {
+          "week": 19,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 395.27
+        },
+        {
+          "week": 20,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 384.33
+        },
+        {
+          "week": 21,
+          "stage": "MATURE",
+          "price": 430,
+          "floor": 391.6
+        },
+        {
+          "week": 22,
+          "stage": "DECLINE",
+          "price": 430,
+          "floor": 380.85
+        },
+        {
+          "week": 23,
+          "stage": "DECLINE",
+          "price": 430,
+          "floor": 354.3
+        },
+        {
+          "week": 24,
+          "stage": "DECLINE",
+          "price": 409,
+          "floor": 352.14
+        },
+        {
+          "week": 25,
+          "stage": "DECLINE",
+          "price": 409,
+          "floor": 356.46
+        },
+        {
+          "week": 26,
+          "stage": "DECLINE",
+          "price": 388,
+          "floor": 352.23
+        }
+      ]
+    },
+    "seller_instinct": {
+      "week26CumulativeProfit": -33508,
+      "profitPerUnitSold": -18.21,
+      "weeksBelowFloor": 26,
+      "unitsSold": 1840,
+      "averagePrice": 300.99,
+      "finalPrice": 308,
+      "stockLeft": 0,
+      "unitsRestocked": 500,
+      "alertsRaised": 4,
+      "alertsActedOn": 0,
+      "firedTriggers": [
+        {
+          "week": 12,
+          "id": "T2",
+          "title": "Festive RTO is coming"
+        },
+        {
+          "week": 14,
+          "id": "T5",
+          "title": "Your product cost changed"
+        },
+        {
+          "week": 16,
+          "id": "T2",
+          "title": "Festive RTO is coming"
+        },
+        {
+          "week": 17,
+          "id": "T1",
+          "title": "Returns are climbing"
+        }
+      ],
+      "weeklyPrices": [
+        {
+          "week": 1,
+          "stage": "LAUNCH",
+          "price": 300,
+          "floor": 318.41
+        },
+        {
+          "week": 2,
+          "stage": "LAUNCH",
+          "price": 300,
+          "floor": 321.06
+        },
+        {
+          "week": 3,
+          "stage": "LAUNCH",
+          "price": 300,
+          "floor": 314.11
+        },
+        {
+          "week": 4,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 312.19
+        },
+        {
+          "week": 5,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 319.25
+        },
+        {
+          "week": 6,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 320.81
+        },
+        {
+          "week": 7,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 322.37
+        },
+        {
+          "week": 8,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 320.47
+        },
+        {
+          "week": 9,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 319.98
+        },
+        {
+          "week": 10,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 317.64
+        },
+        {
+          "week": 11,
+          "stage": "RAMP",
+          "price": 300,
+          "floor": 318.93
+        },
+        {
+          "week": 12,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 320.8
+        },
+        {
+          "week": 13,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 320.07
+        },
+        {
+          "week": 14,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 360.23
+        },
+        {
+          "week": 15,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 375.46
+        },
+        {
+          "week": 16,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 395.08
+        },
+        {
+          "week": 17,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 402.34
+        },
+        {
+          "week": 18,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 419.96
+        },
+        {
+          "week": 19,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 395.27
+        },
+        {
+          "week": 20,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 384.33
+        },
+        {
+          "week": 21,
+          "stage": "RAMP",
+          "price": 308,
+          "floor": 391.6
+        },
+        {
+          "week": 22,
+          "stage": "DECLINE",
+          "price": 308,
+          "floor": 380.85
+        },
+        {
+          "week": 23,
+          "stage": "DECLINE",
+          "price": 308,
+          "floor": 354.3
+        },
+        {
+          "week": 24,
+          "stage": "DECLINE",
+          "price": 308,
+          "floor": 352.14
+        },
+        {
+          "week": 25,
+          "stage": "DECLINE",
+          "price": 308,
+          "floor": 356.46
+        },
+        {
+          "week": 26,
+          "stage": "DECLINE",
+          "price": 308,
+          "floor": 352.23
+        }
+      ]
+    }
+  },
+  "gapAtWeek26": 79566,
+  "alertsActedOnDefinition": "An alert is acted on when the next week’s price (the same week, for week 26) is at or above that week’s floor — every trigger’s action comes down to “do not list below your floor”.",
+  "priceStepSequence": [
+    {
+      "week": 5,
+      "from": 325,
+      "to": 335,
+      "improvementPct": 9.1,
+      "kept": true,
+      "sensitivityEstimate": 3.297
+    },
+    {
+      "week": 6,
+      "from": 335,
+      "to": 345,
+      "improvementPct": 43.1,
+      "kept": true,
+      "sensitivityEstimate": 2.096
+    },
+    {
+      "week": 7,
+      "from": 345,
+      "to": 355,
+      "improvementPct": 35.4,
+      "kept": true,
+      "sensitivityEstimate": -0.266
+    },
+    {
+      "week": 8,
+      "from": 355,
+      "to": 365,
+      "improvementPct": 26,
+      "kept": true,
+      "sensitivityEstimate": 3.113
+    },
+    {
+      "week": 9,
+      "from": 365,
+      "to": 375,
+      "improvementPct": 19.8,
+      "kept": true,
+      "sensitivityEstimate": 1.099
+    },
+    {
+      "week": 10,
+      "from": 375,
+      "to": 385,
+      "improvementPct": 18.7,
+      "kept": true,
+      "sensitivityEstimate": 1.495
+    },
+    {
+      "week": 11,
+      "from": 385,
+      "to": 395,
+      "improvementPct": 0.5,
+      "kept": false,
+      "sensitivityEstimate": 4.401
+    }
+  ],
+  "peakPrice": 385,
+  "sensitivity": {
+    "learned": 2.177,
+    "true": 2.2
+  },
+  "robustness": {
+    "sensitivities": [
+      1.5,
+      2.2,
+      3
+    ],
+    "seeds": [
+      20260706,
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs": 15,
+    "sahiDaamWins": 15,
+    "medianGap": 76746,
+    "minGap": 62598,
+    "maxGap": 92483,
+    "detail": [
+      {
+        "epsilon": 1.5,
+        "seed": 20260706,
+        "sahiDaamProfit": 57185,
+        "sellerInstinctProfit": -32974,
+        "gap": 90159,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.725
+      },
+      {
+        "epsilon": 1.5,
+        "seed": 1,
+        "sahiDaamProfit": 58489,
+        "sellerInstinctProfit": -33994,
+        "gap": 92483,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.177
+      },
+      {
+        "epsilon": 1.5,
+        "seed": 2,
+        "sahiDaamProfit": 59081,
+        "sellerInstinctProfit": -28807,
+        "gap": 87888,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.143
+      },
+      {
+        "epsilon": 1.5,
+        "seed": 3,
+        "sahiDaamProfit": 46518,
+        "sellerInstinctProfit": -30228,
+        "gap": 76746,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.454
+      },
+      {
+        "epsilon": 1.5,
+        "seed": 4,
+        "sahiDaamProfit": 57609,
+        "sellerInstinctProfit": -30862,
+        "gap": 88471,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.822
+      },
+      {
+        "epsilon": 2.2,
+        "seed": 20260706,
+        "sahiDaamProfit": 46058,
+        "sellerInstinctProfit": -33508,
+        "gap": 79566,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.177
+      },
+      {
+        "epsilon": 2.2,
+        "seed": 1,
+        "sahiDaamProfit": 48248,
+        "sellerInstinctProfit": -29531,
+        "gap": 77779,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.891
+      },
+      {
+        "epsilon": 2.2,
+        "seed": 2,
+        "sahiDaamProfit": 47141,
+        "sellerInstinctProfit": -29281,
+        "gap": 76422,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 1.924
+      },
+      {
+        "epsilon": 2.2,
+        "seed": 3,
+        "sahiDaamProfit": 38385,
+        "sellerInstinctProfit": -30435,
+        "gap": 68820,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.165
+      },
+      {
+        "epsilon": 2.2,
+        "seed": 4,
+        "sahiDaamProfit": 46109,
+        "sellerInstinctProfit": -31687,
+        "gap": 77795,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.726
+      },
+      {
+        "epsilon": 3,
+        "seed": 20260706,
+        "sahiDaamProfit": 36717,
+        "sellerInstinctProfit": -33710,
+        "gap": 70426,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.994
+      },
+      {
+        "epsilon": 3,
+        "seed": 1,
+        "sahiDaamProfit": 38816,
+        "sellerInstinctProfit": -29959,
+        "gap": 68775,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.707
+      },
+      {
+        "epsilon": 3,
+        "seed": 2,
+        "sahiDaamProfit": 37980,
+        "sellerInstinctProfit": -29087,
+        "gap": 67067,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.74
+      },
+      {
+        "epsilon": 3,
+        "seed": 3,
+        "sahiDaamProfit": 32499,
+        "sellerInstinctProfit": -30099,
+        "gap": 62598,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.977
+      },
+      {
+        "epsilon": 3,
+        "seed": 4,
+        "sahiDaamProfit": 36866,
+        "sellerInstinctProfit": -32175,
+        "gap": 69042,
+        "sahiDaamWins": true,
+        "sahiDaamWeeksBelowFloor": 0,
+        "learnedSensitivity": 2.931
+      }
+    ]
+  },
+  "tests": {
+    "passed": 251,
+    "failed": 0,
+    "total": 251
+  }
+}

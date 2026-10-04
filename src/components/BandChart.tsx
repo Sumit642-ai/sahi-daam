@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react'
+
 import type { Band } from '../engine/band'
 import { percentileOf } from '../engine/band'
 import type { FloorRange } from '../engine/floor'
@@ -5,7 +7,7 @@ import { inr } from '../engine/format'
 import { ShowWorking } from './ShowWorking'
 
 /**
- * Spec section 9.3's band chart: the synthetic listings as dots, p10–p90
+ * The Bazaar Ka Daam band chart: the synthetic listings as dots, p10–p90
  * shaded, the median marked, the floor as a magenta line, everything left of
  * the floor shaded "Loss on every order", and the seller's price marked.
  *
@@ -19,6 +21,21 @@ interface BandChartProps {
   range: FloorRange
   /** The seller's current price marker. */
   price: number
+}
+
+/** One label, pinned over a position on the chart's x-axis, kept on screen. */
+function Lane({ at, children }: { at: number; children: ReactNode }) {
+  const align = at > 80 ? '-translate-x-full' : at < 20 ? '' : '-translate-x-1/2'
+  return (
+    <div className="relative h-5">
+      <span
+        className={`absolute top-0.5 whitespace-nowrap leading-4 ${align}`}
+        style={{ left: `${at}%` }}
+      >
+        {children}
+      </span>
+    </div>
+  )
 }
 
 /** Stable vertical jitter per listing, so dots do not jump on re-render. */
@@ -63,10 +80,29 @@ export function BandChart({ band, range, price }: BandChartProps) {
 
   return (
     <div>
-      <div className="relative h-56 w-full overflow-hidden rounded-card bg-white">
+      {/*
+        The median and the seller's price each get a lane of their own above
+        the chart, and the floor one below it. On the default kurti all three
+        sit within ₹18 of each other; inside the plot their labels collided and
+        the floor line ran straight through the median's.
+      */}
+      <Lane at={p50Pct}>
+        <span className="text-[10px] font-medium text-plum/70">median {inr(band.p50)}</span>
+      </Lane>
+      <Lane at={pricePct}>
+        <span
+          className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${
+            priceIsLoss ? 'bg-magenta' : 'bg-orange'
+          }`}
+        >
+          you {inr(price)}
+        </span>
+      </Lane>
+
+      <div className="relative h-52 w-full overflow-hidden rounded-card bg-white">
         {/* p10–p90, the part of the market most buyers actually see. */}
         <div
-          className="absolute inset-y-7 bottom-12 rounded-lg bg-lilac"
+          className="absolute bottom-12 top-2 rounded-lg bg-lilac"
           style={{ left: `${p10Pct}%`, width: `${Math.max(0, p90Pct - p10Pct)}%` }}
         />
 
@@ -96,20 +132,12 @@ export function BandChart({ band, range, price }: BandChartProps) {
         />
 
         {/* Median. */}
-        <div className="absolute inset-y-7 bottom-12 w-px bg-plum/40" style={{ left: `${p50Pct}%` }} />
-        <span
-          className={`absolute top-0.5 whitespace-nowrap text-[10px] font-medium text-plum/70 ${
-            p50Pct > 80 ? '-translate-x-full' : p50Pct < 20 ? '' : '-translate-x-1/2'
-          }`}
-          style={{ left: `${p50Pct}%` }}
-        >
-          median {inr(band.p50)}
-        </span>
+        <div className="absolute bottom-12 top-2 w-px bg-plum/40" style={{ left: `${p50Pct}%` }} />
 
         {/* Listing dots. */}
         {band.listings.map((listing) => {
           const x = clamp(at(listing.price))
-          const y = 34 + jitterFor(listing.id) * 76
+          const y = 16 + jitterFor(listing.id) * 110
           const under = listing.price < floorExpected
           return (
             <span
@@ -128,30 +156,19 @@ export function BandChart({ band, range, price }: BandChartProps) {
           className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-magenta"
           style={{ left: `${floorPct}%` }}
         />
-        <span
-          className={`absolute bottom-1 whitespace-nowrap rounded-full bg-magenta px-1.5 py-0.5 text-[10px] font-bold text-white ${
-            floorPct > 80 ? '-translate-x-full' : floorPct < 20 ? '' : '-translate-x-1/2'
-          }`}
-          style={{ left: `${floorPct}%` }}
-        >
-          {floorIsReachable ? `floor ${inr(floorExpected)}` : 'no price works'}
-        </span>
-
-        {/* The seller's price. Its badge hugs whichever side keeps it off the
-            floor badge when the two prices are only a few rupees apart. */}
+        {/* The seller's price. */}
         <div
           className="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-orange"
           style={{ left: `${pricePct}%` }}
         />
-        <span
-          className={`absolute top-5 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white ${
-            priceIsLoss ? 'bg-magenta' : 'bg-orange'
-          } ${pricePct > 80 ? '-translate-x-full' : pricePct < 20 ? '' : '-translate-x-1/2'}`}
-          style={{ left: `${pricePct}%` }}
-        >
-          you {inr(price)}
-        </span>
       </div>
+
+      {/* The floor's label, below the chart in a lane of its own. */}
+      <Lane at={floorPct}>
+        <span className="rounded-full bg-magenta px-1.5 py-0.5 text-[10px] font-bold text-white">
+          {floorIsReachable ? `floor ${inr(floorExpected)}` : 'no price works'}
+        </span>
+      </Lane>
 
       <div className="mt-1 flex justify-between text-[10px] text-body/50">
         <span>{inr(lo)}</span>

@@ -37,7 +37,12 @@ to sign up first:
 | Seller | `ramesh@demo.in` | `sahidaam` |
 | Meesho admin | `admin@meesho.demo` | `sahidaam` |
 
-Or press **Enter as Ramesh** / **Enter as admin** on the page.
+Or press **Enter as Ramesh**, the first button on the page — or open the app
+with `?demo=ramesh` (for example `http://localhost:5173/?demo=ramesh`) to skip
+the sign-in screen entirely. Either way Ramesh's profile is reset to the seeded
+one: no prepaid discount, so 80% COD and the deck's ₹318 floor, with his ₹300
+planned price filled in. The admin console is reached by signing in as
+`admin@meesho.demo`.
 
 > **This is not real authentication.** There is no server. Accounts live in this
 > browser's localStorage, the password is run through a non-cryptographic
@@ -58,6 +63,8 @@ npm run preview      # serve the production build locally
 npm run verify:deck     # print the deck's worked example as a cost table
 npm run verify:screen1  # print Screen 1 straight out of the rendered markup
 npm run verify:journey  # print the 26-week journey, both strategies
+
+npm run export:sim      # run the journey + robustness sweep + tests, write sim_results.json
 
 npm run gen:listings    # regenerate the synthetic competitor listings
 npm run gen:i18n        # regenerate the EN/हिं dictionaries

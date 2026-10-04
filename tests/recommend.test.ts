@@ -4,6 +4,8 @@ import { categories } from '../src/data'
 import { bandFor, percentileOf, quantile } from '../src/engine/band'
 import { defaultFloorInput, floorRange, type FloorInput } from '../src/engine/floor'
 import {
+  ABOVE_MARKET_PERCENTILE,
+  CHEAP_END_WARNING,
   GUARDRAIL_WARNING,
   STAGES,
   minMarginFor,
@@ -92,7 +94,10 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
     expect(band.p30).toBeLessThan(range.expected) // the condition under test
 
     const rec = recommend('LAUNCH', range, band)
-    expect(rec.warnings).toContain(GUARDRAIL_WARNING)
+    expect(rec.warnings).toContain(CHEAP_END_WARNING)
+    // ₹324 sits near the median, so "above most of the market" would be false.
+    expect(percentileOf(band, rec.price)).toBeLessThanOrEqual(ABOVE_MARKET_PERCENTILE)
+    expect(rec.warnings).not.toContain(GUARDRAIL_WARNING)
     expect(rec.price).toBeGreaterThanOrEqual(range.expected)
     expect(rec.price).toBeCloseTo(Math.round(range.expected + minMarginFor(range.expected)), 0)
   })
@@ -106,6 +111,15 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
     const rec = recommend('LAUNCH', range, band)
     expect(rec.warnings).not.toContain(GUARDRAIL_WARNING)
     expect(rec.price).toBe(Math.round(band.p30))
+  })
+
+  it('says "above most of the market" only past the 70th percentile', () => {
+    // A floor high enough that floor + margin lands above p70.
+    const range = floorRange(defaultFloorInput('ethnic_women', { cogs: 210 }))
+    const band = bandFor('ethnic_women')
+    const rec = recommend('LAUNCH', range, band)
+    expect(percentileOf(band, rec.price)).toBeGreaterThan(ABOVE_MARKET_PERCENTILE)
+    expect(rec.warnings).toContain(GUARDRAIL_WARNING)
   })
 
   it('uses minMargin = max(₹5, 2% of floor)', () => {

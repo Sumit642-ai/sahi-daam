@@ -34,8 +34,34 @@ export function minMarginFor(floorExpected: number): number {
   return Math.max(5, 0.02 * floorExpected)
 }
 
+/** Only said when the price really is above the 70th percentile of the band. */
 export const GUARDRAIL_WARNING =
   'You are priced above most of the market; impressions may be low. See fixes that lower your floor.'
+
+/** Said whenever the band's 30th percentile sits under the floor. */
+export const CHEAP_END_WARNING =
+  'The cheapest 30% of the market is below your floor — matching them loses money on every order.'
+
+/** Above this band percentile a price counts as "above most of the market". */
+export const ABOVE_MARKET_PERCENTILE = 70
+
+/**
+ * The plain message for a stage target that had to be lifted to the floor.
+ * What is true is said; what is not is left out — a ₹324 kurti in a band whose
+ * median is ₹318 is not "above most of the market", and saying so is wrong.
+ */
+function guardrailWarnings(price: number, range: FloorRange, band: Band): string[] {
+  const out: string[] = []
+  if (band.p30 < range.expected) out.push(CHEAP_END_WARNING)
+  if (percentileOf(band, price) > ABOVE_MARKET_PERCENTILE) out.push(GUARDRAIL_WARNING)
+  if (out.length === 0) {
+    out.push(
+      `Lifted to ${inr(Math.ceil(price))} so you never list below your floor of ` +
+        `${inr(range.expected)}.`,
+    )
+  }
+  return out
+}
 
 /**
  * Spec section 6.4: if the target a stage wants is below the floor, return
@@ -53,13 +79,15 @@ export const GUARDRAIL_WARNING =
 function applyGuardrail(
   rawTarget: number,
   range: FloorRange,
+  band: Band,
   warnings: string[],
   ladderStop = false,
 ): number {
   const floorExpected = range.expected
   if (rawTarget >= floorExpected) return rawTarget
-  warnings.push(GUARDRAIL_WARNING)
-  return ladderStop ? floorExpected : floorExpected + minMarginFor(floorExpected)
+  const lifted = ladderStop ? floorExpected : floorExpected + minMarginFor(floorExpected)
+  warnings.push(...guardrailWarnings(lifted, range, band))
+  return lifted
 }
 
 /** Prices are shown and listed in whole rupees. */
@@ -353,6 +381,11 @@ export interface Recommendation {
   warnings: string[]
   /** The thin-margin allowance used, for the Show-working panel. */
   minMargin: number
+  /**
+   * True for Mature before the ramp has found a peak: `price` is where the
+   * steps start, not a price to hold yet.
+   */
+  provisional: boolean
 }
 
 /** Spec section 6.4. Never returns a price below `range.expected`. */
@@ -374,6 +407,7 @@ export function recommend(
 
   let target: number
   let ladderStop = false
+  let provisional = false
 
   switch (stage) {
     case 'LAUNCH': {
@@ -394,15 +428,17 @@ export function recommend(
             `so we recommend ${inr(money(floorTarget))} (floor + ${inr(minMargin)}).`,
         )
         rationale.push(
-          `The market's cheap end is ${inr(floorExpected - band.p30)} below your floor, so ` +
-            `matching it would lose money on every order.`,
+          `The cheapest 30% of the market is below your floor — the 30th percentile is ` +
+            `${inr(floorExpected - band.p30)} under it, so matching them loses money on every order.`,
         )
       }
       break
     }
 
     case 'RAMP': {
-      const base = context.currentPrice ?? context.launchPrice ?? launchTarget
+      // The ramp climbs from launch. Stepping up from a price that is already
+      // under the floor would put the "step up" below the launch price.
+      const base = Math.max(context.currentPrice ?? context.launchPrice ?? launchTarget, launchTarget)
       const step = base < band.p50 ? 20 : 10
       target = base + step
       rationale.push(
@@ -418,12 +454,21 @@ export function recommend(
     }
 
     case 'MATURE': {
-      const held = context.learnedBestPrice ?? context.currentPrice ?? launchTarget
+      // Before the ramp has run there is no peak to hold. Show where the steps
+      // start — the ramp's own price — and say the peak is still to be found.
+      const rampFrom = Math.max(
+        context.currentPrice ?? context.launchPrice ?? launchTarget,
+        launchTarget,
+      )
+      const rampPrice = rampFrom + (rampFrom < band.p50 ? 20 : 10)
+      const held = context.learnedBestPrice ?? rampPrice
+      provisional = context.learnedBestPrice === undefined
       target = held
       rationale.push(
         context.learnedBestPrice !== undefined
           ? `Hold ${inr(held)} — the profit peak the ramp-stage steps found.`
-          : `Hold ${inr(held)}. Once the ramp finds a profit peak, that becomes the price to hold.`,
+          : `Hold the peak your steps find. The ramp starts at ${inr(money(rampPrice))}; ` +
+            `whichever step stops improving profit, the price before it is the one to hold.`,
       )
       if (context.competitorUndercut) {
         const rival = context.competitorMedian
@@ -482,7 +527,7 @@ export function recommend(
     }
   }
 
-  const guarded = applyGuardrail(target, range, warnings, ladderStop)
+  const guarded = applyGuardrail(target, range, band, warnings, ladderStop)
   const price = money(guarded)
 
   // Rounding to whole rupees must not push the price under the floor.
@@ -493,7 +538,7 @@ export function recommend(
       `At ${inr(safePrice)} you clear ${inr(safePrice - floorExpected)} per clean sale.`,
   )
 
-  return { stage, price: safePrice, rationale, warnings, minMargin }
+  return { stage, price: safePrice, rationale, warnings, minMargin, provisional }
 }
 
 /** All four stages at once — what Screen 2's stage cards render. */

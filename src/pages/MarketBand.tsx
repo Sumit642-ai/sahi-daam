@@ -5,6 +5,7 @@ import { nearestMedian, percentileOf } from '../engine/band'
 import { profitPer100Dispatched } from '../engine/floor'
 import { inr, pct, signedInr } from '../engine/format'
 import {
+  CHEAP_END_WARNING,
   STAGES,
   recommendAllStages,
   verdictFor,
@@ -22,7 +23,7 @@ import { useI18n } from '../i18n'
 import { useProduct } from '../state/productInputs'
 
 /**
- * Screen 2 — Bazaar Ka Daam (spec section 9.3).
+ * Screen 2 — Bazaar Ka Daam.
  *
  * Screen 1 answers "what does this cost me?". This one puts that floor on the
  * same ruler as the market, so the seller can see the two facts that matter at
@@ -45,8 +46,8 @@ export function MarketBand() {
     [range, band, inputs.plannedPrice],
   )
 
-  // The slider and Screen 1's "planned price" are the same value: spec section
-  // 9.3 carries the inputs over, so there must not be two prices in play.
+  // The slider and Screen 1's "planned price" are the same value: the inputs
+  // carry over, so there must not be two prices in play.
   const price = inputs.plannedPrice ?? recommendations.LAUNCH.price
 
   const verdict = useMemo(
@@ -100,6 +101,12 @@ export function MarketBand() {
         </CardTitle>
 
         <BandChart band={band} range={range} price={price} />
+
+        {band.p30 < range.expected ? (
+          <p className="mt-3 rounded-lg bg-magenta/10 px-3 py-2 text-xs font-medium leading-relaxed text-magenta">
+            {CHEAP_END_WARNING}
+          </p>
+        ) : null}
       </Card>
 
       <div className="mt-4 grid items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
@@ -172,7 +179,7 @@ export function MarketBand() {
             <div className="space-y-3">
               <SelectField
                 label={t('label.category')}
-                provider="seller"
+                provider="listing"
                 value={inputs.categoryId}
                 onChange={changeCategory}
                 options={categories.map((c) => ({
@@ -192,7 +199,7 @@ export function MarketBand() {
                 />
                 <NumberField
                   label={t('label.weight')}
-                  provider="seller"
+                  provider="listing"
                   value={inputs.weightG}
                   onChange={(v) => set('weightG', v)}
                   min={0}
@@ -284,7 +291,7 @@ export function MarketBand() {
                     },
                     {
                       label: 'Thresholds',
-                      note: 'Below 0% is a loss, 0–10% is thin, 10% and above is healthy (spec section 6.2).',
+                      note: 'Below 0% is a loss, 0–10% is thin, 10% and above is healthy.',
                     },
                   ],
                 },

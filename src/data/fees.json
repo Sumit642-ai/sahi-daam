@@ -33,7 +33,7 @@
     "unit": "share of forward shipping",
     "label_en": "GST (applied to forward shipping only)",
     "label_hi": "GST (केवल आगे की शिपिंग पर)",
-    "source": "ASSUMPTION, matches deck"
+    "source": "Deck worked example — GST at 18% of forward shipping (18% × ₹5,000 = ₹900)"
   },
   "unitsBasis": {
     "value": 100,

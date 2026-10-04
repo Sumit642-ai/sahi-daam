@@ -5,8 +5,8 @@ import { useI18n } from '../i18n'
 import { ShowWorking } from './ShowWorking'
 
 /**
- * One lifecycle stage card (spec section 9.3): the recommended price and the
- * rationale lines, which section 6.4 requires to carry the actual numbers.
+ * One lifecycle stage card: the recommended price and the rationale lines,
+ * every one of which carries the actual numbers.
  */
 interface StageCardProps {
   recommendation: Recommendation
@@ -18,7 +18,7 @@ interface StageCardProps {
 
 export function StageCard({ recommendation, range, active, onSelect }: StageCardProps) {
   const { t } = useI18n()
-  const { stage, price, rationale, warnings, minMargin } = recommendation
+  const { stage, price, rationale, warnings, minMargin, provisional } = recommendation
   const perSale = price - range.expected
   const margin = price > 0 ? perSale / price : 0
 
@@ -44,9 +44,20 @@ export function StageCard({ recommendation, range, active, onSelect }: StageCard
             {t(`stage.${stage}.aim`)}
           </span>
         </span>
-        <span className={`shrink-0 text-2xl font-bold tabular-nums ${active ? 'text-orange' : 'text-plum-deep'}`}>
-          {inr(price)}
-        </span>
+        {provisional ? (
+          <span className="max-w-[9.5rem] shrink-0 text-right">
+            <span className={`block text-sm font-bold leading-tight ${active ? 'text-orange' : 'text-plum-deep'}`}>
+              {t('stage.peakYourStepsFind')}
+            </span>
+            <span className={`block text-[11px] tabular-nums ${active ? 'text-white/70' : 'text-body/60'}`}>
+              {t('stage.rampStartsAt', { price: inr(price) })}
+            </span>
+          </span>
+        ) : (
+          <span className={`shrink-0 text-2xl font-bold tabular-nums ${active ? 'text-orange' : 'text-plum-deep'}`}>
+            {inr(price)}
+          </span>
+        )}
       </button>
 
       <ul className={`mt-3 space-y-1.5 text-[11px] leading-snug ${active ? 'text-white/85' : 'text-body'}`}>

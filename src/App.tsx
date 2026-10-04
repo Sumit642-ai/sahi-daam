@@ -1,6 +1,6 @@
 import { Suspense, lazy, useState } from 'react'
 
-import { AuthProvider, useAuth } from './auth'
+import { AuthProvider, DEMO_SELLER_ID, useAuth } from './auth'
 import { ExpandAllContext } from './components/ShowWorking'
 import { BarTab, TopBar } from './components/TopBar'
 import { I18nProvider, useI18n } from './i18n'
@@ -134,6 +134,9 @@ function Shell() {
   )
 }
 
+/** What the demo seller was going to list his ₹150 kurti at. */
+const DEMO_PLANNED_PRICE = 300
+
 /** The gates, and the product state that depends on which one you are past. */
 function Gated() {
   const { account, platform } = useAuth()
@@ -147,7 +150,13 @@ function Gated() {
   return (
     // Keyed on the account so switching seller rebuilds the product from that
     // seller's own answers rather than carrying the last one's numbers over.
-    <ProductInputsProvider key={account.id} profile={account.profile} platform={platform}>
+    <ProductInputsProvider
+      key={account.id}
+      profile={account.profile}
+      platform={platform}
+      // Ramesh's own price — cost × 2 — so the demo opens on the ₹18 loss.
+      initial={account.id === DEMO_SELLER_ID ? { plannedPrice: DEMO_PLANNED_PRICE } : undefined}
+    >
       <Shell />
     </ProductInputsProvider>
   )

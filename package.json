@@ -16,7 +16,8 @@
     "verify:screen1": "vite-node scripts/print-screen1.tsx",
     "shoot": "node scripts/shoot.mjs",
     "verify:journey": "vite-node scripts/print-journey.ts",
-    "gen:i18n": "node scripts/generate-i18n.mjs"
+    "gen:i18n": "node scripts/generate-i18n.mjs",
+    "export:sim": "vite-node scripts/export-sim-results.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

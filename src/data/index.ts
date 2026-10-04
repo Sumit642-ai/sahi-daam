@@ -235,6 +235,28 @@ export const seasonRaw = seasonJson
 
 // ----------------------------------------------- flat list for Screen 6 (9.7)
 
+/**
+ * What kind of claim a value's source makes, for the badge on Screen 6.
+ *
+ *   CITED       a published source says so
+ *   DERIVED     worked out from the deck's worked example (13/83, 6/13, …)
+ *   CONVENTION  a modelling choice, not a claim about the world — the units
+ *               basis, the simulator seed, the calendar, the RTO cap
+ *   ASSUMPTION  a placeholder; production would replace it with Meesho's data
+ */
+export type SourceKind = 'CITED' | 'DERIVED' | 'CONVENTION' | 'ASSUMPTION'
+
+/** The pricing model a seller sees, or the simulator and its sample market. */
+export type SourceDomain = 'pricing' | 'simulator'
+
+export function sourceKind(source: string): SourceKind {
+  const s = source.trim()
+  if (/^model convention/i.test(s)) return 'CONVENTION'
+  if (/^deck worked example/i.test(s)) return 'DERIVED'
+  if (isAssumption(s)) return 'ASSUMPTION'
+  return 'CITED'
+}
+
 export interface SourcedEntry {
   group: string
   key: string
@@ -244,10 +266,16 @@ export interface SourcedEntry {
   unit: string
   source: string
   isAssumption: boolean
+  kind: SourceKind
+  domain: SourceDomain
+}
+
+function domainOf(group: string): SourceDomain {
+  return group.startsWith('Journey') || group.startsWith('Synthetic') ? 'simulator' : 'pricing'
 }
 
 function entry(group: string, key: string, s: Sourced<string | number>): SourcedEntry {
-  return {
+  return withKind({
     group,
     key,
     label_en: s.label_en,
@@ -255,8 +283,12 @@ function entry(group: string, key: string, s: Sourced<string | number>): Sourced
     value: s.value,
     unit: s.unit,
     source: s.source,
-    isAssumption: isAssumption(s.source),
-  }
+  })
+}
+
+function withKind(e: Omit<SourcedEntry, 'isAssumption' | 'kind' | 'domain'>): SourcedEntry {
+  const kind = sourceKind(e.source)
+  return { ...e, isAssumption: kind === 'ASSUMPTION', kind, domain: domainOf(e.group) }
 }
 
 /**
@@ -272,7 +304,7 @@ export function sourcedEntries(): SourcedEntry[] {
   }
 
   for (const slab of weightSlabsJson.slabs) {
-    out.push({
+    out.push(withKind({
       group: 'Shipping slabs',
       key: `${slab.id}.forward`,
       label_en: `Forward shipping, ${slab.label_en}`,
@@ -280,9 +312,8 @@ export function sourcedEntries(): SourcedEntry[] {
       value: slab.forward,
       unit: '₹ per order',
       source: slab.source,
-      isAssumption: isAssumption(slab.source),
-    })
-    out.push({
+    }))
+    out.push(withKind({
       group: 'Shipping slabs',
       key: `${slab.id}.reverse`,
       label_en: `Reverse shipping, ${slab.label_en}`,
@@ -290,10 +321,9 @@ export function sourcedEntries(): SourcedEntry[] {
       value: slab.reverse,
       unit: '₹ per order',
       source: slab.source,
-      isAssumption: isAssumption(slab.source),
-    })
+    }))
   }
-  out.push({
+  out.push(withKind({
     group: 'Shipping slabs',
     key: 'extraStep.forward',
     label_en: `Forward shipping, ${weightSlabExtraStep.label_en}`,
@@ -301,9 +331,8 @@ export function sourcedEntries(): SourcedEntry[] {
     value: weightSlabExtraStep.forward,
     unit: '₹ per order',
     source: weightSlabExtraStep.source,
-    isAssumption: isAssumption(weightSlabExtraStep.source),
-  })
-  out.push({
+  }))
+  out.push(withKind({
     group: 'Shipping slabs',
     key: 'extraStep.reverse',
     label_en: `Reverse shipping, ${weightSlabExtraStep.label_en}`,
@@ -311,8 +340,7 @@ export function sourcedEntries(): SourcedEntry[] {
     value: weightSlabExtraStep.reverse,
     unit: '₹ per order',
     source: weightSlabExtraStep.source,
-    isAssumption: isAssumption(weightSlabExtraStep.source),
-  })
+  }))
 
   for (const c of categoriesJson.categories) {
     for (const [key, s] of Object.entries(c)) {
@@ -346,7 +374,7 @@ export function sourcedEntries(): SourcedEntry[] {
 
   // Synthetic listings: one row per category, recording the seed and the shape.
   for (const category of categoriesJson.categories) {
-    out.push({
+    out.push(withKind({
       group: 'Synthetic competitor listings',
       key: `${category.id}.listings`,
       label_en: `${category.name_en} — 40 generated listings`,
@@ -355,8 +383,7 @@ export function sourcedEntries(): SourcedEntry[] {
       unit: 'listings',
       source:
         'ASSUMPTION — synthetic sample data, generated from a fixed seed by scripts/generate-listings.mjs. Nothing is scraped; in production these come from Meesho’s similar-product search.',
-      isAssumption: true,
-    })
+    }))
   }
 
   return out

@@ -9,6 +9,7 @@ import {
   verdictFor,
   type Stage,
 } from '../engine/recommend'
+import { TRIGGER_TITLE_BY_LANG } from '../engine/nudges'
 import { TRIGGER_IDS } from '../engine/triggers'
 import { useI18n } from '../i18n'
 import { Card, CardTitle } from '../components/Card'
@@ -18,7 +19,7 @@ import { VerdictBadge } from '../components/VerdictBadge'
 import { useProduct } from '../state/productInputs'
 
 /**
- * Screen 5 — Meesho today vs Sahi Daam (spec section 9.6).
+ * Screen 5 — Meesho today vs Sahi Daam.
  *
  * The same product, side by side. Meesho's Recommended Price Range is a real
  * and useful tool; the point of this screen is not that it is wrong but that it
@@ -95,7 +96,7 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
         <div className="grid gap-3 sm:grid-cols-3">
           <SelectField
             label={t('label.category')}
-            provider="seller"
+            provider="listing"
             value={inputs.categoryId}
             onChange={changeCategory}
             options={categories.map((c) => ({
@@ -114,7 +115,7 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
           />
           <NumberField
             label={t('label.weight')}
-            provider="seller"
+            provider="listing"
             value={inputs.weightG}
             onChange={(v) => set('weightG', v)}
             min={0}
@@ -133,10 +134,13 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
 
           <div className="rounded-card bg-lilac p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-body/70">
-              {t('compare.todayRange', { from: inr(meeshoLow), to: inr(meeshoHigh) })}
+              {t('compare.simulatedRange')}
             </p>
             <p className="mt-2 text-4xl font-bold leading-none tracking-tight text-plum">
               {inr(meeshoLow)} <span className="text-plum/40">–</span> {inr(meeshoHigh)}
+            </p>
+            <p className="mt-1.5 text-[11px] leading-snug text-body/60">
+              {t('compare.simulatedRangeNote')}
             </p>
           </div>
 
@@ -274,7 +278,9 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
                   </span>
                 </span>
                 <span className="text-sm font-bold tabular-nums text-orange">
-                  {inr(recommendations[stage].price)}
+                  {recommendations[stage].provisional
+                    ? t('stage.peakYourStepsFind')
+                    : inr(recommendations[stage].price)}
                 </span>
               </li>
             ))}
@@ -295,12 +301,22 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
           </CardTitle>
           <ul className="grid grid-cols-2 gap-1.5">
             {TRIGGER_IDS.map((id) => (
-              <li key={id} className="rounded-lg bg-white/70 px-2 py-1.5 text-center">
-                <span className="text-[11px] font-bold text-plum">{id}</span>
+              <li key={id} className="rounded-lg bg-white/70 px-2.5 py-1.5">
+                <span className="block text-[11px] font-bold text-plum">{id}</span>
+                <span className="block text-[11px] leading-snug text-body">
+                  {TRIGGER_TITLE_BY_LANG[lang][id]}
+                </span>
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[11px] leading-snug text-body/70">{t('compare.noAlerts')}</p>
+          <p className="mt-3 text-[11px] leading-snug text-body/70">
+            {inputs.plannedPrice !== null && inputs.plannedPrice < range.expected
+              ? t('compare.belowFloorAlert', {
+                  price: inr(inputs.plannedPrice),
+                  floor: inr(range.expected),
+                })
+              : t('compare.noAlerts')}
+          </p>
         </Card>
       </div>
     </div>

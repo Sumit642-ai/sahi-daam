@@ -16,7 +16,7 @@ import type { Provider } from '../components/SourceTag'
 import { useProduct } from '../state/productInputs'
 
 /**
- * Screen 1 — Aapki Laagat (spec section 9.2).
+ * Screen 1 — Aapki Laagat.
  *
  * Inputs on the left, each tagged with who provides it. Outputs on the right,
  * each expandable to its working. Nothing is hidden: the auto-filled values are
@@ -146,7 +146,7 @@ export function FloorCalculator() {
             <div className="space-y-3">
               <SelectField
                 label={t('label.category')}
-                provider="seller"
+                provider="listing"
                 value={draft.categoryId}
                 onChange={changeCategory}
                 options={categories.map((c) => ({
@@ -169,7 +169,7 @@ export function FloorCalculator() {
                 />
                 <NumberField
                   label={t('label.weight')}
-                  provider="seller"
+                  provider="listing"
                   value={draft.weightG}
                   onChange={(v) => set('weightG', v)}
                   min={0}

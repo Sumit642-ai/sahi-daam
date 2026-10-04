@@ -8,10 +8,11 @@ import {
   PREPAID_DISCOUNT_EFFECT,
   type SellerProfile,
   codShareFor,
+  demoSellerProfile,
   emptyProfile,
 } from '../src/auth'
 import { AuthProvider } from '../src/auth'
-import { floorRange } from '../src/engine/floor'
+import { defaultFloorInput, floorRange } from '../src/engine/floor'
 import { I18nProvider } from '../src/i18n'
 import { AdminConsole } from '../src/pages/AdminConsole'
 import { SellerOnboarding } from '../src/pages/SellerOnboarding'
@@ -100,11 +101,26 @@ describe('the signup answers drive the auto-fill', () => {
 describe('the sign-in screen', () => {
   const html = page(<SignIn />)
 
-  it('offers sign in, sign up and both roles', () => {
+  it('leads with Enter as Ramesh, and has no admin shortcut', () => {
     expect(html).toContain('Sign in')
     expect(html).toContain('Sign up')
     expect(html).toContain('Enter as Ramesh')
-    expect(html).toContain('Enter as admin')
+    expect(html).not.toContain('Enter as admin')
+    // The demo button comes before the form.
+    expect(html.indexOf('Enter as Ramesh')).toBeLessThan(html.indexOf('type="email"'))
+  })
+
+  it('seeds Ramesh with no prepaid discount, so his COD share is 80%', () => {
+    const ramesh = demoSellerProfile()
+    expect(ramesh.prepaidDiscount).toBe(false)
+    expect(codShareFor(ramesh)).toBe(0.8)
+    const inputs = inputsForProfile(ramesh, PLATFORM_FALLBACK)
+    const range = floorRange(
+      { ...defaultFloorInput(inputs.categoryId), cogs: inputs.cogs!, weightG: inputs.weightG!, codShare: inputs.codShare },
+    )
+    expect(Math.round(range.expected)).toBe(318)
+    expect(Math.round(range.low)).toBe(315)
+    expect(Math.round(range.high)).toBe(362)
   })
 
   it('says plainly that it is not real authentication', () => {

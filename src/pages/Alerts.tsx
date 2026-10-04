@@ -21,7 +21,7 @@ import { useI18n } from '../i18n'
 import { useProduct } from '../state/productInputs'
 
 /**
- * Screen 4 — Daam Badlo (spec section 9.5).
+ * Screen 4 — Daam Badlo.
  *
  * A phone mock-up of the WhatsApp messages the seller actually receives, and a
  * panel of six buttons that fire each trigger on demand against the current
@@ -46,6 +46,9 @@ const DEMO_SCENARIO: Record<TriggerId, string> = {
 
 type Delivered = Alert & { key: string; time: string }
 
+/** Fired on first load. */
+const PREFIRED: TriggerId = 'T2'
+
 export function Alerts({ onOpenBand }: AlertsProps) {
   const { inputs, update, category, floorInput, range, band, season } = useProduct()
   const { t, lang } = useI18n()
@@ -53,10 +56,18 @@ export function Alerts({ onOpenBand }: AlertsProps) {
   // The seller's own name, so the alerts read as the seller's own.
   const sellerName = account?.profile?.sellerName?.trim() || DEMO_SELLER[lang]
   const productName = DEMO_PRODUCT[lang]
-  const [feed, setFeed] = useState<Delivered[]>([])
-  const [lastFired, setLastFired] = useState<TriggerId | null>(null)
-
   const price = inputs.plannedPrice ?? Math.round(range.expected + 6)
+
+  // The festive alert is already on the phone when the screen opens: it is
+  // the one every seller gets in October, so the chat is never empty.
+  // Not when no price can work (every order comes back): the message would
+  // have nothing true to say, and the Fire button is still there.
+  const [feed, setFeed] = useState<Delivered[]>(() => {
+    if (!Number.isFinite(range.expected) || !Number.isFinite(price)) return []
+    const festive = checkTrigger(PREFIRED, demoContext(PREFIRED))
+    return festive ? [{ ...festive, key: `${PREFIRED}-on-open`, time: '09:14' }] : []
+  })
+  const [lastFired, setLastFired] = useState<TriggerId | null>(PREFIRED)
 
   /**
    * A context that makes one trigger fire, built from the real product plus the
@@ -203,7 +214,7 @@ export function Alerts({ onOpenBand }: AlertsProps) {
           <Card tone="lilac">
             <CardTitle
               tone="lilac"
-              hint="Each button runs the real rule from spec section 6.6 against your current product — nothing is faked into firing."
+              hint="Each button runs the real trigger rule against your current product — nothing is faked into firing."
             >
               Fire a trigger
             </CardTitle>
@@ -286,7 +297,7 @@ export function Alerts({ onOpenBand }: AlertsProps) {
           </Card>
 
           <Card tone="white">
-            <CardTitle hint="What each rule actually watches (spec section 6.6).">
+            <CardTitle hint="What each rule actually watches.">
               The six rules
             </CardTitle>
             <ul className="space-y-1.5">

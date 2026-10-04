@@ -107,7 +107,7 @@ export function SellerOnboarding() {
             <div className="space-y-3">
               <SelectField
                 label={t('onboard.qCategory')}
-                provider="seller"
+                provider="listing"
                 value={draft.categoryId}
                 onChange={(id) => {
                   const next = getCategory(id)
@@ -137,7 +137,7 @@ export function SellerOnboarding() {
                 />
                 <NumberField
                   label={t('onboard.qWeight')}
-                  provider="seller"
+                  provider="listing"
                   value={draft.typicalWeightG}
                   onChange={(v) => set('typicalWeightG', v ?? 0)}
                   min={0}
@@ -241,14 +241,15 @@ export function SellerOnboarding() {
                 ],
                 [t('label.shippingSlab'), preview.results.expected.slab.label],
                 [t('label.packaging'), inr(category.packagingCost)],
-              ].map(([label, value]) => (
+              ].map(([label, value], i) => (
                 <div
                   key={label}
                   className="flex items-baseline justify-between gap-3 rounded-lg bg-lilac/60 px-3 py-2"
                 >
                   <dt className="flex items-center gap-2 text-[11px] text-body">
                     {label}
-                    <SourceTag provider="meesho" />
+                    {/* Row 0 is the category, which comes from the listing. */}
+                    <SourceTag provider={i === 0 ? 'listing' : 'meesho'} />
                   </dt>
                   <dd className="text-xs font-semibold tabular-nums text-plum-deep">{value}</dd>
                 </div>
