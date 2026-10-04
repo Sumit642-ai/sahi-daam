@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { bandFor } from '../src/engine/band'
 import {
   defaultFloorInput,
-  floor,
+  sellerFloor as floor,
   floorRange,
   marginPct,
   profitPer100Dispatched,

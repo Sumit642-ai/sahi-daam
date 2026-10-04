@@ -6,10 +6,17 @@ the Meesho DICE Challenge 3.0, problem statement #4.
 An offline seller prices the way they did in their shop: cost plus a markup. A
 ₹300 kurti costing ₹150 looks like ₹150 of profit. But out of 100 orders
 dispatched, ~17 never reach the buyer (RTO, mostly COD refusals) and ~13 come
-back after delivery. Forward shipping, reverse shipping, GST, packaging and COD
-handling are paid on all of them, and the product itself is lost on unsellable
-returns. Spread that over the sales that actually survive and the true floor is
-**₹318** — so that seller loses **₹18** on every kurti they sell.
+back after delivery. Under Meesho's published supplier policy the seller pays
+no COD fee and no shipping on RTOs — but does pay forward shipping and GST on
+delivered orders, reverse shipping and GST on customer returns, packaging on
+every order, and loses the product on unsellable returns. Spread that over the
+sales that actually survive and the seller's floor is **₹271** — so the ₹150
+they think they earn is really about **₹29**.
+
+The full cost to serve that kurti — every shipping leg on every order plus COD
+handling, whoever pays it — is **₹318**, the deck's worked example. The ₹51 per
+clean sale between the two is what Meesho absorbs. Sahi Daam shows both,
+labelled, and prices on the seller floor.
 
 Sahi Daam computes that floor from the seller's own cost and RTO/return drag,
 places it against the market band, moves the recommendation through the

@@ -114,20 +114,28 @@ const BODY: Record<TriggerId, Record<Lang, Template>> = {
       `दाम ₹${n.suggested} कीजिए, या लिस्टिंग ठीक कीजिए — साइज़ चार्ट और फ़ोटो।`,
   },
 
-  // Spec section 8 gives this one verbatim; the Hindi below is that template.
+  // Festive RTO: under the supplier policy the seller's floor barely moves, so
+  // the message is about refusals, deliveries and stock in transit — and it
+  // quotes the real floor change instead of claiming a jump.
   T2: {
     en: (n, name, product) =>
-      `${name} ji, RTO goes up in the festive season. Your ${product}'s true minimum price has ` +
-      `risen from ₹${n.floorOld} to ₹${n.floorNew}. You are selling at ₹${n.price} right now — ` +
+      `${name} ji, festive RTO is coming — more COD buyers refuse at the door. Of 100 ` +
+      `${product} orders, about ${n.deliveredNew} will be delivered instead of ${n.deliveredOld}, ` +
+      `and the rest sit in transit before they come back. Meesho pays the RTO shipping, so your ` +
+      `minimum price moves only from ₹${n.floorOld} to ₹${n.floorNew}. Push prepaid and keep ` +
+      `stock ready. ` +
       (Number(n.loss) > 0
-        ? `a loss of ₹${n.loss} on every order.`
-        : `that leaves just ₹${n.profit} on every order.`),
+        ? `At ₹${n.price} you lose ₹${n.loss} on every order.`
+        : `At ₹${n.price} you keep ₹${n.profit} on every order.`),
     hi: (n, name, product) =>
-      `${name} जी, त्योहार के मौसम में RTO बढ़ जाता है। आपकी ${product} का सही न्यूनतम दाम ` +
-      `₹${n.floorOld} से बढ़कर ₹${n.floorNew} हो गया है। अभी आप ₹${n.price} पर बेच रहे हैं — ` +
+      `${name} जी, त्योहार का RTO आ रहा है — ज़्यादा COD ग्राहक दरवाज़े पर ऑर्डर लौटा देंगे। ` +
+      `100 ऑर्डर में से लगभग ${n.deliveredNew} ही डिलीवर होंगे (पहले ${n.deliveredOld}), बाक़ी ` +
+      `रास्ते में फँसकर वापस आएँगे। RTO की शिपिंग मीशो भरता है, इसलिए आपकी ${product} का ` +
+      `न्यूनतम दाम सिर्फ़ ₹${n.floorOld} से ₹${n.floorNew} होता है। प्रीपेड को बढ़ावा दीजिए और ` +
+      `स्टॉक तैयार रखिए। ` +
       (Number(n.loss) > 0
-        ? `हर ऑर्डर पर ₹${n.loss} का नुकसान।`
-        : `हर ऑर्डर पर सिर्फ़ ₹${n.profit} बचते हैं।`),
+        ? `₹${n.price} पर हर ऑर्डर पर ₹${n.loss} का नुकसान।`
+        : `₹${n.price} पर हर ऑर्डर पर ₹${n.profit} बचते हैं।`),
   },
 
   T3: {

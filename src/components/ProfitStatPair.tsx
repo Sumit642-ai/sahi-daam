@@ -6,9 +6,9 @@ import { useI18n } from '../i18n'
 import { ShowWorking, type WorkingStep } from './ShowWorking'
 
 /**
- * Spec section 9.2: "You think you earn ₹(price − COGS). You actually earn
- * ₹(price − floor)." This is the hook from section 1 — the ₹150 that is really
- * a ₹18 loss — so it is deliberately two enormous numbers side by side, the
+ * "You think you earn ₹(price − COGS). You actually keep ₹(price − floor)."
+ * The floor is the seller floor — what the seller pays — so at ₹300 the
+ * kurti's ₹150 is really about ₹29. Two enormous numbers side by side, the
  * second in magenta when it is a loss.
  */
 interface ProfitStatPairProps {
@@ -35,7 +35,7 @@ export function ProfitStatPair({ price, cogs, range, deck }: ProfitStatPairProps
       note: 'This is the number a seller carries over from the shop. It ignores every order that never became a clean sale.',
     },
     {
-      label: 'What you actually earn per clean sale',
+      label: 'What you actually keep per clean sale',
       formula: `${inr(price)} price − ${inr(range.expected, 2)} floor`,
       value: signedInr(actual, 2),
       emphasis: true,
@@ -44,7 +44,7 @@ export function ProfitStatPair({ price, cogs, range, deck }: ProfitStatPairProps
       label: 'Across 100 orders dispatched',
       formula: `${range.results.expected.cleanSales.toFixed(1)} clean sales × ${signedInr(actual, 2)}`,
       value: signedInr(perHundred),
-      note: 'The flat per-order costs were paid on all 100, not just on the ones that stuck.',
+      note: 'Packaging was paid on all 100, and shipping on every order that went out to a buyer — not just on the ones that stuck.',
     },
     {
       label: `If returns come in low (${pct(range.returnRates.low, 0)})`,
@@ -90,7 +90,7 @@ export function ProfitStatPair({ price, cogs, range, deck }: ProfitStatPairProps
             {signedInr(actual)}
           </p>
           <p className="mt-1 text-[11px] text-body/60">
-            {inr(price)} − {inr(range.expected)} true floor
+            {inr(price)} − {inr(range.expected)} your floor
           </p>
         </div>
       </div>
@@ -116,20 +116,20 @@ export function ProfitStatPair({ price, cogs, range, deck }: ProfitStatPairProps
 
       <ShowWorking
         className="mt-2"
-        title="What you actually earn"
+        title="What you actually keep"
         steps={steps}
         withLabel
         footer={
           deck ? (
             <p>
-              <span className="font-semibold text-plum">Deck worked example.</span> On the
-              deck&rsquo;s rounded units the floor is {inr(deck.floor)}, so {inr(price)} −{' '}
-              {inr(deck.floor)} ={' '}
+              <span className="font-semibold text-plum">At full cost-to-serve.</span> The
+              deck&rsquo;s worked example charges every shipping leg on every order plus COD
+              handling: {inr(deck.floor)}, so {inr(price)} − {inr(deck.floor)} ={' '}
               <strong className={price - deck.floor < 0 ? 'text-magenta' : 'text-profit'}>
                 {signedInr(price - deck.floor)}
               </strong>{' '}
-              per sale. At a {inr(300)} list price that is the &ldquo;you think ₹150, you actually
-              lose ₹18&rdquo; number from the deck.
+              per sale. That is what the order costs to serve. Meesho&rsquo;s supplier policy pays
+              the RTO legs and COD handling, which is why what you keep is higher.
             </p>
           ) : null
         }

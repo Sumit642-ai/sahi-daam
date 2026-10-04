@@ -4,7 +4,7 @@
  *
  *   npm run verify:deck
  */
-import { defaultFloorInput, floor, floorRange, profitPerCleanSale } from '../src/engine/floor'
+import { costToServe as floor, costToServeRange as floorRange, defaultFloorInput, profitPerCleanSale } from '../src/engine/floor'
 import { inr, pct } from '../src/engine/format'
 
 const base = defaultFloorInput('ethnic_women', { cogs: 150, weightG: 350 })

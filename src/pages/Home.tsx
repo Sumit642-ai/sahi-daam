@@ -1,13 +1,14 @@
-import { inr } from '../engine/format'
+import { inr, signedInr } from '../engine/format'
 import { useI18n } from '../i18n'
 import { Card } from '../components/Card'
 import { useProduct } from '../state/productInputs'
 
 /**
- * Screen 0 — Home (spec section 9.1).
+ * Screen 0 — Home.
  *
- * Two large entry cards, the one-line problem statement, and the hook that the
- * whole product exists to deliver: ₹150 against −₹18 on the same kurti.
+ * Three entry cards, the one-line problem statement, and the hook: the ₹150 a
+ * seller thinks a ₹300 kurti earns, against what they actually keep once
+ * their own shipping, returns and packaging are spread over clean sales.
  */
 interface HomeProps {
   onOpenFloor: () => void
@@ -17,12 +18,13 @@ interface HomeProps {
 
 export function Home({ onOpenFloor, onOpenJourney, onOpenCompare }: HomeProps) {
   const { t } = useI18n()
-  const { deck } = useProduct()
+  const { range, inputs } = useProduct()
 
-  // The deck's kurti, which is what the hook quotes.
-  const deckFloor = deck?.floor ?? 318
-  const imagined = 300 - 150
-  const actual = 300 - deckFloor
+  // The hook quotes the signed-in seller's own product at ₹300 (Ramesh's
+  // kurti by default), on the seller floor — what they actually pay.
+  const price = 300
+  const imagined = price - (inputs.cogs ?? 0)
+  const actual = price - range.expected
 
   const cards = [
     {
@@ -81,8 +83,12 @@ export function Home({ onOpenFloor, onOpenJourney, onOpenCompare }: HomeProps) {
             <p className="text-xs font-semibold uppercase tracking-wide text-body/70">
               {t('home.hookActual')}
             </p>
-            <p className="mt-1 text-5xl font-bold leading-none tracking-tight text-magenta sm:text-6xl">
-              −{inr(Math.abs(actual))}
+            <p
+              className={`mt-1 text-5xl font-bold leading-none tracking-tight sm:text-6xl ${
+                actual < 0 ? 'text-magenta' : 'text-profit'
+              }`}
+            >
+              {signedInr(actual)}
             </p>
           </div>
         </div>

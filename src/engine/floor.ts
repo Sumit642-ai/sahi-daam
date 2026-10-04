@@ -1,5 +1,22 @@
 /**
- * The floor calculation (spec section 6.1) — the heart of Sahi Daam.
+ * The floor calculation — the heart of Sahi Daam.
+ *
+ * TWO MODELS LIVE HERE, and the difference between them is who pays.
+ *
+ *   sellerFloor()  What the SELLER actually pays under Meesho's published
+ *                  supplier policy: forward shipping on delivered orders,
+ *                  reverse shipping on customer returns, GST on both fees,
+ *                  packaging, unsellable returns and ads. No return fee on
+ *                  RTOs, no COD fee. Every seller-facing number uses this.
+ *
+ *   costToServe()  The full logistics cost of the order, whoever pays it:
+ *                  every leg on every order plus COD handling. This is the
+ *                  deck's original ₹318 model, kept to show what Meesho
+ *                  absorbs on the seller's behalf.
+ *
+ * meeshoAbsorbs() is the part of cost-to-serve the seller does not pay.
+ *
+ * The rest of this note describes the idea the two share:
  *
  * Meesho charges 0% commission, so a seller's online costs are almost all FLAT
  * PER ORDER: forward shipping, reverse shipping on anything that comes back,
@@ -24,6 +41,7 @@ import {
   weightSlabExtraStep,
   weightSlabs,
 } from '../data'
+import policyJson from '../data/policy.json'
 import { inr, pct, units } from './format'
 import { MAX_RTO, seasonalRto } from './season'
 
@@ -45,7 +63,20 @@ const LAST_SLAB = weightSlabs[weightSlabs.length - 1]!
  * Forward and reverse shipping for a parcel weight (spec section 5.2).
  * Past the last listed slab, each extra 500 g adds +₹20 forward / +₹30 reverse.
  */
-export function slabFor(weightG: number): ResolvedSlab {
+export function slabFor(weightG: number, rateSource: RateSource = 'dice'): ResolvedSlab {
+  const dice = diceSlabFor(weightG)
+  if (rateSource === 'dice') return dice
+  // 2026 reported rates are only published for the first slab. Heavier slabs
+  // keep the same rupee uplift over DICE — an ASSUMPTION, labelled as one.
+  return {
+    ...dice,
+    forward: dice.forward + REPORTED_2026.forwardUplift,
+    reverse: dice.reverse + REPORTED_2026.reverseUplift,
+    source: policyJson.reported2026Forward.source,
+  }
+}
+
+function diceSlabFor(weightG: number): ResolvedSlab {
   const w = Math.max(0, weightG)
   const match = weightSlabs.find((s) => w <= s.maxG)
   if (match) {
@@ -78,6 +109,32 @@ export function fwd(weightG: number): number {
 /** Reverse shipping only, ₹ per returned order — the `rev(weight)` of the spec. */
 export function rev(weightG: number): number {
   return slabFor(weightG).reverse
+}
+
+// ---------------------------------------------------------------------- policy
+
+/** Whose rate card prices the shipping legs. */
+export type RateSource = 'dice' | 'reported2026'
+
+/** Who pays a cost line. */
+export type Payer = 'seller' | 'meesho'
+
+export interface SellerPolicy {
+  /**
+   * DISPUTED. Off (default): the forward fee is charged on delivered orders
+   * only, so an RTO costs the seller no shipping at all. On: the forward fee
+   * is charged on every dispatched order, as some 2026 seller guides report.
+   */
+  forwardOnRto: boolean
+  rateSource: RateSource
+}
+
+export const DEFAULT_POLICY: SellerPolicy = { forwardOnRto: false, rateSource: 'dice' }
+
+/** ₹65 / ₹155 at ≤ 500 g, expressed as the uplift over DICE's ₹50 / ₹120. */
+const REPORTED_2026 = {
+  forwardUplift: policyJson.reported2026Forward.value - weightSlabs[0]!.forward,
+  reverseUplift: policyJson.reported2026Reverse.value - weightSlabs[0]!.reverse,
 }
 
 // ---------------------------------------------------------------------- inputs
@@ -122,6 +179,8 @@ export interface FloorInput {
   unitOverrides?: UnitOverrides
   /** Overrides for fees.json defaults (gstRate, codFee, unitsBasis). */
   fees?: Partial<Fees>
+  /** Who-pays settings. Defaults to DEFAULT_POLICY. */
+  policy?: Partial<SellerPolicy>
 }
 
 // --------------------------------------------------------------------- outputs
@@ -134,6 +193,10 @@ export type CostLineKey =
   | 'cod'
   | 'writeOff'
   | 'ad'
+  // Lines Meesho absorbs under the supplier policy (sellerFloor only).
+  | 'rtoForward'
+  | 'rtoForwardGst'
+  | 'rtoReverse'
 
 export interface CostLine {
   key: CostLineKey
@@ -144,9 +207,13 @@ export interface CostLine {
   working: string
   /** ₹ for the whole basis of 100 dispatched orders. */
   amount: number
+  /** Who pays it. Cost-to-serve lines are all reported as 'seller'. */
+  payer: Payer
 }
 
 export interface FloorResult {
+  /** Which model produced this: what the seller pays, or the full cost to serve. */
+  model: 'seller' | 'costToServe'
   /** Units dispatched the whole calculation is based on (100 by convention). */
   unitsBasis: number
   /** Blended RTO rate after the season index, capped at 0.90. */
@@ -167,6 +234,14 @@ export interface FloorResult {
 
   /** The seven cost lines, each with its working, in display order. */
   costLines: CostLine[]
+  /**
+   * Seller model only: what Meesho pays on the seller's behalf (RTO legs and
+   * COD handling). Not part of `totalOverhead`. Empty for cost-to-serve.
+   */
+  absorbedLines: CostLine[]
+  absorbedTotal: number
+  /** absorbedTotal ÷ clean sales. */
+  absorbedPerCleanSale: number
   totalOverhead: number
   overheadPerCleanSale: number
   /** COGS + overhead per clean sale. The answer. */
@@ -179,26 +254,33 @@ export interface FloorResult {
   /** False when no order survives, so the floor is unreachable at any price. */
   viable: boolean
   /** The resolved inputs, echoed back so a UI panel can show what was used. */
-  input: Required<Omit<FloorInput, 'unitOverrides' | 'fees'>> & {
+  input: Required<Omit<FloorInput, 'unitOverrides' | 'fees' | 'policy'>> & {
     fees: Fees
     unitOverrides: UnitOverrides
+    policy: SellerPolicy
   }
 }
 
 // -------------------------------------------------------------- the calculation
 
 /**
- * The floor for one set of inputs, with every intermediate value and the
- * working for each of the seven cost lines.
+ * FULL COST-TO-SERVE: every logistics cost on every order, whoever pays it.
+ *
+ * Forward on all 100 dispatched, reverse on every RTO and every return, GST on
+ * the forward leg, COD handling. This is the deck's original model (₹318 for
+ * the kurti) and it is NOT what the seller pays — Meesho's supplier policy
+ * takes the RTO return leg and the COD fee off them. It is shown beside the
+ * seller floor so the size of what Meesho absorbs is visible.
  */
-export function floor(input: FloorInput): FloorResult {
+export function costToServe(input: FloorInput): FloorResult {
   const fees: Fees = { ...defaultFees, ...input.fees }
+  const policy: SellerPolicy = { ...DEFAULT_POLICY, ...input.policy }
   const adSpendPerOrder = input.adSpendPerOrder ?? 0
   const seasonIndex = input.seasonIndex ?? 1
   const ov = input.unitOverrides ?? {}
 
   const N = fees.unitsBasis
-  const slab = slabFor(input.weightG)
+  const slab = slabFor(input.weightG, policy.rateSource)
 
   // Blended RTO across the COD / prepaid mix, lifted by the season, then capped.
   const baselineRto = input.codShare * input.rtoCod + (1 - input.codShare) * input.rtoPrepaid
@@ -223,6 +305,7 @@ export function floor(input: FloorInput): FloorResult {
   const costLines: CostLine[] = [
     {
       key: 'forward',
+      payer: 'seller',
       label: 'Forward shipping',
       labelKey: 'cost.forward',
       working: `${units(N)} × ${inr(slab.forward)}`,
@@ -230,6 +313,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'reverse',
+      payer: 'seller',
       label: 'Reverse shipping (RTO + returns)',
       labelKey: 'cost.reverse',
       working: `(${units(rtoUnits)} + ${units(returnUnits)}) × ${inr(slab.reverse)}`,
@@ -237,6 +321,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'gst',
+      payer: 'seller',
       label: 'GST on forward shipping',
       labelKey: 'cost.gst',
       working: `${pct(fees.gstRate, 0)} × ${inr(forwardCost)}`,
@@ -244,6 +329,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'packaging',
+      payer: 'seller',
       label: 'Packaging',
       labelKey: 'cost.packaging',
       working: `${units(N)} × ${inr(input.packagingCost)}`,
@@ -251,6 +337,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'cod',
+      payer: 'seller',
       label: 'COD handling',
       labelKey: 'cost.cod',
       working: `${units(N)} × ${pct(input.codShare, 0)} × ${inr(fees.codFee)}`,
@@ -258,6 +345,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'writeOff',
+      payer: 'seller',
       label: 'Unsellable returns (product written off)',
       labelKey: 'cost.writeOff',
       working: `${units(writeOffUnits)} × ${inr(input.cogs)}`,
@@ -265,6 +353,7 @@ export function floor(input: FloorInput): FloorResult {
     },
     {
       key: 'ad',
+      payer: 'seller',
       label: 'Ad spend',
       labelKey: 'cost.ad',
       working: `${units(N)} × ${inr(adSpendPerOrder)}`,
@@ -281,6 +370,10 @@ export function floor(input: FloorInput): FloorResult {
   const floorValue = viable ? input.cogs + overheadPerCleanSale : Number.POSITIVE_INFINITY
 
   return {
+    model: 'costToServe',
+    absorbedLines: [],
+    absorbedTotal: 0,
+    absorbedPerCleanSale: 0,
     unitsBasis: N,
     rto,
     rtoUnits,
@@ -316,7 +409,219 @@ export function floor(input: FloorInput): FloorResult {
       seasonIndex,
       fees,
       unitOverrides: ov,
+      policy,
     },
+  }
+}
+
+// ---------------------------------------------------------------- seller floor
+
+/**
+ * WHAT THE SELLER PAYS, under Meesho's published supplier policy.
+ *
+ *   delivered = N × (1 − RTO)
+ *   returns   = delivered × returnRate
+ *   clean     = delivered − returns
+ *   forward   = delivered × fwd        (N × fwd when forwardOnRto is on)
+ *   reverse   = returns × rev          (customer returns only; no RTO fee)
+ *   GST       = 18% × (forward + reverse)
+ *   packaging = N × packaging          (every order is packed)
+ *   write-off = returns × writeOffShare × COGS
+ *   ads       = N × ad spend
+ *   floor     = COGS + total ÷ clean
+ *
+ * No COD fee. The RTO legs and COD handling are reported as `absorbedLines`.
+ */
+export function sellerFloor(input: FloorInput): FloorResult {
+  const fees: Fees = { ...defaultFees, ...input.fees }
+  const policy: SellerPolicy = { ...DEFAULT_POLICY, ...input.policy }
+  const adSpendPerOrder = input.adSpendPerOrder ?? 0
+  const seasonIndex = input.seasonIndex ?? 1
+  const ov = input.unitOverrides ?? {}
+
+  const N = fees.unitsBasis
+  const slab = slabFor(input.weightG, policy.rateSource)
+
+  const baselineRto = input.codShare * input.rtoCod + (1 - input.codShare) * input.rtoPrepaid
+  const rto = seasonalRto(baselineRto, seasonIndex)
+
+  const rtoUnits = ov.rtoUnits ?? N * rto
+  const deliveredUnits = ov.deliveredUnits ?? N - rtoUnits
+  const returnUnits = ov.returnUnits ?? deliveredUnits * input.returnRate
+  const cleanSales = ov.cleanSales ?? deliveredUnits - returnUnits
+  const writeOffUnits = ov.writeOffUnits ?? returnUnits * input.writeOffShare
+
+  // GST on both fees, at the platform rate (18% unless an admin changes it).
+  const gstRate = fees.gstRate
+  const forwardUnits = policy.forwardOnRto ? N : deliveredUnits
+  const forwardCost = forwardUnits * slab.forward
+  const reverseCost = returnUnits * slab.reverse
+  const gstCost = gstRate * (forwardCost + reverseCost)
+  const packagingTotal = N * input.packagingCost
+  const writeOffCost = writeOffUnits * input.cogs
+  const adCost = N * adSpendPerOrder
+
+  const costLines: CostLine[] = [
+    {
+      key: 'forward',
+      payer: 'seller',
+      label: policy.forwardOnRto
+        ? 'Forward shipping (every dispatched order)'
+        : 'Forward shipping (delivered orders)',
+      labelKey: policy.forwardOnRto ? 'cost.forwardAll' : 'cost.forwardDelivered',
+      working: `${units(forwardUnits)} × ${inr(slab.forward)}`,
+      amount: forwardCost,
+    },
+    {
+      key: 'reverse',
+      payer: 'seller',
+      label: 'Reverse shipping (customer returns)',
+      labelKey: 'cost.reverseReturns',
+      working: `${units(returnUnits)} × ${inr(slab.reverse)}`,
+      amount: reverseCost,
+    },
+    {
+      key: 'gst',
+      payer: 'seller',
+      label: 'GST on your shipping fees',
+      labelKey: 'cost.gstFees',
+      working: `${pct(gstRate, 0)} × (${inr(forwardCost)} + ${inr(reverseCost)})`,
+      amount: gstCost,
+    },
+    {
+      key: 'packaging',
+      payer: 'seller',
+      label: 'Packaging',
+      labelKey: 'cost.packaging',
+      working: `${units(N)} × ${inr(input.packagingCost)}`,
+      amount: packagingTotal,
+    },
+    {
+      key: 'writeOff',
+      payer: 'seller',
+      label: 'Unsellable returns (product written off)',
+      labelKey: 'cost.writeOff',
+      working: `${units(writeOffUnits)} × ${inr(input.cogs)}`,
+      amount: writeOffCost,
+    },
+    {
+      key: 'ad',
+      payer: 'seller',
+      label: 'Ad spend',
+      labelKey: 'cost.ad',
+      working: `${units(N)} × ${inr(adSpendPerOrder)}`,
+      amount: adCost,
+    },
+  ]
+
+  // What Meesho pays so the seller does not.
+  const rtoForward = rtoUnits * slab.forward
+  const absorbedLines: CostLine[] = []
+  if (!policy.forwardOnRto) {
+    absorbedLines.push(
+      {
+        key: 'rtoForward',
+        payer: 'meesho',
+        label: 'Forward shipping on RTO orders',
+        labelKey: 'cost.rtoForward',
+        working: `${units(rtoUnits)} × ${inr(slab.forward)}`,
+        amount: rtoForward,
+      },
+      {
+        key: 'rtoForwardGst',
+        payer: 'meesho',
+        label: 'GST on that forward fee',
+        labelKey: 'cost.rtoForwardGst',
+        working: `${pct(gstRate, 0)} × ${inr(rtoForward)}`,
+        amount: gstRate * rtoForward,
+      },
+    )
+  }
+  absorbedLines.push(
+    {
+      key: 'rtoReverse',
+      payer: 'meesho',
+      label: 'Return shipping on RTO orders',
+      labelKey: 'cost.rtoReverse',
+      working: `${units(rtoUnits)} × ${inr(slab.reverse)}`,
+      amount: rtoUnits * slab.reverse,
+    },
+    {
+      key: 'cod',
+      payer: 'meesho',
+      label: 'COD handling',
+      labelKey: 'cost.cod',
+      working: `${units(N)} × ${pct(input.codShare, 0)} × ${inr(fees.codFee)}`,
+      amount: N * input.codShare * fees.codFee,
+    },
+  )
+
+  const totalOverhead = costLines.reduce((sum, line) => sum + line.amount, 0)
+  const absorbedTotal = absorbedLines.reduce((sum, line) => sum + line.amount, 0)
+  const viable = cleanSales > 0
+  const overheadPerCleanSale = viable ? totalOverhead / cleanSales : Number.POSITIVE_INFINITY
+  const floorValue = viable ? input.cogs + overheadPerCleanSale : Number.POSITIVE_INFINITY
+
+  return {
+    model: 'seller',
+    unitsBasis: N,
+    rto,
+    rtoUnits,
+    deliveredUnits,
+    returnUnits,
+    cleanSales,
+    writeOffUnits,
+    forwardCost,
+    reverseCost,
+    gstCost,
+    packagingTotal,
+    codCost: 0,
+    writeOffCost,
+    adCost,
+    costLines,
+    absorbedLines,
+    absorbedTotal,
+    absorbedPerCleanSale: viable ? absorbedTotal / cleanSales : Number.POSITIVE_INFINITY,
+    totalOverhead,
+    overheadPerCleanSale,
+    floor: floorValue,
+    survivalRate: cleanSales / N,
+    slab,
+    viable,
+    input: {
+      cogs: input.cogs,
+      weightG: input.weightG,
+      categoryId: input.categoryId,
+      codShare: input.codShare,
+      rtoCod: input.rtoCod,
+      rtoPrepaid: input.rtoPrepaid,
+      returnRate: input.returnRate,
+      writeOffShare: input.writeOffShare,
+      packagingCost: input.packagingCost,
+      adSpendPerOrder,
+      seasonIndex,
+      fees,
+      unitOverrides: ov,
+      policy,
+    },
+  }
+}
+
+/**
+ * What Meesho pays on the seller's behalf, per clean sale: the forward fee
+ * and its GST on RTO orders (unless that fee is charged to the seller), the
+ * RTO return leg, and COD handling.
+ */
+export function meeshoAbsorbs(input: FloorInput): {
+  lines: CostLine[]
+  total: number
+  perCleanSale: number
+} {
+  const result = sellerFloor(input)
+  return {
+    lines: result.absorbedLines,
+    total: result.absorbedTotal,
+    perCleanSale: result.absorbedPerCleanSale,
   }
 }
 
@@ -349,6 +654,19 @@ export interface FloorRange {
  * drawer (spec section 9.2 makes every auto-filled value editable).
  */
 export function floorRange(input: FloorInput, override?: ReturnRateTriple): FloorRange {
+  return rangeOf(sellerFloor, input, override)
+}
+
+/** The same three return rates, priced at full cost-to-serve. */
+export function costToServeRange(input: FloorInput, override?: ReturnRateTriple): FloorRange {
+  return rangeOf(costToServe, input, override)
+}
+
+function rangeOf(
+  model: (input: FloorInput) => FloorResult,
+  input: FloorInput,
+  override?: ReturnRateTriple,
+): FloorRange {
   const category = getCategory(input.categoryId)
   const returnRates = override ?? {
     low: category.returnRateLow,
@@ -356,9 +674,9 @@ export function floorRange(input: FloorInput, override?: ReturnRateTriple): Floo
     high: category.returnRateHigh,
   }
   const results = {
-    low: floor({ ...input, returnRate: returnRates.low }),
-    expected: floor({ ...input, returnRate: returnRates.expected }),
-    high: floor({ ...input, returnRate: returnRates.high }),
+    low: model({ ...input, returnRate: returnRates.low }),
+    expected: model({ ...input, returnRate: returnRates.expected }),
+    high: model({ ...input, returnRate: returnRates.high }),
   }
   return {
     low: results.low.floor,

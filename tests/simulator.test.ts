@@ -18,7 +18,7 @@ import { runSimulation, weekDate } from '../src/engine/simulator'
 // Spec section 10, test 8 — Simulator determinism
 // ---------------------------------------------------------------------------
 
-describe('test 8 — simulator determinism and the two strategies', () => {
+describe('test 8 — simulator determinism and the three strategies', () => {
   const a = runSimulation()
   const b = runSimulation()
 
@@ -26,37 +26,46 @@ describe('test 8 — simulator determinism and the two strategies', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b))
   })
 
-  it('runs both strategies for all 26 weeks', () => {
+  it('runs all three strategies for all 26 weeks', () => {
     expect(a.sahiDaam.weeks).toHaveLength(26)
     expect(a.sellerInstinct.weeks).toHaveLength(26)
+    expect(a.meeshoRange.weeks).toHaveLength(26)
     expect(a.sahiDaam.weeks.map((w) => w.week)).toEqual(
       Array.from({ length: 26 }, (_, i) => i + 1),
     )
   })
 
-  it('ends Sahi Daam ahead of seller instinct on cumulative profit', () => {
+  it('ends Sahi Daam ahead of both baselines on cumulative profit', () => {
     const sahi = a.sahiDaam.weeks[25]!.cumulativeProfit
-    const instinct = a.sellerInstinct.weeks[25]!.cumulativeProfit
-    expect(sahi).toBeGreaterThan(instinct)
-    // ...and by a margin worth putting on a chart.
-    expect(sahi).toBeGreaterThan(0)
-    expect(instinct).toBeLessThan(0)
+    expect(sahi).toBeGreaterThan(a.sellerInstinct.weeks[25]!.cumulativeProfit)
+    expect(sahi).toBeGreaterThan(a.meeshoRange.weeks[25]!.cumulativeProfit)
   })
 
-  it('never lets Sahi Daam price below its floor, and never stops seller instinct', () => {
+  it('shows on the seller floor that both baselines still make money — just less', () => {
+    // At ₹300 or the ₹318 band median, both sit above the ₹271 seller floor in
+    // quiet weeks. The case for Sahi Daam is the gap, not a loss.
+    expect(a.sellerInstinct.summary.totalProfit).toBeGreaterThan(0)
+    expect(a.meeshoRange.summary.totalProfit).toBeGreaterThan(0)
+  })
+
+  it('never lets Sahi Daam price below its floor', () => {
     expect(a.sahiDaam.summary.weeksBelowFloor).toBe(0)
-    expect(a.sellerInstinct.summary.weeksBelowFloor).toBe(26)
+  })
+
+  it('keeps Meesho range on the band median every week, undercut included', () => {
+    for (const w of a.meeshoRange.weeks) expect(w.price).toBe(Math.round(w.bandP50))
   })
 
   it('gives both strategies the identical world', () => {
     // Same scripted calendar, same band, same seasonal lift, same costs.
     for (let i = 0; i < 26; i += 1) {
       const sahi = a.sahiDaam.weeks[i]!
-      const instinct = a.sellerInstinct.weeks[i]!
-      expect(instinct.date).toBe(sahi.date)
-      expect(instinct.cogs).toBe(sahi.cogs)
-      expect(instinct.seasonIndex).toBe(sahi.seasonIndex)
-      expect(instinct.bandP50).toBeCloseTo(sahi.bandP50, 6)
+      for (const other of [a.sellerInstinct.weeks[i]!, a.meeshoRange.weeks[i]!]) {
+        expect(other.date).toBe(sahi.date)
+        expect(other.cogs).toBe(sahi.cogs)
+        expect(other.seasonIndex).toBe(sahi.seasonIndex)
+        expect(other.bandP50).toBeCloseTo(sahi.bandP50, 6)
+      }
     }
   })
 
@@ -108,7 +117,7 @@ describe('test 8 — simulator determinism and the two strategies', () => {
   })
 
   it('keeps stock and profit arithmetic consistent week to week', () => {
-    for (const run of [a.sahiDaam, a.sellerInstinct]) {
+    for (const run of [a.sahiDaam, a.sellerInstinct, a.meeshoRange]) {
       let cumulative = 0
       for (const week of run.weeks) {
         cumulative += week.profit

@@ -1,9 +1,17 @@
 /**
- * The 26-week seller-journey world (spec section 7).
+ * The 26-week seller-journey world.
  *
- * One kurti, two strategies, the same world — same seed, same noise draws, same
- * scripted events — so the only thing separating the two cumulative-profit
- * lines is how each of them prices.
+ * One kurti, three strategies, the same world — same seed, same noise draws,
+ * same scripted events — so the only thing separating the cumulative-profit
+ * lines is how each of them prices:
+ *
+ *   sahi_daam        the floor, the band, the learner, and the triggers
+ *   seller_instinct  cost × 2, matches the week-12 undercut, never checks
+ *   meesho_range     the similar-listing band median every week — what
+ *                    following Meesho's range alone would do
+ *
+ * Profit is always measured on the SELLER floor: what Meesho's supplier policy
+ * actually charges the seller.
  *
  * The demand model in here is HIDDEN (spec section 7.1): it exists to generate
  * believable weekly numbers, and `learner.ts` must never see it. The learner is
@@ -17,7 +25,7 @@ import {
   type FloorInput,
   type FloorRange,
   defaultFloorInput,
-  floor as computeFloor,
+  sellerFloor as computeFloor,
   floorRange,
 } from './floor'
 import {
@@ -161,11 +169,14 @@ export interface WorldOptions {
 
 // ------------------------------------------------------------------- outputs
 
-export type StrategyId = 'sahi_daam' | 'seller_instinct'
+export type StrategyId = 'sahi_daam' | 'seller_instinct' | 'meesho_range'
+
+export const STRATEGY_IDS: readonly StrategyId[] = ['sahi_daam', 'seller_instinct', 'meesho_range']
 
 export const STRATEGY_LABEL: Record<StrategyId, string> = {
   sahi_daam: 'Sahi Daam',
   seller_instinct: 'Seller instinct',
+  meesho_range: 'Meesho range',
 }
 
 export interface WeekRow {
@@ -218,6 +229,8 @@ export interface StrategyRun {
 export interface Simulation {
   sahiDaam: StrategyRun
   sellerInstinct: StrategyRun
+  /** Lists at the similar-listing band median every week. */
+  meeshoRange: StrategyRun
   events: JourneyEvent[]
   /** Revealed in judge mode only (spec section 9). */
   hidden: { epsilon: number; seed: number }
@@ -293,15 +306,15 @@ function runStrategy(strategy: StrategyId, world_: Required<WorldOptions>): Stra
   // Week-1 setup, shared by both strategies.
   const week1 = worldFor(1, baseBand, baseBand)
   const launchRecommendation = recommend('LAUNCH', week1.range, week1.band)
-  const cohort = nearestListings(
-    baseBand,
-    strategy === 'sahi_daam' ? launchRecommendation.price : PRODUCT.cogs * 2,
-  ).map((l) => l.id)
-
-  let price =
+  const startingPrice =
     strategy === 'sahi_daam'
       ? launchRecommendation.price
-      : PRODUCT.cogs * 2 // the interviewed seller's rule: cost x 2
+      : strategy === 'meesho_range'
+        ? Math.round(baseBand.p50) // the middle of the similar-listing band
+        : PRODUCT.cogs * 2 // the interviewed seller's rule: cost x 2
+  const cohort = nearestListings(baseBand, startingPrice).map((l) => l.id)
+
+  let price = startingPrice
 
   // The week-12 event belongs to the WORLD, not to the strategy: it is one
   // marketplace, and the same five listings cut their prices whoever is
@@ -374,6 +387,10 @@ function runStrategy(strategy: StrategyId, world_: Required<WorldOptions>): Stra
         if (price < safe) price = safe
         maturePrice = price
       }
+    } else if (strategy === 'meesho_range') {
+      // Follows the similar-listing band, week-12 undercut included. Never
+      // checks the floor; never reprices for festive RTO.
+      price = Math.round(world.band.p50)
     } else {
       // Seller instinct, from the team's interviews.
       if (week === 12) {
@@ -553,6 +570,7 @@ export function runSimulation(options: WorldOptions = {}): Simulation {
   return {
     sahiDaam: runStrategy('sahi_daam', world),
     sellerInstinct: runStrategy('seller_instinct', world),
+    meeshoRange: runStrategy('meesho_range', world),
     events: JOURNEY_EVENTS as JourneyEvent[],
     hidden: world,
   }

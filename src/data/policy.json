@@ -1,0 +1,59 @@
+{
+  "_note": "Who pays which logistics cost under Meesho's published supplier policy. Values are rendered on Numbers & sources with their source. The engine's sellerFloor() follows these; costToServe() ignores them and charges every logistics cost on every order.",
+  "rtoReturnShipping": {
+    "value": "Not charged to the seller",
+    "unit": "RTO return leg",
+    "label_en": "Return shipping on RTO orders",
+    "label_hi": "RTO ऑर्डर की वापसी शिपिंग",
+    "source": "supplier.meesho.com/pricing and supplier.meesho.com/shipping — no return-shipping fee on RTO orders"
+  },
+  "codFee": {
+    "value": "Not charged to the seller",
+    "unit": "COD / collection fee",
+    "label_en": "COD / collection fee",
+    "label_hi": "COD / वसूली शुल्क",
+    "source": "supplier.meesho.com/pricing — no COD or collection fee for suppliers"
+  },
+  "customerReturnShipping": {
+    "value": "Seller pays, by weight slab",
+    "unit": "customer-return leg",
+    "label_en": "Reverse shipping on customer returns",
+    "label_hi": "ग्राहक वापसी की रिवर्स शिपिंग",
+    "source": "supplier.meesho.com/shipping — reverse shipping on customer returns is charged to the supplier by weight"
+  },
+  "forwardOnRto": {
+    "value": "Off — forward fee on delivered orders only",
+    "unit": "setting",
+    "label_en": "Forward fee also charged on RTO orders",
+    "label_hi": "RTO ऑर्डर पर भी आगे की शिपिंग फ़ीस",
+    "source": "DISPUTED — 2026 seller guides disagree on whether the forward fee is charged when an order is returned to origin. Default: delivered orders only. Switch it on under Advanced to see the other reading."
+  },
+  "gstOnFees": {
+    "value": 0.18,
+    "unit": "share of forward + reverse fees",
+    "label_en": "GST on shipping fees (forward and reverse)",
+    "label_hi": "शिपिंग फ़ीस पर GST (आगे और वापसी)",
+    "source": "ASSUMPTION — 18% from the deck's worked example, applied to both the forward and the reverse fee the seller pays"
+  },
+  "rateSource": {
+    "value": "DICE data pack (₹50 / ₹120)",
+    "unit": "setting",
+    "label_en": "Shipping rate source",
+    "label_hi": "शिपिंग दर का स्रोत",
+    "source": "Valmo DICE data pack by default; switch to 2026 reported seller rates under Advanced"
+  },
+  "reported2026Forward": {
+    "value": 65,
+    "unit": "₹ per order, ≤ 500 g",
+    "label_en": "2026 reported forward rate, ≤ 500 g",
+    "label_hi": "2026 की बताई गई आगे की दर, ≤ 500 ग्राम",
+    "source": "ASSUMPTION — third-party 2026 seller guides. Heavier slabs add the same +₹15 to the DICE rate."
+  },
+  "reported2026Reverse": {
+    "value": 155,
+    "unit": "₹ per return, ≤ 500 g",
+    "label_en": "2026 reported reverse rate, ≤ 500 g",
+    "label_hi": "2026 की बताई गई वापसी दर, ≤ 500 ग्राम",
+    "source": "ASSUMPTION — third-party 2026 seller guides. Heavier slabs add the same +₹35 to the DICE rate."
+  }
+}

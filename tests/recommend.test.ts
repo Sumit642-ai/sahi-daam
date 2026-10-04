@@ -88,14 +88,16 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
   it('warns, rather than silently clamping, when the band target is below the floor', () => {
     // A kurti whose floor sits above the band's cheap end: launching at p30
     // would lose money, so the guardrail has to lift the price AND say why.
-    const input = defaultFloorInput('ethnic_women')
+    // (The default ₹150 kurti's seller floor, ₹271, is under p30 = ₹282, so a
+    // dearer one is needed to put the floor above the cheap end.)
+    const input = defaultFloorInput('ethnic_women', { cogs: 170 })
     const range = floorRange(input)
     const band = bandFor('ethnic_women')
     expect(band.p30).toBeLessThan(range.expected) // the condition under test
 
     const rec = recommend('LAUNCH', range, band)
     expect(rec.warnings).toContain(CHEAP_END_WARNING)
-    // ₹324 sits near the median, so "above most of the market" would be false.
+    // Floor + margin sits under the median, so "above most of the market" would be false.
     expect(percentileOf(band, rec.price)).toBeLessThanOrEqual(ABOVE_MARKET_PERCENTILE)
     expect(rec.warnings).not.toContain(GUARDRAIL_WARNING)
     expect(rec.price).toBeGreaterThanOrEqual(range.expected)
@@ -115,7 +117,7 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
 
   it('says "above most of the market" only past the 70th percentile', () => {
     // A floor high enough that floor + margin lands above p70.
-    const range = floorRange(defaultFloorInput('ethnic_women', { cogs: 210 }))
+    const range = floorRange(defaultFloorInput('ethnic_women', { cogs: 250 }))
     const band = bandFor('ethnic_women')
     const rec = recommend('LAUNCH', range, band)
     expect(percentileOf(band, rec.price)).toBeGreaterThan(ABOVE_MARKET_PERCENTILE)
@@ -163,10 +165,10 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
   })
 
   it('matches the worked rationale format from spec section 6.4', () => {
-    const range = floorRange(defaultFloorInput('ethnic_women'))
+    const range = floorRange(defaultFloorInput('ethnic_women', { cogs: 170 }))
     const band = bandFor('ethnic_women')
     const rec = recommend('LAUNCH', range, band)
-    // "Band 30th percentile is ₹289; your floor is ₹315; so we recommend ₹321 (floor + ₹6)."
+    // "Band 30th percentile is ₹282; your floor is ₹292; so we recommend ₹298 (floor + ₹6)."
     expect(rec.rationale[0]).toMatch(
       /^Band 30th percentile is ₹[\d,]+; your floor is ₹[\d,]+; so we recommend ₹[\d,]+ \(floor \+ ₹\d+\)\.$/,
     )
@@ -178,18 +180,19 @@ describe('test 5 — guardrail: no stage ever recommends below the floor', () =>
 // ---------------------------------------------------------------------------
 
 describe('test 6 — NOT_VIABLE and its fixes', () => {
-  const input = defaultFloorInput('beauty', { cogs: 120 })
+  // ₹152 is the cheapest beauty product cost whose seller floor is above p90.
+  const input = defaultFloorInput('beauty', { cogs: 152 })
   const range = floorRange(input)
   const band = bandFor('beauty')
   const result = verdictFor({ price: Math.round(band.p50), input, range, band })
 
-  it('calls a ₹120 beauty product NOT_VIABLE', () => {
+  it('calls a ₹152 beauty product NOT_VIABLE', () => {
     expect(range.expected).toBeGreaterThan(band.p90)
     expect(result.verdict).toBe('NOT_VIABLE')
   })
 
   it('explains it with the two numbers that decide it', () => {
-    expect(result.detail).toContain('₹252') // the floor
+    expect(result.detail).toContain('₹241') // the floor
     expect(result.detail).toContain('₹240') // band p90
   })
 
@@ -212,7 +215,7 @@ describe('test 6 — NOT_VIABLE and its fixes', () => {
     const bundle = result.fixes.find((f) => f.id === 'bundle')!
     expect(bundle.newFloor).toBeLessThan(range.expected)
     // Per-order costs shared across two units is the single biggest lever here.
-    expect(bundle.newFloor).toBeLessThan(range.expected * 0.8)
+    expect(bundle.newFloor).toBeLessThan(range.expected * 0.85)
     expect(bundle.caveat).toMatch(/weight slab/)
   })
 
@@ -285,7 +288,7 @@ describe('verdict thresholds (spec section 6.2)', () => {
   })
 
   it('reports NOT_VIABLE regardless of price, because price cannot fix it', () => {
-    const bad = defaultFloorInput('beauty', { cogs: 120 })
+    const bad = defaultFloorInput('beauty', { cogs: 152 })
     const badRange = floorRange(bad)
     const badBand = bandFor('beauty')
     for (const price of [50, 240, 1_000]) {

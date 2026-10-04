@@ -1,4 +1,4 @@
-import type { CostLineKey, FloorResult } from '../engine/floor'
+import type { CostLine, CostLineKey, FloorResult, Payer } from '../engine/floor'
 import { inr, units } from '../engine/format'
 import { useI18n, type TranslationKey } from '../i18n'
 import { Card, CardTitle } from './Card'
@@ -10,9 +10,12 @@ import {
 } from './ShowWorking'
 
 /**
- * Spec section 9.2: "the seven cost lines with the working column, total,
- * ÷ clean sales, + COGS = floor. (This must reproduce the deck table for the
- * default kurti.)"
+ * The seller's cost table: every line they pay on 100 orders dispatched, with
+ * the working, WHO PAYS it, the total, ÷ clean sales, + COGS = their floor.
+ *
+ * Below the floor come the lines Meesho pays on the seller's behalf under its
+ * supplier policy — the RTO legs and COD handling. They are shown, tagged
+ * "Meesho", and kept out of the seller's total.
  *
  * No rules or borders anywhere — the design system forbids them — so rows are
  * separated by zebra fills and the summary block by a different fill.
@@ -21,24 +24,24 @@ import {
 /** Why each line exists and where its rate comes from, for the row's ⓘ panel. */
 const LINE_NOTES: Record<CostLineKey, { why: string; source: string }> = {
   forward: {
-    why: 'Paid on every order you dispatch, including the ones that come straight back. This is the single biggest overhead line for a cheap product.',
-    source: 'Valmo DICE data pack (0–500 g slab); heavier slabs are ASSUMPTIONS',
+    why: 'Charged on orders that reach the buyer. By default an order refused at the door (RTO) costs you no forward fee — switch "Forward fee also charged on RTOs" on under Advanced to see the disputed reading.',
+    source: 'Rate: Valmo DICE data pack (0–500 g slab) or 2026 reported rates. Policy: supplier.meesho.com/shipping',
   },
   reverse: {
-    why: 'Paid on anything that travels back to you: RTO orders the buyer refused, plus returns after delivery. Reverse shipping costs more than forward.',
-    source: 'Valmo DICE data pack (0–500 g slab); heavier slabs are ASSUMPTIONS',
+    why: 'Charged when a delivered order is returned by the customer, by weight. Return shipping on RTO orders is not charged to you.',
+    source: 'supplier.meesho.com/shipping',
   },
   gst: {
-    why: 'GST applies to the forward shipping leg only in this model.',
-    source: 'ASSUMPTION, matches the deck',
+    why: '18% GST on the forward and reverse fees you pay.',
+    source: 'ASSUMPTION — 18% from the deck, applied to both fees',
   },
   packaging: {
     why: 'Polybag, tape and label on every order you pack, whether or not it sticks.',
     source: 'ASSUMPTION (per category)',
   },
   cod: {
-    why: 'A flat handling fee on the COD share of your orders. Meesho charges 0% commission, so flat fees like this are what actually eat a cheap product.',
-    source: 'ASSUMPTION',
+    why: 'Handling cash-on-delivery orders. Meesho does not charge suppliers a COD or collection fee, so this is Meesho’s cost, not yours.',
+    source: 'supplier.meesho.com/pricing — no COD fee. ₹7 per COD order is an ASSUMPTION',
   },
   writeOff: {
     why: 'Returns that cannot be resold — damaged, worn, or opened. You lose the product itself, valued at your own cost.',
@@ -47,6 +50,18 @@ const LINE_NOTES: Record<CostLineKey, { why: string; source: string }> = {
   ad: {
     why: 'Any ad spend you choose to attribute per order dispatched.',
     source: 'Seller input, default ₹0',
+  },
+  rtoForward: {
+    why: 'The forward trip of an order that was refused at the door. Under the supplier policy you are not charged for it.',
+    source: 'supplier.meesho.com/pricing and supplier.meesho.com/shipping',
+  },
+  rtoForwardGst: {
+    why: 'GST on that forward fee, which Meesho bears along with the fee.',
+    source: 'ASSUMPTION — 18%',
+  },
+  rtoReverse: {
+    why: 'Bringing a refused order back to you. No return-shipping fee is charged to the supplier on RTO orders.',
+    source: 'supplier.meesho.com/pricing and supplier.meesho.com/shipping',
   },
 }
 
@@ -60,6 +75,8 @@ interface RowProps {
   label: string
   working: string
   amount: string
+  /** The WHO PAYS cell; blank on the summary rows. */
+  payer?: Payer
   shade: boolean
   panelTitle: string
   steps: WorkingStep[]
@@ -72,6 +89,7 @@ function Row({
   label,
   working,
   amount,
+  payer,
   shade,
   panelTitle,
   steps,
@@ -80,6 +98,7 @@ function Row({
   emphasis = 'none',
 }: RowProps) {
   const [open, toggle, panelId] = useWorkingDisclosure()
+  const { t } = useI18n()
 
   const fill =
     emphasis === 'floor' ? 'bg-plum text-white' : emphasis === 'sum' ? 'bg-peach' : shade ? 'bg-lilac/60' : ''
@@ -119,6 +138,17 @@ function Row({
         >
           {working}
         </td>
+        <td className="px-2 py-2 text-left align-top">
+          {payer ? (
+            <span
+              className={`inline-block whitespace-nowrap rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                payer === 'seller' ? 'bg-plum/10 text-plum' : 'bg-orange/15 text-[#8A4408]'
+              }`}
+            >
+              {payer === 'seller' ? t('cost.payerYou') : t('cost.payerMeesho')}
+            </span>
+          ) : null}
+        </td>
         <td className={`px-2 py-2 text-right align-top text-sm tabular-nums ${amountClass}`}>
           {amount}
           <span
@@ -132,7 +162,7 @@ function Row({
       </tr>
       {open ? (
         <tr>
-          <td colSpan={3} className="px-1 pb-2">
+          <td colSpan={4} className="px-1 pb-2">
             <WorkingPanel id={panelId} title={panelTitle} steps={steps} source={source} footer={footer} />
           </td>
         </tr>
@@ -144,6 +174,36 @@ function Row({
 export function CostTable({ result, deck }: CostTableProps) {
   const { t } = useI18n()
   const cleanSales = units(result.cleanSales)
+
+  const lineRow = (line: CostLine, i: number) => (
+    <Row
+      key={line.key}
+      label={t(line.labelKey as TranslationKey)}
+      working={line.working}
+      amount={inr(line.amount)}
+      payer={line.payer}
+      shade={i % 2 === 1}
+      panelTitle={t(line.labelKey as TranslationKey).toLowerCase()}
+      source={LINE_NOTES[line.key].source}
+      steps={[
+        {
+          label: 'Cost on 100 orders dispatched',
+          formula: line.working,
+          value: inr(line.amount),
+          emphasis: true,
+        },
+        {
+          label: 'Per clean sale',
+          formula: `${inr(line.amount)} ÷ ${cleanSales} clean sales`,
+          value: inr(line.amount / result.cleanSales, 2),
+        },
+        {
+          label: line.payer === 'seller' ? 'Why you pay it' : 'Why Meesho pays it',
+          note: LINE_NOTES[line.key].why,
+        },
+      ]}
+    />
+  )
 
   return (
     <Card tone="white">
@@ -163,37 +223,16 @@ export function CostTable({ result, deck }: CostTableProps) {
               <th scope="col" className="hidden px-2 pb-1 text-left text-[10px] font-semibold uppercase tracking-wide text-body/50 sm:table-cell">
                 {t('cost.working')}
               </th>
+              <th scope="col" className="px-2 pb-1 text-left text-[10px] font-semibold uppercase tracking-wide text-body/50">
+                {t('cost.whoPays')}
+              </th>
               <th scope="col" className="px-2 pb-1 text-right text-[10px] font-semibold uppercase tracking-wide text-body/50">
                 {t('cost.on100')}
               </th>
             </tr>
           </thead>
           <tbody>
-            {result.costLines.map((line, i) => (
-              <Row
-                key={line.key}
-                label={t(line.labelKey as TranslationKey)}
-                working={line.working}
-                amount={inr(line.amount)}
-                shade={i % 2 === 1}
-                panelTitle={t(line.labelKey as TranslationKey).toLowerCase()}
-                source={LINE_NOTES[line.key].source}
-                steps={[
-                  {
-                    label: 'Cost on 100 orders dispatched',
-                    formula: line.working,
-                    value: inr(line.amount),
-                    emphasis: true,
-                  },
-                  {
-                    label: 'Per clean sale',
-                    formula: `${inr(line.amount)} ÷ ${cleanSales} clean sales`,
-                    value: inr(line.amount / result.cleanSales, 2),
-                  },
-                  { label: 'Why you pay it', note: LINE_NOTES[line.key].why },
-                ]}
-              />
-            ))}
+            {result.costLines.map(lineRow)}
 
             <Row
               label={t('cost.total')}
@@ -209,8 +248,9 @@ export function CostTable({ result, deck }: CostTableProps) {
               }))}
               footer={
                 <p>
-                  All seven lines are paid on orders that were dispatched — not on orders that
-                  stuck. That is why the total has to be divided by clean sales, not by 100.
+                  These are the lines you pay. Packaging is paid on every order you pack, and
+                  the shipping fees on orders that went out — not only on the ones that stuck.
+                  That is why the total is divided by clean sales, not by 100.
                 </p>
               }
             />
@@ -264,7 +304,7 @@ export function CostTable({ result, deck }: CostTableProps) {
               amount={inr(result.floor, 2)}
               shade={false}
               emphasis="floor"
-              panelTitle="your true floor"
+              panelTitle="your floor"
               steps={[
                 {
                   label: 'Product cost',
@@ -285,9 +325,12 @@ export function CostTable({ result, deck }: CostTableProps) {
               footer={
                 deck ? (
                 <div className="space-y-1">
-                  <p className="font-semibold text-plum">Deck worked example, for comparison</p>
+                  <p className="font-semibold text-plum">
+                    Full cost-to-serve (the deck&rsquo;s worked example), for comparison
+                  </p>
                   <p>
-                    The deck uses rounded whole units — {units(deck.rtoUnits)} RTO,{' '}
+                    This is every logistics cost on every order, whoever pays it — including the
+                    RTO legs and COD handling Meesho absorbs. It uses rounded whole units — {units(deck.rtoUnits)} RTO,{' '}
                     {units(deck.returnUnits)} returned, {units(deck.writeOffUnits)} unsellable,{' '}
                     {units(deck.cleanSales)} clean sales — which gives{' '}
                     {inr(deck.totalOverhead)} ÷ {units(deck.cleanSales)} ={' '}
@@ -320,6 +363,47 @@ export function CostTable({ result, deck }: CostTableProps) {
                 ) : null
               }
             />
+            {result.absorbedLines.length > 0 ? (
+              <>
+                <tr>
+                  <th
+                    colSpan={4}
+                    scope="colgroup"
+                    className="px-2 pb-1 pt-4 text-left text-[10px] font-semibold uppercase tracking-wide text-[#8A4408]"
+                  >
+                    {t('cost.meeshoSection')}
+                  </th>
+                </tr>
+                {result.absorbedLines.map(lineRow)}
+                <Row
+                  label={t('cost.meeshoTotal')}
+                  working={`${inr(result.absorbedTotal)} ÷ ${cleanSales}`}
+                  amount={inr(result.absorbedPerCleanSale, 2)}
+                  shade={false}
+                  emphasis="sum"
+                  panelTitle="what Meesho absorbs"
+                  steps={[
+                    ...result.absorbedLines.map((l) => ({
+                      label: l.label,
+                      formula: l.working,
+                      value: inr(l.amount),
+                    })),
+                    {
+                      label: 'Total Meesho pays on your 100 dispatched',
+                      value: inr(result.absorbedTotal),
+                    },
+                    {
+                      label: 'Per clean sale',
+                      formula: `${inr(result.absorbedTotal)} ÷ ${cleanSales}`,
+                      value: inr(result.absorbedPerCleanSale, 2),
+                      emphasis: true,
+                      note: 'Not in your floor. It is what your RTOs and COD orders cost Meesho.',
+                    },
+                  ]}
+                  source="supplier.meesho.com/pricing; supplier.meesho.com/shipping"
+                />
+              </>
+            ) : null}
           </tbody>
         </table>
       </div>

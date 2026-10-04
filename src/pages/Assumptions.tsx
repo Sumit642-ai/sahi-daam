@@ -19,6 +19,7 @@ const BADGE: Record<SourceKind, { key: TranslationKey; className: string }> = {
   CITED: { key: 'assumptions.cited', className: 'bg-profit/15 text-profit' },
   DERIVED: { key: 'assumptions.derived', className: 'bg-plum/10 text-plum' },
   CONVENTION: { key: 'assumptions.convention', className: 'bg-orange/15 text-[#8A4408]' },
+  DISPUTED: { key: 'assumptions.disputed', className: 'bg-magenta/10 text-magenta' },
   ASSUMPTION: { key: 'tag.assumption', className: 'bg-body/10 text-body' },
 }
 

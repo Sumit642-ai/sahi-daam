@@ -114,12 +114,22 @@ describe('test 7 — T2, festive RTO spike', () => {
     expect(checkT2(ctx({ date: new Date(2026, 11, 7) }))).not.toBeNull()
   })
 
-  it('raises the floor and says by how much', () => {
+  it('quotes the real, small floor change instead of claiming a jump', () => {
     const alert = checkT2(ctx({ seasonIndexAhead: 1.867 }))!
-    expect(Number(alert.numbers.floorNew)).toBeGreaterThan(Number(alert.numbers.floorOld))
-    expect(alert.action).toMatch(
-      /^Festive RTO will lift your floor from ₹[\d,]+ to ₹[\d,]+\. Reprice before the peak\.$/,
-    )
+    const change = Number(alert.numbers.floorChange)
+    // Meesho pays the RTO legs, so festive RTO moves the seller floor by only rupees.
+    expect(change).toBeGreaterThan(0)
+    expect(change).toBeLessThan(5)
+    expect(alert.action).toMatch(/^Push prepaid before the peak/)
+    expect(alert.action).toContain(`+₹${change.toFixed(2)}`)
+  })
+
+  it('leads with refusals, deliveries and stock in transit', () => {
+    const alert = checkT2(ctx({ seasonIndexAhead: 1.867 }))!
+    expect(Number(alert.numbers.deliveredNew)).toBeLessThan(Number(alert.numbers.deliveredOld))
+    expect(alert.detail).toMatch(/COD buyers refusing at the door/)
+    expect(alert.detail).toMatch(/in transit/)
+    expect(alert.detail).not.toMatch(/reprice/i)
   })
 })
 
@@ -290,10 +300,11 @@ describe('test 7 — T6, repriced without checking', () => {
   })
 
   it('says what the new price actually earns', () => {
-    const loss = checkT6(ctx({ manualPriceChange: { from: 330, to: 300 } }))!
+    // ₹250 is under the kurti's ₹271 seller floor.
+    const loss = checkT6(ctx({ manualPriceChange: { from: 330, to: 250 } }))!
     expect(loss.severity).toBe('critical')
     expect(loss.action).toMatch(
-      /^You changed the price to ₹300\. Your floor is ₹[\d,]+, so you now lose ₹[\d,]+ per order\.$/,
+      /^You changed the price to ₹250\. Your floor is ₹[\d,]+, so you now lose ₹[\d,]+ per order\.$/,
     )
 
     const gain = checkT6(ctx({ manualPriceChange: { from: 300, to: 400 } }))!
@@ -366,12 +377,14 @@ describe('trigger plumbing', () => {
 describe('nudges (spec section 8)', () => {
   const festive = checkT2(ctx({ price: 300, seasonIndexAhead: 1.867 }))!
 
-  it('matches the Hindi T2 template from the spec, verbatim', () => {
+  it('renders the honest Hindi T2 template, verbatim', () => {
     const n = festive.numbers
     const expected =
-      `रमेश जी, त्योहार के मौसम में RTO बढ़ जाता है। आपकी कुर्ती का सही न्यूनतम दाम ` +
-      `₹${n.floorOld} से बढ़कर ₹${n.floorNew} हो गया है। अभी आप ₹${n.price} पर बेच रहे हैं — ` +
-      `हर ऑर्डर पर ₹${n.loss} का नुकसान। दाम जाँचें →`
+      `रमेश जी, त्योहार का RTO आ रहा है — ज़्यादा COD ग्राहक दरवाज़े पर ऑर्डर लौटा देंगे। ` +
+      `100 ऑर्डर में से लगभग ${n.deliveredNew} ही डिलीवर होंगे (पहले ${n.deliveredOld}), बाक़ी ` +
+      `रास्ते में फँसकर वापस आएँगे। RTO की शिपिंग मीशो भरता है, इसलिए आपकी कुर्ती का ` +
+      `न्यूनतम दाम सिर्फ़ ₹${n.floorOld} से ₹${n.floorNew} होता है। प्रीपेड को बढ़ावा दीजिए और ` +
+      `स्टॉक तैयार रखिए। ₹${n.price} पर हर ऑर्डर पर ₹${n.profit} बचते हैं। दाम जाँचें →`
     expect(nudgeText(festive, 'hi')).toBe(expected)
   })
 

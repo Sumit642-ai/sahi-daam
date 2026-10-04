@@ -12,9 +12,12 @@ import {
   type FloorRange,
   type FloorResult,
   type ResolvedSlab,
+  type RateSource,
   type ReturnRateTriple,
+  DEFAULT_POLICY,
+  costToServe,
+  costToServeRange,
   defaultFloorInput,
-  floor,
   floorRange,
   slabFor,
 } from '../engine/floor'
@@ -25,8 +28,8 @@ import { type PlatformDefaults, type SellerProfile, codShareFor } from '../auth'
 /**
  * One product, shared by every screen.
  *
- * Spec section 9.3 says Screen 2's inputs are "carried from Screen 1", so the
- * product cannot live inside either screen. Everything derived from it — the
+ * Screen 2's inputs are carried from Screen 1, so the product cannot live
+ * inside either screen. Everything derived from it — the
  * floor range, the competitor band, the shipping slab — is memoised here too,
  * so the two screens cannot drift into showing different numbers for the same
  * product.
@@ -52,10 +55,17 @@ export interface ProductInputs {
   returnRateHigh: number
   writeOffShare: number
   packagingCost: number | null
+  /** DISPUTED policy setting: is the forward fee also charged on RTO orders? */
+  forwardOnRto: boolean
+  /** DICE data pack rates, or the 2026 rates reported by seller guides. */
+  rateSource: RateSource
 }
 
-/** The deck's worked example, fixed, so the comparison always says ₹318. */
-export const DECK_RESULT: FloorResult = floor({
+/**
+ * The deck's worked example at FULL COST-TO-SERVE, fixed, so the comparison
+ * always says ₹318. This is not what the seller pays — see sellerFloor().
+ */
+export const DECK_RESULT: FloorResult = costToServe({
   ...defaultFloorInput('ethnic_women', { cogs: 150, weightG: 350 }),
   seasonIndex: 1,
   unitOverrides: { rtoUnits: 17, returnUnits: 13, writeOffUnits: 6, cleanSales: 70 },
@@ -89,6 +99,8 @@ export function inputsForCategory(
     returnRateHigh: category.returnRateHigh,
     writeOffShare: category.writeOffShare,
     packagingCost: category.packagingCost,
+    forwardOnRto: DEFAULT_POLICY.forwardOnRto,
+    rateSource: DEFAULT_POLICY.rateSource,
     ...carryOver,
   }
 }
@@ -109,7 +121,12 @@ interface ProductInputsValue {
   season: number
   floorInput: FloorInput
   returnRates: ReturnRateTriple
+  /** What the seller pays — every seller-facing number reads this. */
   range: FloorRange
+  /** The same product at full cost-to-serve, shown alongside, never instead. */
+  costToServe: FloorRange
+  /** What Meesho pays on the seller's behalf, ₹ per clean sale (expected). */
+  absorbs: number
   band: Band
   slab: ResolvedSlab
   /** Non-null only while the inputs still are the deck's own kurti. */
@@ -172,6 +189,8 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
           month: d.month,
           codShare: d.codShare,
           adSpendPerOrder: d.adSpendPerOrder,
+          forwardOnRto: d.forwardOnRto,
+          rateSource: d.rateSource,
         }),
       )
 
@@ -202,6 +221,7 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       packagingCost: inputs.packagingCost ?? 0,
       adSpendPerOrder: inputs.adSpendPerOrder ?? 0,
       seasonIndex: season,
+      policy: { forwardOnRto: inputs.forwardOnRto, rateSource: inputs.rateSource },
       // The admin's platform-wide fees, when an admin has set them.
       ...(platform ? { fees: { codFee: platform.codFee, gstRate: platform.gstRate } } : {}),
     }
@@ -211,6 +231,8 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       expected: inputs.returnRateExpected,
       high: inputs.returnRateHigh,
     }
+
+    const range = floorRange(floorInput, returnRates)
 
     const deckApplies =
       inputs.categoryId === 'ethnic_women' &&
@@ -222,6 +244,7 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       inputs.writeOffShare === 0.46 &&
       inputs.packagingCost === 8 &&
       (inputs.adSpendPerOrder ?? 0) === 0 &&
+      inputs.rateSource === 'dice' &&
       season === 1
 
     return {
@@ -236,9 +259,11 @@ export function ProductInputsProvider({ children, initial, profile, platform }: 
       season,
       floorInput,
       returnRates,
-      range: floorRange(floorInput, returnRates),
+      range,
+      costToServe: costToServeRange(floorInput, returnRates),
+      absorbs: range.results.expected.absorbedPerCleanSale,
       band: bandFor(inputs.categoryId),
-      slab: slabFor(inputs.weightG ?? 0),
+      slab: slabFor(inputs.weightG ?? 0, inputs.rateSource),
       deck: deckApplies ? DECK_RESULT : null,
       tagFor: (source: string) => (isAssumption(source) ? 'assumption' : 'meesho'),
       sources: {

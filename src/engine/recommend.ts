@@ -10,7 +10,7 @@
  *
  * Pure, framework-free. No React imports.
  */
-import { fees, weightSlabs } from '../data'
+import { weightSlabs } from '../data'
 import {
   type FloorInput,
   type FloorRange,
@@ -232,7 +232,7 @@ function nextLowerSlab(weightG: number) {
 }
 
 /**
- * The four fixes from spec section 6.2, each with the floor it would produce so
+ * The four NOT_VIABLE fixes, each with the floor it would produce so
  * the seller can see the size of the effect rather than being told to "reduce
  * costs".
  */
@@ -257,9 +257,10 @@ export function notViableFixes(args: {
     label: 'Push buyers to prepaid',
     detail:
       `Move your COD share from ${pct(input.codShare, 0)} to ${pct(newCodShare, 0)} with prepaid ` +
-      `discounts or coupons. Fewer COD orders means fewer refusals at the door, and the ` +
-      `${inr(fees.codFee)} handling fee is not paid on prepaid orders — worth ` +
-      `${inr(current - prepaidFloor)} off your floor.`,
+      `discounts or coupons. Fewer COD orders means fewer refusals at the door, so fewer packed ` +
+      `parcels come back unsold and less stock sits in transit. Meesho does not charge you for ` +
+      `RTO shipping or COD, so on your own floor this is worth only ` +
+      `${inr(current - prepaidFloor, 2)} — most of the saving is Meesho's.`,
     newFloor: prepaidFloor,
     delta: prepaidFloor - current,
     viableNow: prepaidFloor <= band.p90,
@@ -307,7 +308,7 @@ export function notViableFixes(args: {
     id: 'bundle',
     label: 'Sell as a bundle of 2',
     detail:
-      `One parcel, two units. Shipping, packaging, GST and the COD fee are paid once and shared ` +
+      `One parcel, two units. Shipping, GST and packaging are paid once and shared ` +
       `by both, so the per-unit floor falls from ${inr(current)} to ${inr(bundlePerUnit)} — ` +
       `list the pair at ${inr(bundleOrderFloor)}.`,
     newFloor: bundlePerUnit,

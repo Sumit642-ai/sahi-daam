@@ -32,7 +32,7 @@ const markup = (expandAll = true) =>
 describe('Screen 1 — default kurti reproduces the deck cost table', () => {
   const html = markup()
 
-  it('renders all seven deck cost lines with their working and amount', () => {
+  it('keeps the deck’s full cost-to-serve table in the working panel', () => {
     const deckRows: [string, string, string][] = [
       ['Forward shipping', '100 × ₹50', '₹5,000'],
       ['Reverse shipping (RTO + returns)', '(17 + 13) × ₹120', '₹3,600'],
@@ -55,25 +55,52 @@ describe('Screen 1 — default kurti reproduces the deck cost table', () => {
     expect(html).toContain('₹318')
   })
 
-  it('shows the deck table as the DEFAULT scenario, not only in the ⓘ panel', () => {
-    // Acceptance item 1: "the cost table matches the deck lines". The default
-    // scenario is the expected return rate of 13/83 = 0.157, which reproduces
-    // every deck line to the rupee without any unit overrides.
+  it('shows the SELLER table by default: the lines the seller pays, and who pays each', () => {
     const seller = markup(false)
-    for (const line of ['₹5,000', '₹3,604', '₹900', '₹800', '₹560', '₹899', '₹0']) {
-      expect(seller).toContain(line)
+    const rows: [string, string, string][] = [
+      ['Forward shipping (delivered orders)', '83 × ₹50', '₹4,150'],
+      ['Reverse shipping (customer returns)', '13.0 × ₹120', '₹1,564'],
+      ['GST on your shipping fees', '18% × (₹4,150 + ₹1,564)', '₹1,028'],
+      ['Packaging', '100 × ₹8', '₹800'],
+      ['Unsellable returns (product written off)', '6.0 × ₹150', '₹899'],
+    ]
+    for (const [label, working, amount] of rows) {
+      expect(seller).toContain(label)
+      expect(seller).toContain(working)
+      expect(seller).toContain(amount)
     }
-    expect(seller).toContain('₹11,763') // deck ₹11,760
-    expect(seller).toContain('₹168.12') // deck ₹168
-    expect(seller).toContain('₹318.12') // deck ₹318
-    expect(seller).toContain('÷ clean sales (70.0)') // deck 70
+    expect(seller).toContain('Who pays')
+    expect(seller).toContain('₹8,441') // total the seller pays
+    expect(seller).toContain('₹120.64') // ÷ 70 clean sales
+    expect(seller).toContain('₹270.64') // + ₹150 COGS
+    expect(seller).toContain('÷ clean sales (70.0)')
   })
 
-  it('renders the floor range headline as ₹315 – ₹362', () => {
-    // Acceptance checklist item 1.
-    expect(html).toContain('₹315')
-    expect(html).toContain('₹362')
-    expect(html).toContain('Your true floor')
+  it('lists what Meesho pays below the floor, out of the seller total', () => {
+    const seller = markup(false)
+    expect(seller).toContain('Paid by Meesho, not in your floor')
+    for (const [label, amount] of [
+      ['Forward shipping on RTO orders', '₹850'],
+      ['Return shipping on RTO orders', '₹2,040'],
+      ['COD handling', '₹560'],
+    ]) {
+      expect(seller).toContain(label)
+      expect(seller).toContain(amount)
+    }
+    expect(seller).toContain('₹51.49') // Meesho absorbs per clean sale
+  })
+
+  it('heads the screen with the seller floor, cost-to-serve and what Meesho absorbs', () => {
+    expect(html).toContain('Your floor (what you pay)')
+    expect(html).toContain('₹268')
+    expect(html).toContain('₹312')
+    expect(html).toContain('Full cost-to-serve ₹318')
+    expect(html).toContain('Meesho absorbs ₹51 per clean sale (RTO + COD)')
+  })
+
+  it('puts the who-pays policy settings under Advanced', () => {
+    // The drawer starts closed; the settings live in it.
+    expect(html).toContain('Advanced — edit Meesho')
   })
 
   it('tags every input with who provides it', () => {
@@ -114,5 +141,27 @@ describe('Screen 1 — default kurti reproduces the deck cost table', () => {
     // which only holds if the screen does not already open on a festive month.
     expect(html).toContain('March — RTO ×1.00 (baseline)')
     expect(html).toContain('17.0%') // the un-seasoned blended RTO
+  })
+})
+
+describe('Screen 1 — the disputed "forward fee on RTOs" setting', () => {
+  const html = renderToStaticMarkup(
+    <I18nProvider>
+      <AuthProvider>
+        <ProductInputsProvider initial={{ forwardOnRto: true }}>
+          <ExpandAllContext.Provider value={false}>
+            <FloorCalculator />
+          </ExpandAllContext.Provider>
+        </ProductInputsProvider>
+      </AuthProvider>
+    </I18nProvider>,
+  )
+
+  it('charges forward shipping on all 100 dispatched and lifts the floor to about ₹285', () => {
+    expect(html).toContain('Forward shipping (every dispatched order)')
+    expect(html).toContain('100 × ₹50')
+    expect(html).toContain('₹284.98')
+    // Meesho no longer absorbs the RTO forward fee.
+    expect(html).not.toContain('Forward shipping on RTO orders')
   })
 })

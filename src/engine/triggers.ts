@@ -11,7 +11,7 @@
  * Pure, framework-free. No React imports.
  */
 import { type Band, nearestListings, percentileOf, quantile } from './band'
-import { type FloorInput, type FloorRange, floor as computeFloor } from './floor'
+import { type FloorInput, type FloorRange, sellerFloor as computeFloor } from './floor'
 import { inr, pct } from './format'
 import { minMarginFor } from './recommend'
 import { type MonthKey, peakSeasonIndexBetween, seasonIndexForDate } from './season'
@@ -135,9 +135,9 @@ function floorAtReturnRate(input: FloorInput, returnRate: number): number {
   return computeFloor({ ...input, returnRate }).floor
 }
 
-/** The floor for this product at one specific season index. */
-function floorAtSeason(input: FloorInput, seasonIndex: number): number {
-  return computeFloor({ ...input, seasonIndex }).floor
+/** The whole seller result at one season index — RTO, deliveries and floor. */
+function resultAtSeason(input: FloorInput, seasonIndex: number) {
+  return computeFloor({ ...input, seasonIndex })
 }
 
 /** Loss-shaped alerts get louder when the current price is already underwater. */
@@ -205,24 +205,45 @@ export function checkT2(ctx: TriggerContext): Alert | null {
   // happened. "Reprice before the peak" is only useful before the peak.
   if (ahead <= now) return null
 
-  const floorOld = floorAtSeason(ctx.input, now)
-  const floorNew = floorAtSeason(ctx.input, ahead)
+  // Under the supplier policy Meesho pays the RTO legs and there is no COD
+  // fee, so festive RTO barely moves the SELLER's floor — only packaging on the
+  // parcels that come back is spread over fewer sales. What festive RTO really
+  // does to a seller is fewer deliveries and stock stuck in transit. The alert
+  // says that, and quotes the floor change it actually causes.
+  const before = resultAtSeason(ctx.input, now)
+  const after = resultAtSeason(ctx.input, ahead)
+  const floorOld = before.floor
+  const floorNew = after.floor
+  const floorChange = floorNew - floorOld
   const profit = ctx.price - floorNew
+  const deliveredOld = Math.round(before.deliveredUnits)
+  const deliveredNew = Math.round(after.deliveredUnits)
 
   return {
     id: 'T2',
     week: ctx.week,
-    severity: severityForFloor(ctx.price, floorNew),
+    severity: ctx.price < floorNew ? 'critical' : 'warn',
     title: TRIGGER_TITLE.T2,
     detail:
-      `RTO runs ${ahead}× its usual level in the next two weeks. More parcels refused at the ` +
-      `door means more forward and reverse shipping paid on orders that never become a sale, ` +
-      `so your floor rises from ${inr(floorOld)} to ${inr(floorNew)} before you change anything.`,
-    action: `Festive RTO will lift your floor from ${inr(floorOld)} to ${inr(floorNew)}. Reprice before the peak.`,
+      `RTO runs ${ahead}× its usual level in the next two weeks — ${pct(before.rto)} to ` +
+      `${pct(after.rto)}, mostly COD buyers refusing at the door. Of every 100 orders you ` +
+      `dispatch, about ${deliveredNew} will be delivered instead of ${deliveredOld}; the rest ` +
+      `come back, and that stock sits in transit until they do. Meesho pays the RTO shipping, ` +
+      `so your floor moves only from ${inr(floorOld, 2)} to ${inr(floorNew, 2)} ` +
+      `(${floorChange >= 0 ? '+' : '−'}${inr(Math.abs(floorChange), 2)}).`,
+    action:
+      `Push prepaid before the peak and keep stock for parcels stuck in transit. ` +
+      `Your floor moves only ${floorChange >= 0 ? '+' : '−'}${inr(Math.abs(floorChange), 2)}, ` +
+      `to ${inr(floorNew, 2)}.`,
     numbers: {
       seasonIndex: ahead,
+      rtoOld: Math.round(before.rto * 1000) / 10,
+      rtoNew: Math.round(after.rto * 1000) / 10,
+      deliveredOld,
+      deliveredNew,
       floorOld: Math.round(floorOld),
       floorNew: Math.round(floorNew),
+      floorChange: Math.round(floorChange * 100) / 100,
       price: Math.round(ctx.price),
       profit: Math.round(profit),
       loss: Math.round(Math.abs(Math.min(0, profit))),

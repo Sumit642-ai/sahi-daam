@@ -5,19 +5,29 @@ import { useI18n } from '../i18n'
 import { ShowWorking, type WorkingStep } from './ShowWorking'
 
 /**
- * Spec section 9.2: "Your true floor: ₹low – ₹high (most likely ₹expected)".
- * The hero number of the whole product, so it is the biggest thing on the page
- * and it is orange on plum.
+ * "Your floor (what you pay): ₹low – ₹high (most likely ₹expected)", with the
+ * full cost-to-serve and what Meesho absorbs beside it.
+ *
+ * The big number is the SELLER floor — what Meesho's supplier policy actually
+ * charges them. Cost-to-serve is shown, clearly labelled, never instead.
  */
 interface FloorHeadlineProps {
   range: FloorRange
+  /** The same product at full cost-to-serve (every leg + COD on every order). */
+  costToServe: FloorRange
   /** The deck's rounded worked example, when the inputs are still that kurti. */
   deck: FloorResult | null
   monthLabel: string
   seasonIndex: number
 }
 
-export function FloorHeadline({ range, deck, monthLabel, seasonIndex }: FloorHeadlineProps) {
+export function FloorHeadline({
+  range,
+  costToServe,
+  deck,
+  monthLabel,
+  seasonIndex,
+}: FloorHeadlineProps) {
   const { t } = useI18n()
   const expected = range.results.expected
   const rtoNote =
@@ -38,9 +48,10 @@ export function FloorHeadline({ range, deck, monthLabel, seasonIndex }: FloorHea
       value: `${expected.cleanSales.toFixed(1)} of 100`,
     },
     {
-      label: 'Total overhead on those 100 dispatched',
+      label: 'What you pay on those 100 dispatched',
       formula: expected.costLines.map((l) => inr(l.amount)).join(' + '),
       value: inr(expected.totalOverhead),
+      note: 'Forward shipping on delivered orders, return shipping on customer returns, GST on both, packaging on every order, unsellable returns and ads. No COD fee and no shipping on RTOs — Meesho pays those.',
     },
     {
       label: 'Overhead each surviving sale has to carry',
@@ -48,10 +59,21 @@ export function FloorHeadline({ range, deck, monthLabel, seasonIndex }: FloorHea
       value: inr(expected.overheadPerCleanSale, 2),
     },
     {
-      label: 'Your true floor',
+      label: 'Your floor (what you pay)',
       formula: `${inr(expected.input.cogs)} COGS + ${inr(expected.overheadPerCleanSale, 2)} overhead`,
       value: inr(range.expected, 2),
       emphasis: true,
+    },
+    {
+      label: 'Full cost-to-serve, whoever pays it',
+      formula: 'every shipping leg on every order + COD handling',
+      value: inr(costToServe.expected, 2),
+      note: 'The deck’s original model. The difference is what Meesho absorbs on your behalf.',
+    },
+    {
+      label: 'Meesho absorbs, per clean sale',
+      formula: expected.absorbedLines.map((l) => inr(l.amount)).join(' + ') + ` ÷ ${expected.cleanSales.toFixed(1)}`,
+      value: inr(expected.absorbedPerCleanSale, 2),
     },
     {
       label: `Same sum at your low return rate (${pct(range.returnRates.low, 0)})`,
@@ -82,6 +104,11 @@ export function FloorHeadline({ range, deck, monthLabel, seasonIndex }: FloorHea
               {' '}
               {t('floor.atReturnRate', { rate: pct(range.returnRates.expected, 0) })}
             </span>
+          </p>
+          <p className="mt-2 text-xs text-white/70">
+            {t('floor.costToServe', { cts: inr(costToServe.expected) })}
+            <span className="text-white/40"> · </span>
+            {t('floor.absorbs', { x: inr(expected.absorbedPerCleanSale) })}
           </p>
         </div>
 
@@ -118,16 +145,19 @@ export function FloorHeadline({ range, deck, monthLabel, seasonIndex }: FloorHea
         steps={steps}
         onDark
         withLabel
-        source="Shipping and RTO from the Valmo DICE data pack; COD fee, GST and category return rates are ASSUMPTIONS — see Screen 6."
+        source="Who pays what: supplier.meesho.com/pricing and /shipping. Rates: Valmo DICE data pack (or 2026 reported rates under Advanced). GST treatment and category return rates are ASSUMPTIONS — see Numbers & sources."
         footer={
           deck ? (
             <p>
-              <span className="font-semibold text-plum">Deck worked example.</span> With the
-              deck&rsquo;s rounded whole units ({deck.rtoUnits} RTO, {deck.returnUnits} returned,{' '}
-              {deck.writeOffUnits} unsellable, {deck.cleanSales} clean sales) the same formula gives{' '}
-              {inr(deck.totalOverhead)} ÷ {deck.cleanSales} + {inr(deck.input.cogs)} ={' '}
-              <strong>{inr(deck.floor)}</strong>. The continuous model above does not round, so it
-              lands a little either side.
+              <span className="font-semibold text-plum">
+                Full cost-to-serve, the deck&rsquo;s worked example.
+              </span>{' '}
+              Charging every shipping leg on every order plus COD handling, on the deck&rsquo;s
+              rounded units ({deck.rtoUnits} RTO, {deck.returnUnits} returned, {deck.writeOffUnits}{' '}
+              unsellable, {deck.cleanSales} clean sales), gives {inr(deck.totalOverhead)} ÷{' '}
+              {deck.cleanSales} + {inr(deck.input.cogs)} = <strong>{inr(deck.floor)}</strong>. That
+              is what the order costs to serve — not what you pay. Meesho&rsquo;s supplier policy
+              takes the RTO legs and COD handling off you.
             </p>
           ) : null
         }

@@ -55,7 +55,7 @@ function Tick({ on }: { on: boolean }) {
 
 export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
   const { t, lang } = useI18n()
-  const { inputs, set, changeCategory, category, range, band, floorInput, returnRates } =
+  const { inputs, set, changeCategory, category, range, band, floorInput, returnRates, absorbs } =
     useProduct()
 
   // What Meesho's Recommended Price Range would say today: the middle half of
@@ -182,6 +182,9 @@ export function MeeshoComparison({ onOpenBand }: ComparisonProps) {
             <p className="mt-1 text-sm text-white/80">
               {t('label.mostLikely')}{' '}
               <span className="font-bold text-white">{inr(range.expected)}</span>
+            </p>
+            <p className="mt-2 text-xs text-white/70">
+              {t('compare.absorbs', { x: inr(absorbs) })}
             </p>
           </div>
 

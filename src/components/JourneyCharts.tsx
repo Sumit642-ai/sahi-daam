@@ -135,19 +135,19 @@ export function WeeklyProfitChart({ run, week }: ChartAProps) {
 interface ChartCProps {
   sahiDaam: StrategyRun
   sellerInstinct: StrategyRun
+  meeshoRange: StrategyRun
   week: number
   height?: number
 }
 
 /**
- * The hero chart: cumulative profit, both strategies, on the same world.
- *
- * One line climbs, the other falls, and the gap between them at week 26 is the
- * whole argument for the product in a single number.
+ * The hero chart: cumulative profit, all three strategies, on the same world,
+ * measured on the seller floor. The gaps at week 26 are the argument.
  */
 export function CumulativeProfitChart({
   sahiDaam,
   sellerInstinct,
+  meeshoRange,
   week,
   height = 300,
 }: ChartCProps) {
@@ -155,6 +155,7 @@ export function CumulativeProfitChart({
     week: w.week,
     sahi: Math.round(w.cumulativeProfit),
     instinct: Math.round(sellerInstinct.weeks[i]!.cumulativeProfit),
+    range: Math.round(meeshoRange.weeks[i]!.cumulativeProfit),
   }))
 
   return (
@@ -169,7 +170,7 @@ export function CumulativeProfitChart({
           labelFormatter={(w) => `Week ${w}`}
         />
         <Legend wrapperStyle={{ fontSize: 11 }} iconType="plainline" />
-        {/* The festive stretch, where the two lines separate fastest. */}
+        {/* The festive stretch. */}
         <ReferenceLine x={16} stroke={PLUM} strokeOpacity={0.25} strokeDasharray="3 3" />
         <ReferenceLine x={21} stroke={PLUM} strokeOpacity={0.25} strokeDasharray="3 3" />
         <ReferenceLine y={0} stroke={BODY} strokeOpacity={0.35} />
@@ -186,6 +187,15 @@ export function CumulativeProfitChart({
           name="Seller instinct"
           stroke={MAGENTA}
           strokeWidth={3}
+          dot={false}
+          isAnimationActive={false}
+        />
+        <Line
+          dataKey="range"
+          name="Meesho range"
+          stroke={ORANGE}
+          strokeWidth={3}
+          strokeDasharray="6 4"
           dot={false}
           isAnimationActive={false}
         />

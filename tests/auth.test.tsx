@@ -12,7 +12,7 @@ import {
   emptyProfile,
 } from '../src/auth'
 import { AuthProvider } from '../src/auth'
-import { defaultFloorInput, floorRange } from '../src/engine/floor'
+import { costToServeRange, defaultFloorInput, floorRange } from '../src/engine/floor'
 import { I18nProvider } from '../src/i18n'
 import { AdminConsole } from '../src/pages/AdminConsole'
 import { SellerOnboarding } from '../src/pages/SellerOnboarding'
@@ -118,9 +118,14 @@ describe('the sign-in screen', () => {
     const range = floorRange(
       { ...defaultFloorInput(inputs.categoryId), cogs: inputs.cogs!, weightG: inputs.weightG!, codShare: inputs.codShare },
     )
-    expect(Math.round(range.expected)).toBe(318)
-    expect(Math.round(range.low)).toBe(315)
-    expect(Math.round(range.high)).toBe(362)
+    // The seller floor under the supplier policy...
+    expect(Math.round(range.expected)).toBe(271)
+    expect(Math.round(range.low)).toBe(268)
+    expect(Math.round(range.high)).toBe(312)
+    // ...and the deck's full cost-to-serve, shown beside it.
+    expect(Math.round(costToServeRange(
+      { ...defaultFloorInput(inputs.categoryId), cogs: inputs.cogs!, weightG: inputs.weightG!, codShare: inputs.codShare },
+    ).expected)).toBe(318)
   })
 
   it('says plainly that it is not real authentication', () => {
@@ -158,7 +163,7 @@ describe('the onboarding and admin screens render', () => {
   it('shows the admin what a fee change would do to every seller', () => {
     const html = page(<AdminConsole onOpenAssumptions={() => {}} />)
     expect(html).toContain('Platform defaults')
-    expect(html).toContain('COD handling fee')
+    expect(html).toContain('COD handling cost')
     expect(html).toContain('Sellers on the platform')
     expect(html).toContain('Ramesh') // the seeded demo seller
     expect(html).not.toMatch(/NaN|Infinity/)

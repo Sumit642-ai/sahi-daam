@@ -20,11 +20,13 @@ import { ShowWorking } from '../components/ShowWorking'
 import { useI18n } from '../i18n'
 
 /**
- * Screen 3 — the seller journey (spec section 9.4).
+ * Screen 3 — the seller journey.
  *
- * Twenty-six weeks of one kurti, played out twice on the same world. The hero
- * is Chart C: two cumulative-profit lines starting from the same ₹0 and the
- * same 1,500 units of stock, and ending ₹87,000 apart.
+ * Twenty-six weeks of one kurti, played out three ways on the same world:
+ * Sahi Daam, the seller's instinct, and following Meesho's similar-listing
+ * range. The hero is Chart C — three cumulative-profit lines from the same ₹0
+ * and the same stock, all measured on the seller floor. Every sentence on this
+ * screen is computed from the run, so the copy cannot claim more than it shows.
  */
 
 type View = StrategyId | 'both'
@@ -71,8 +73,27 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
 
   const sahiWeek = sim.sahiDaam.weeks[week - 1]!
   const instinctWeek = sim.sellerInstinct.weeks[week - 1]!
-  const primary = view === 'seller_instinct' ? sim.sellerInstinct : sim.sahiDaam
-  const primaryWeek = view === 'seller_instinct' ? instinctWeek : sahiWeek
+  const rangeWeek = sim.meeshoRange.weeks[week - 1]!
+  const runs = { sahi_daam: sim.sahiDaam, seller_instinct: sim.sellerInstinct, meesho_range: sim.meeshoRange }
+  const primary = view === 'both' ? sim.sahiDaam : runs[view]
+  const primaryWeek = primary.weeks[week - 1]!
+  const allRuns = [sim.sahiDaam, sim.sellerInstinct, sim.meeshoRange] as const
+  /** First week a strategy had no stock left to sell, if it ever ran out. */
+  const soldOutWeek = (run: typeof sim.sahiDaam) => run.weeks.find((w) => w.stockLeft <= 0.5)?.week
+  const perUnit = (run: typeof sim.sahiDaam) => run.summary.totalProfit / run.summary.unitsSold
+  /** First week from which Sahi Daam stays ahead of both baselines to the end. */
+  const leadsFrom = (() => {
+    let from: number | null = null
+    for (const w of sim.sahiDaam.weeks) {
+      const i = w.week - 1
+      const ahead =
+        w.cumulativeProfit >= sim.sellerInstinct.weeks[i]!.cumulativeProfit &&
+        w.cumulativeProfit >= sim.meeshoRange.weeks[i]!.cumulativeProfit
+      if (ahead && from === null) from = w.week
+      if (!ahead) from = null
+    }
+    return from
+  })()
 
   /** Scripted events and alerts up to this week, newest first. */
   const log = useMemo(() => {
@@ -138,9 +159,11 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
           <span className="text-base font-medium text-body/60">· {t('nav.journeySub')}</span>
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-body">
-          The same product, the same market, the same 1,500 units of stock — priced two ways. One
-          seller checks the floor every week; the other prices at cost × 2 and matches whoever
-          undercuts him. Watch what the festive season does to each of them.
+          The same product, the same market, the same 1,500 units of stock — priced three ways.
+          Sahi Daam checks the floor every week and learns from its own price steps. Seller
+          instinct lists at cost × 2 and matches the week-12 undercut. Meesho range lists at the
+          middle of the similar-listing band every week. Profit is what the seller actually keeps,
+          on the seller floor.
         </p>
       </div>
 
@@ -200,7 +223,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
           </label>
 
           <div className="flex gap-1 rounded-full bg-white/70 p-0.5">
-            {(['sahi_daam', 'seller_instinct', 'both'] as const).map((v) => (
+            {(['sahi_daam', 'seller_instinct', 'meesho_range', 'both'] as const).map((v) => (
               <button
                 key={v}
                 type="button"
@@ -210,7 +233,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
                   view === v ? 'bg-plum text-white' : 'text-plum'
                 }`}
               >
-                {v === 'both' ? 'Both' : STRATEGY_LABEL[v]}
+                {v === 'both' ? 'All three' : STRATEGY_LABEL[v]}
               </button>
             ))}
           </div>
@@ -272,7 +295,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
                 {t(`stage.${primaryWeek.stage}`)}
               </span>
               <span className="text-xs text-white/70">
-                {view === 'seller_instinct' ? 'Seller instinct' : 'Sahi Daam'}
+                {STRATEGY_LABEL[primary.strategy]}
               </span>
             </p>
           </div>
@@ -341,22 +364,22 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
           hint="Same product, same market, same 1,500 units of stock. The only difference is how each one priced."
           aside={
             <div className="flex gap-4 text-right">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-body/60">
-                  Sahi Daam
-                </p>
-                <p className="text-xl font-bold tabular-nums text-profit">
-                  {signedInr(sahiWeek.cumulativeProfit)}
-                </p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-body/60">
-                  Seller instinct
-                </p>
-                <p className="text-xl font-bold tabular-nums text-magenta">
-                  {signedInr(instinctWeek.cumulativeProfit)}
-                </p>
-              </div>
+              {(
+                [
+                  ['Sahi Daam', sahiWeek, 'text-profit'],
+                  ['Seller instinct', instinctWeek, 'text-magenta'],
+                  ['Meesho range', rangeWeek, 'text-orange'],
+                ] as const
+              ).map(([label, row, tone]) => (
+                <div key={label}>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-body/60">
+                    {label}
+                  </p>
+                  <p className={`text-xl font-bold tabular-nums ${tone}`}>
+                    {signedInr(row.cumulativeProfit)}
+                  </p>
+                </div>
+              ))}
             </div>
           }
         >
@@ -366,15 +389,26 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
         <CumulativeProfitChart
           sahiDaam={sim.sahiDaam}
           sellerInstinct={sim.sellerInstinct}
+          meeshoRange={sim.meeshoRange}
           week={week}
         />
 
         <p className="mt-2 rounded-lg bg-peach px-3 py-2 text-xs text-body">
-          The dashed lines mark weeks 16&ndash;21, the festive season. Sahi Daam raises its price as
-          festive RTO lifts the floor; the instinct seller does not, and every extra order he wins
-          in those weeks costs him more than it earns.{' '}
+          The dashed lines mark weeks 16&ndash;21, the festive season. Measured on what the seller
+          actually pays, all three strategies make money: Meesho pays the RTO shipping, so a ₹
+          {Math.round(sim.sellerInstinct.weeks[0]!.price)} or ₹
+          {Math.round(sim.meeshoRange.weeks[0]!.price)} kurti clears a ₹
+          {Math.round(sim.sahiDaam.weeks[0]!.floor)} floor in a quiet week. What separates them is
+          what each unit earns — Sahi Daam steps its price up through the ramp and carries its
+          margin when the floor moves (the fabric rise in week 14, the size complaints in weeks
+          16&ndash;18). It launches cheaper, at ₹{Math.round(sim.sahiDaam.weeks[0]!.price)}, so it
+          trails at first
+          {leadsFrom !== null ? <> and leads from week {leadsFrom} to the end</> : null}. The
+          lines go flat when each one runs out of stock.{' '}
           <span className="font-semibold text-plum">
-            Gap at week {week}: {inr(sahiWeek.cumulativeProfit - instinctWeek.cumulativeProfit)}.
+            Gap at week {week}: {inr(sahiWeek.cumulativeProfit - instinctWeek.cumulativeProfit)} over
+            seller instinct, {inr(sahiWeek.cumulativeProfit - rangeWeek.cumulativeProfit)} over
+            Meesho range.
           </span>
         </p>
       </Card>
@@ -382,7 +416,7 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
       <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
         {/* ----------------------------------------------------------- Chart A */}
         <Card tone="white">
-          <CardTitle hint={`${view === 'seller_instinct' ? 'Seller instinct' : 'Sahi Daam'} — price against the floor and the market.`}>
+          <CardTitle hint={`${STRATEGY_LABEL[primary.strategy]} — price against the floor and the market.`}>
             Price vs floor vs band
           </CardTitle>
           <PriceVsFloorChart run={primary} week={week} />
@@ -550,12 +584,12 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
       {/* -------------------------------------------------------- week-26 summary */}
       {finished ? (
         <Card tone="peach" className="mt-4">
-          <CardTitle tone="peach" hint="Twenty-six weeks, one product, two ways of pricing it.">
+          <CardTitle tone="peach" hint="Twenty-six weeks, one product, three ways of pricing it.">
             Where they ended up
           </CardTitle>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {([sim.sahiDaam, sim.sellerInstinct] as const).map((run) => {
+          <div className="grid gap-3 sm:grid-cols-3">
+            {allRuns.map((run) => {
               const winner = run.strategy === 'sahi_daam'
               return (
                 <div
@@ -576,8 +610,10 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
                   </p>
                   <dl className="mt-3 space-y-1 text-[11px]">
                     {[
-          
-                      ['Units reordered', units(run.summary.unitsRestocked)],
+                      ['Profit per unit sold', signedInr(perUnit(run))],
+                      ['Units sold', units(Math.round(run.summary.unitsSold))],
+                      ['Weeks below floor', String(run.summary.weeksBelowFloor)],
+                      ['Sold out in week', soldOutWeek(run) ? String(soldOutWeek(run)) : '—'],
                       ['Final price', inr(run.summary.finalPrice)],
                     ].map(([label, value]) => (
                       <div key={label} className="flex justify-between gap-3">
@@ -595,17 +631,26 @@ export function SellerJourney({ judgeMode }: { judgeMode: boolean }) {
 
           <p className="mt-3 rounded-card bg-white px-3 py-2 text-xs leading-relaxed text-body">
             <span className="font-semibold text-plum">
-              {inr(sim.sahiDaam.summary.totalProfit - sim.sellerInstinct.summary.totalProfit)}{' '}
-              apart.
+              Sahi Daam finished{' '}
+              {inr(sim.sahiDaam.summary.totalProfit - sim.sellerInstinct.summary.totalProfit)} ahead
+              of seller instinct and{' '}
+              {inr(sim.sahiDaam.summary.totalProfit - sim.meeshoRange.summary.totalProfit)} ahead of
+              Meesho range.
             </span>{' '}
-            The instinct seller sold {units(Math.round(sim.sellerInstinct.summary.unitsSold))} units
-            — {Math.round(
-              (sim.sellerInstinct.summary.unitsSold / sim.sahiDaam.summary.unitsSold - 1) * 100,
-            )}
-            % more than Sahi Daam — and still finished {signedInr(sim.sellerInstinct.summary.totalProfit)}.
-            Volume was never the problem. He ran out of stock in week{' '}
-            {sim.sellerInstinct.weeks.find((w) => w.orders === 0)?.week ?? totalWeeks}, which is why
-            his line goes flat.
+            Volume did not decide it: the three sold{' '}
+            {allRuns.map((r) => units(Math.round(r.summary.unitsSold))).join(', ')} units. Each unit
+            did — {allRuns.map((r) => `${signedInr(perUnit(r))} (${STRATEGY_LABEL[r.strategy]})`).join(', ')}.
+            {allRuns.some((r) => soldOutWeek(r) !== undefined) ? (
+              <>
+                {' '}
+                Stock ran out in week{' '}
+                {allRuns
+                  .filter((r) => soldOutWeek(r) !== undefined)
+                  .map((r) => `${soldOutWeek(r)} for ${STRATEGY_LABEL[r.strategy]}`)
+                  .join(', ')}
+                , which is where each line goes flat.
+              </>
+            ) : null}
           </p>
         </Card>
       ) : null}

@@ -1041,3 +1041,35 @@ account id forces a rebuild from the new seller's answers.
 now say "Sunita ji" when Sunita is signed in, rather than always "Ramesh ji".
 The journey screen keeps Ramesh, because that is a fixed scripted story about a
 specific seller rather than about whoever is logged in.
+
+---
+
+## Seller floor vs cost-to-serve (policy correction)
+
+The original model charged the seller every logistics cost on every order plus a
+COD fee — the deck's ₹318. Meesho's published supplier policy
+(supplier.meesho.com/pricing, /shipping) says the supplier pays no COD or
+collection fee and no return-shipping fee on RTO orders; reverse shipping is
+charged on customer returns, by weight. Charging the seller for costs the
+policy says Meesho bears overstated their floor by about ₹48 on the kurti.
+
+- `sellerFloor()` is now the model every seller-facing screen, verdict,
+  recommendation, trigger and the simulator use: forward on delivered orders,
+  reverse on customer returns, 18% GST on both, packaging on every order,
+  unsellable returns, ads. Kurti: ₹270.64 (₹267.92 – ₹311.72).
+- `costToServe()` is the old function, unchanged, shown alongside and labelled:
+  ₹318 on the deck's rounded units, ₹318.12 continuous.
+- `meeshoAbsorbs()` is the RTO forward fee and its GST, the RTO return leg and
+  COD handling, per clean sale: ₹51.49 on the kurti.
+- Whether the forward fee is also charged on RTOs is DISPUTED between 2026
+  seller guides. Default off; a setting under Advanced switches it on (₹284.98).
+- Rates default to the DICE data pack (₹50 / ₹120). "2026 reported seller
+  rates" (₹65 / ₹155 at ≤ 500 g, ASSUMPTION) gives ₹299.33.
+
+Consequences, stated rather than hidden: festive RTO barely moves the seller
+floor (₹270.64 → ₹273.11 in November), so the T2 alert now talks about refused
+COD orders, fewer deliveries and stock in transit, and quotes the real change.
+The cheapest NOT_VIABLE beauty product is now ₹152, not ₹120. In the journey,
+seller instinct and Meesho range both make money; Sahi Daam leads on profit per
+unit. Across the 15-run robustness grid it beats instinct 15/15 and the Meesho
+range 12/15 — it loses all three seed-3 runs, by up to ₹3,815.

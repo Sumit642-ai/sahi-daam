@@ -69,6 +69,7 @@ export function FloorCalculator() {
     monthRow,
     season: index,
     range,
+    costToServe,
     slab,
     deck,
     tagFor,
@@ -115,6 +116,7 @@ export function FloorCalculator() {
       <div className="space-y-4">
         <FloorHeadline
           range={range}
+          costToServe={costToServe}
           deck={deck}
           monthLabel={monthRow.label_en}
           seasonIndex={index}
@@ -489,6 +491,43 @@ export function FloorCalculator() {
                   hint="Of the returns that come back, how many cannot be sold again."
                 />
 
+                {/* ------------------------------ who pays: policy settings */}
+                <div className="space-y-2 rounded-lg bg-lilac/60 p-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-plum">
+                    {t('policy.heading')}
+                  </p>
+                  <label className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={draft.forwardOnRto}
+                      onChange={(e) => set('forwardOnRto', e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-orange"
+                    />
+                    <span>
+                      <span className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-plum-deep">
+                        {t('policy.forwardOnRto')}
+                        <span className="rounded-full bg-magenta/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-magenta">
+                          {t('assumptions.disputed')}
+                        </span>
+                      </span>
+                      <span className="block text-[11px] leading-snug text-body/60">
+                        {t('policy.forwardOnRtoHint')}
+                      </span>
+                    </span>
+                  </label>
+                  <SelectField
+                    label={t('policy.rateSource')}
+                    provider={draft.rateSource === 'dice' ? 'meesho' : 'assumption'}
+                    value={draft.rateSource}
+                    onChange={(v) => set('rateSource', v)}
+                    options={[
+                      { value: 'dice', label: t('policy.rateDice') },
+                      { value: 'reported2026', label: t('policy.rate2026') },
+                    ]}
+                    hint={t('policy.rateSourceHint')}
+                  />
+                </div>
+
                 <button
                   type="button"
                   onClick={resetToDefaults}
@@ -514,7 +553,7 @@ export function FloorCalculator() {
                 step={5}
                 display={pct(draft.codShare, 0)}
                 ends={['all prepaid', 'all COD']}
-                hint="Pushing buyers to prepaid is the fastest way to lower your floor."
+                hint="Prepaid orders are refused far less often. Meesho pays the RTO shipping, so this moves your floor only a little — it mostly means fewer parcels lost in transit."
               />
 
               <SliderField
@@ -543,7 +582,7 @@ export function FloorCalculator() {
                 step={1}
                 display={`${monthRow.label_en} ×${index}`}
                 ends={['Jan', 'Dec']}
-                hint="Festive RTO lifts your floor without you touching anything."
+                hint="Festive RTO means fewer deliveries. Your floor moves only slightly, because Meesho pays the RTO shipping — returns and product cost move it far more."
               />
             </div>
           </Card>

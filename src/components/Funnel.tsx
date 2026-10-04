@@ -177,11 +177,11 @@ export function Funnel({ result }: FunnelProps) {
 
       <p className="mt-4 rounded-lg bg-peach px-3 py-2 text-xs text-body">
         Only <span className="font-bold text-orange">{units(result.cleanSales)}</span> of the 100
-        orders you packed and shipped actually earn you anything. The other{' '}
-        <span className="font-semibold text-magenta">
-          {units(result.rtoUnits + result.returnUnits)}
-        </span>{' '}
-        still cost you shipping, packaging and COD handling.
+        orders you packed actually earn you anything. The{' '}
+        <span className="font-semibold text-magenta">{units(result.rtoUnits)}</span> refused at
+        the door still cost you their packaging (Meesho pays their shipping), and the{' '}
+        <span className="font-semibold text-magenta">{units(result.returnUnits)}</span> customer
+        returns cost you shipping both ways, GST and packaging.
       </p>
     </Card>
   )

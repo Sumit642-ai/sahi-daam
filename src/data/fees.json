@@ -24,14 +24,14 @@
   "codFee": {
     "value": 7,
     "unit": "₹ per COD order",
-    "label_en": "COD handling fee",
+    "label_en": "COD handling cost (Meesho's — not charged to sellers; used in cost-to-serve)",
     "label_hi": "COD हैंडलिंग शुल्क",
     "source": "ASSUMPTION"
   },
   "gstRate": {
     "value": 0.18,
     "unit": "share of forward shipping",
-    "label_en": "GST (applied to forward shipping only)",
+    "label_en": "GST rate (cost-to-serve: forward leg; seller floor: both fees)",
     "label_hi": "GST (केवल आगे की शिपिंग पर)",
     "source": "Deck worked example — GST at 18% of forward shipping (18% × ₹5,000 = ₹900)"
   },

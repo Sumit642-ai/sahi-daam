@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   defaultFloorInput,
-  floor,
-  floorRange,
+  costToServe as floor,
+  costToServeRange as floorRange,
+  meeshoAbsorbs,
+  sellerFloor,
   fwd,
   marginPct,
   profitPer100Dispatched,
@@ -303,5 +305,84 @@ describe('floor — edge behaviour required by spec section 6.1', () => {
 
   it('rejects an unknown category id rather than silently defaulting', () => {
     expect(() => defaultFloorInput('not_a_category')).toThrow(/Unknown categoryId/)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The seller floor — what Meesho's supplier policy actually charges the seller
+// ---------------------------------------------------------------------------
+
+describe('sellerFloor — what the seller pays under the supplier policy', () => {
+  /** Within ₹0.20: the targets are the deck's rounded units, the engine does not round. */
+  const near = (actual: number, target: number) =>
+    expect(Math.abs(actual - target)).toBeLessThanOrEqual(0.2)
+
+  it('keeps the full cost-to-serve of the deck kurti at exactly ₹318', () => {
+    const deck = floor({
+      ...kurti(),
+      seasonIndex: 1,
+      unitOverrides: { rtoUnits: 17, returnUnits: 13, writeOffUnits: 6, cleanSales: 70 },
+    })
+    expect(deck.floor).toBe(318)
+    expect(deck.model).toBe('costToServe')
+  })
+
+  it('gives the default kurti a seller floor of about ₹270.5', () => {
+    near(sellerFloor(kurti()).floor, 270.5)
+  })
+
+  it('gives about ₹284.9 when the forward fee is also charged on RTOs', () => {
+    near(sellerFloor({ ...kurti(), policy: { forwardOnRto: true } }).floor, 284.9)
+  })
+
+  it('gives about ₹299.2 on 2026 reported seller rates', () => {
+    near(sellerFloor({ ...kurti(), policy: { rateSource: 'reported2026' } }).floor, 299.2)
+  })
+
+  it('reproduces the seller formula line by line', () => {
+    const r = sellerFloor(kurti())
+    const delivered = 100 * (1 - 0.17)
+    const returns = delivered * 0.157
+    const clean = delivered - returns
+    const forward = delivered * 50
+    const reverse = returns * 120
+    const gst = 0.18 * (forward + reverse)
+    const total = forward + reverse + gst + 100 * 8 + returns * 0.46 * 150
+    expect(r.deliveredUnits).toBeCloseTo(delivered, 9)
+    expect(r.cleanSales).toBeCloseTo(clean, 9)
+    expect(r.totalOverhead).toBeCloseTo(total, 6)
+    expect(r.floor).toBeCloseTo(150 + total / clean, 6)
+  })
+
+  it('charges the seller no COD fee and no RTO shipping', () => {
+    const r = sellerFloor(kurti())
+    expect(r.codCost).toBe(0)
+    const keys = r.costLines.map((l) => l.key)
+    expect(keys).not.toContain('cod')
+    expect(keys).not.toContain('rtoReverse')
+    expect(r.absorbedLines.map((l) => l.key)).toEqual(['rtoForward', 'rtoForwardGst', 'rtoReverse', 'cod'])
+  })
+
+  it('reports what Meesho absorbs per clean sale', () => {
+    const r = sellerFloor(kurti())
+    const rto = 17
+    const absorbed = rto * 50 * 1.18 + rto * 120 + 100 * 0.8 * 7
+    expect(meeshoAbsorbs(kurti()).total).toBeCloseTo(absorbed, 6)
+    expect(meeshoAbsorbs(kurti()).perCleanSale).toBeCloseTo(absorbed / r.cleanSales, 6)
+    // With the forward fee on RTOs charged to the seller, Meesho no longer absorbs it.
+    const disputed = meeshoAbsorbs({ ...kurti(), policy: { forwardOnRto: true } })
+    expect(disputed.lines.map((l) => l.key)).toEqual(['rtoReverse', 'cod'])
+  })
+
+  it('sits below full cost-to-serve', () => {
+    for (const rr of [0.1, 0.157, 0.25]) {
+      const input = { ...kurti(), returnRate: rr }
+      expect(sellerFloor(input).floor).toBeLessThan(floor(input).floor)
+    }
+  })
+
+  it('still rises with RTO, because every order is packed', () => {
+    const at = (rtoCod: number) => sellerFloor({ ...kurti(), rtoCod }).floor
+    expect(at(0.3)).toBeGreaterThan(at(0.2))
   })
 })

@@ -274,7 +274,7 @@ export function MarketBand() {
                     },
                     {
                       label: 'Why it is not 100 × the margin',
-                      note: 'You paid shipping, packaging and COD handling on all 100 orders, but only the clean sales earn anything back.',
+                      note: 'You paid packaging on all 100 orders and shipping on every order that went out to a buyer, but only the clean sales earn anything back.',
                     },
                   ],
                 },

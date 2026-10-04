@@ -15,6 +15,7 @@ import weightSlabsJson from './weightSlabs.json'
 import categoriesJson from './categories.json'
 import seasonJson from './season.json'
 import journeyJson from './journey.json'
+import policyJson from './policy.json'
 
 import ethnicWomenListings from './listings/ethnic_women.json'
 import westernWomenListings from './listings/western_women.json'
@@ -242,9 +243,11 @@ export const seasonRaw = seasonJson
  *   DERIVED     worked out from the deck's worked example (13/83, 6/13, …)
  *   CONVENTION  a modelling choice, not a claim about the world — the units
  *               basis, the simulator seed, the calendar, the RTO cap
+ *   DISPUTED    published sources disagree; the default is stated and the
+ *               other reading is a setting
  *   ASSUMPTION  a placeholder; production would replace it with Meesho's data
  */
-export type SourceKind = 'CITED' | 'DERIVED' | 'CONVENTION' | 'ASSUMPTION'
+export type SourceKind = 'CITED' | 'DERIVED' | 'CONVENTION' | 'DISPUTED' | 'ASSUMPTION'
 
 /** The pricing model a seller sees, or the simulator and its sample market. */
 export type SourceDomain = 'pricing' | 'simulator'
@@ -252,6 +255,7 @@ export type SourceDomain = 'pricing' | 'simulator'
 export function sourceKind(source: string): SourceKind {
   const s = source.trim()
   if (/^model convention/i.test(s)) return 'CONVENTION'
+  if (/^disputed/i.test(s)) return 'DISPUTED'
   if (/^deck worked example/i.test(s)) return 'DERIVED'
   if (isAssumption(s)) return 'ASSUMPTION'
   return 'CITED'
@@ -297,6 +301,13 @@ function withKind(e: Omit<SourcedEntry, 'isAssumption' | 'kind' | 'domain'>): So
  */
 export function sourcedEntries(): SourcedEntry[] {
   const out: SourcedEntry[] = []
+
+  // Who pays what, under Meesho's published supplier policy. First, because
+  // it decides which of the numbers below land on the seller at all.
+  for (const [key, s] of Object.entries(policyJson)) {
+    if (key.startsWith('_')) continue
+    out.push(entry('Seller policy — who pays what', `policy.${key}`, s as Sourced<string | number>))
+  }
 
   for (const [key, s] of Object.entries(feesJson)) {
     if (key.startsWith('_')) continue
