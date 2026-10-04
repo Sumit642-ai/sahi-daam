@@ -35,7 +35,7 @@ function FixRow({ fix, band, currentFloor }: { fix: Fix; band: Band; currentFloo
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-profit/15 px-2 py-0.5 text-[10px] font-semibold text-profit">
-          floor down {inr(saving)}
+          floor down {inr(saving, saving < 1 ? 2 : 0)}
         </span>
         {fix.viableNow ? (
           <span className="rounded-full bg-profit/15 px-2 py-0.5 text-[10px] font-semibold text-profit">

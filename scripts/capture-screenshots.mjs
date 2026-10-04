@@ -76,7 +76,7 @@ try {
     const text = await headline.innerText()
     // The seller floor (what the seller pays), with cost-to-serve beside it.
     const expected = ['Your floor (what you pay)', '₹268', '₹312', 'most likely ₹271', 'Full cost-to-serve ₹318', 'You actually keep', '+₹29']
-    const missing = expected.filter((s) => !text.includes(s))
+    const missing = expected.filter((s) => !text.toLowerCase().includes(s.toLowerCase()))
     if (missing.length > 0) {
       throw new Error(`STALE DEPLOY: the floor card is missing ${missing.join(', ')}. Nothing captured.`)
     }
@@ -114,6 +114,9 @@ try {
     await settle(page)
     const notViable = card(page, 'can’t make money as listed')
     await notViable.waitFor()
+    // Price it where the market is, not at the kurti's ₹300.
+    await page.getByRole('button', { name: 'Match the median' }).click()
+    await settle(page)
     written.push(await shootUnion(page, [card(page, 'similar listings'), notViable], 'beauty.png'))
     await context.close()
   }
