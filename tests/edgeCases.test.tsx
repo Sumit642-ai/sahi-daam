@@ -13,19 +13,19 @@ import {
 } from '../src/engine/floor'
 import { inr, num, pct, signedInr, units } from '../src/engine/format'
 import { recommend, verdictFor } from '../src/engine/recommend'
-import { ExpandAllContext } from '../src/components/ShowWorking'
-import { AuthProvider } from '../src/auth'
-import { I18nProvider } from '../src/i18n'
-import { Alerts } from '../src/pages/Alerts'
-import { Assumptions } from '../src/pages/Assumptions'
-import { FloorCalculator } from '../src/pages/FloorCalculator'
-import { Home } from '../src/pages/Home'
-import { MarketBand } from '../src/pages/MarketBand'
-import { MeeshoComparison } from '../src/pages/MeeshoComparison'
+import { ExpandAllContext } from '../src/story/components/ShowWorking'
+import { AuthProvider } from '../src/story/auth'
+import { I18nProvider } from '../src/story/i18n'
+import { Alerts } from '../src/story/pages/Alerts'
+import { Assumptions } from '../src/story/pages/Assumptions'
+import { FloorCalculator } from '../src/story/pages/FloorCalculator'
+import { Home } from '../src/story/pages/Home'
+import { MarketBand } from '../src/story/pages/MarketBand'
+import { MeeshoComparison } from '../src/story/pages/MeeshoComparison'
 import {
   ProductInputsProvider,
   type ProductInputs,
-} from '../src/state/productInputs'
+} from '../src/story/state/productInputs'
 
 /**
  * Phase 7 — empty and edge inputs.

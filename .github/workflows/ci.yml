@@ -1,0 +1,22 @@
+# Section 14: tests + build on every push. Also enforces the 250 KB initial-JS budget.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc -b --noEmit
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:bundle

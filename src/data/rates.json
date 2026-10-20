@@ -1,0 +1,230 @@
+{
+  "_note": "MVP spec v2, section 6.4. Every default rate the v2 engine (src/engine/keep.ts) uses, each with its source, the date it was last checked against that source (lastVerified) and a status: CITED (an outside source says so), ASSUMPTION (our own estimate), FROM_REPORT (zero until the seller's own report supplies it). Values that overlap the prototype's categories.json / fees.json / weightSlabs.json must stay equal to them; tests/rates.test.ts checks that.",
+  "statuses": {
+    "CITED": "An outside source states this value.",
+    "ASSUMPTION": "Our estimate. Shown with an \"estimated\" chip and replaced by the seller's report when one is uploaded.",
+    "FROM_REPORT": "Only the seller's own report can supply this; the default is 0 until then."
+  },
+  "global": {
+    "unitsBasis": {
+      "value": 100,
+      "unit": "orders dispatched",
+      "label_en": "Model basis: every calculation is per 100 dispatched orders",
+      "source": "Model convention (spec v2, section 6.2)",
+      "lastVerified": "2026-10-20",
+      "status": "CITED"
+    },
+    "feeGstRate": {
+      "value": 0.18,
+      "unit": "share of shipping fees",
+      "label_en": "GST on Meesho's shipping fees (forward and reverse)",
+      "source": "Team deck worked example (18% × ₹5,000 = ₹900). The synthetic sample report charges ₹59 = ₹50 + 18%. Verify on a real report.",
+      "lastVerified": "2026-10-05",
+      "status": "ASSUMPTION"
+    },
+    "tcsRate": {
+      "value": 0.005,
+      "unit": "share of net taxable value",
+      "label_en": "GST TCS deducted by the marketplace (tax deducted, claimable)",
+      "source": "CGST Act section 52; CBIC Notification 15/2024-Central Tax cut it from 1% to 0.5% from 10 July 2024 (cleartax.in/s/tcs-under-goods-and-services-tax)",
+      "lastVerified": "2026-10-20",
+      "status": "CITED"
+    },
+    "tdsRate": {
+      "value": 0.001,
+      "unit": "share of gross sales",
+      "label_en": "Income-tax TDS under section 194-O (tax deducted, claimable)",
+      "source": "Income Tax Act section 194-O; Finance (No. 2) Act 2024 cut it from 1% to 0.1% from 1 October 2024 (taxguru.in/income-tax/section-194-o-amendment-lower-tds-rate-e-commerce-payments.html)",
+      "lastVerified": "2026-10-20",
+      "status": "CITED"
+    },
+    "gstRegisteredDefault": {
+      "value": true,
+      "unit": "setting",
+      "label_en": "Seller is GST-registered (default for new shops)",
+      "source": "Spec v2, section 6.1: most Meesho sellers have a GSTIN. Changed in shop setup.",
+      "lastVerified": "2026-10-20",
+      "status": "ASSUMPTION"
+    },
+    "fwdOnRtoDefault": {
+      "value": false,
+      "unit": "setting",
+      "label_en": "Forward fee also charged on RTO orders",
+      "source": "supplier.meesho.com/pricing and /shipping: no fee on RTO orders. DISPUTED: some 2026 seller guides say the forward fee is still charged. A report overrides this.",
+      "lastVerified": "2026-10-05",
+      "status": "CITED"
+    },
+    "outputGstChoices": {
+      "value": [0, 0.03, 0.05, 0.12, 0.18],
+      "unit": "share of listed price",
+      "label_en": "Output GST rates the seller can pick",
+      "source": "Spec v2, section 6.1. Note: GST 2.0 (Notification 9/2025-Central Tax (Rate), from 22 Sep 2025) removed the 12% slab for apparel and footwear; 12% is kept only because the spec lists it.",
+      "lastVerified": "2026-10-20",
+      "status": "CITED"
+    },
+    "adPerOrder": {
+      "value": 0,
+      "unit": "₹ per order dispatched",
+      "label_en": "Ad spend per order (shown with an \"ads not included\" chip while 0)",
+      "source": "Spec v2, section 6.1: asked on every product; replaced by the report's Ads Cost when present",
+      "lastVerified": "2026-10-20",
+      "status": "ASSUMPTION"
+    },
+    "penaltiesPerOrder": {
+      "value": 0,
+      "unit": "₹ per order dispatched",
+      "label_en": "Penalties and claims per order",
+      "source": "Spec v2, section 6.1: from the report only",
+      "lastVerified": "2026-10-20",
+      "status": "FROM_REPORT"
+    }
+  },
+  "rtoPrior": {
+    "codShare": {
+      "value": 0.8,
+      "unit": "share of orders",
+      "label_en": "COD share before any prepaid discount",
+      "source": "Valmo DICE data pack",
+      "lastVerified": "2026-10-01",
+      "status": "CITED"
+    },
+    "rtoCod": {
+      "value": 0.2,
+      "unit": "share of COD orders",
+      "label_en": "RTO rate on COD orders (mixed buyer regions)",
+      "source": "Valmo DICE data pack",
+      "lastVerified": "2026-10-01",
+      "status": "CITED"
+    },
+    "rtoPrepaid": {
+      "value": 0.05,
+      "unit": "share of prepaid orders",
+      "label_en": "RTO rate on prepaid orders",
+      "source": "Valmo DICE data pack",
+      "lastVerified": "2026-10-01",
+      "status": "CITED"
+    },
+    "prepaidDiscountCodShift": {
+      "value": 0.2,
+      "unit": "points of COD share",
+      "label_en": "A prepaid discount (or a prepaid push) moves this much of COD to prepaid",
+      "source": "Same 20-point shift as the prototype's prepaid fix (src/engine/sale.ts PREPAID_SHIFT)",
+      "lastVerified": "2026-10-05",
+      "status": "ASSUMPTION"
+    },
+    "regionCodRtoMultiplier": {
+      "big_cities": {
+        "value": 0.75,
+        "unit": "× COD RTO rate",
+        "label_en": "Buyers mostly in big cities",
+        "source": "Our estimate: metro COD refusals below the national DICE average",
+        "lastVerified": "2026-10-20",
+        "status": "ASSUMPTION"
+      },
+      "mixed": {
+        "value": 1,
+        "unit": "× COD RTO rate",
+        "label_en": "Buyers mixed",
+        "source": "Valmo DICE data pack average, unchanged",
+        "lastVerified": "2026-10-01",
+        "status": "CITED"
+      },
+      "small_towns": {
+        "value": 1.25,
+        "unit": "× COD RTO rate",
+        "label_en": "Buyers mostly in small towns",
+        "source": "Our estimate: tier-3 COD refusals above the national DICE average",
+        "lastVerified": "2026-10-20",
+        "status": "ASSUMPTION"
+      }
+    }
+  },
+  "shipping": {
+    "_note": "₹ per order, before 18% GST. forward = per delivered order; reverse = per customer return.",
+    "slabs": [
+      {
+        "maxG": 500,
+        "forward": { "value": 50, "unit": "₹", "label_en": "Forward, 0–500 g", "source": "Valmo DICE data pack", "lastVerified": "2026-10-01", "status": "CITED" },
+        "reverse": { "value": 120, "unit": "₹", "label_en": "Reverse, 0–500 g", "source": "Valmo DICE data pack", "lastVerified": "2026-10-01", "status": "CITED" }
+      },
+      {
+        "maxG": 1000,
+        "forward": { "value": 70, "unit": "₹", "label_en": "Forward, 501–1000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+        "reverse": { "value": 150, "unit": "₹", "label_en": "Reverse, 501–1000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" }
+      },
+      {
+        "maxG": 1500,
+        "forward": { "value": 90, "unit": "₹", "label_en": "Forward, 1001–1500 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+        "reverse": { "value": 180, "unit": "₹", "label_en": "Reverse, 1001–1500 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" }
+      },
+      {
+        "maxG": 2000,
+        "forward": { "value": 110, "unit": "₹", "label_en": "Forward, 1501–2000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+        "reverse": { "value": 210, "unit": "₹", "label_en": "Reverse, 1501–2000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" }
+      }
+    ],
+    "extraStep": {
+      "stepG": 500,
+      "forward": { "value": 20, "unit": "₹ per extra 500 g", "label_en": "Forward, each extra 500 g past 2000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "reverse": { "value": 30, "unit": "₹ per extra 500 g", "label_en": "Reverse, each extra 500 g past 2000 g", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" }
+    }
+  },
+  "categories": {
+    "ethnic_women": {
+      "weightG": { "value": 350, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 8, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.157, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Team deck worked example: 13 of 83 delivered returned. IBEF puts fashion returns at 25–40%.", "lastVerified": "2026-10-04", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.46, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Team deck worked example: 6 of 13 returns unsellable", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.05, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "GST 2.0, Notification 9/2025-CT(R): apparel up to ₹2,500 a piece at 5% from 22 Sep 2025", "lastVerified": "2026-10-20", "status": "CITED" }
+    },
+    "western_women": {
+      "weightG": { "value": 300, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 8, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.2, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.4, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.05, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "GST 2.0, Notification 9/2025-CT(R): apparel up to ₹2,500 a piece at 5% from 22 Sep 2025", "lastVerified": "2026-10-20", "status": "CITED" }
+    },
+    "men_apparel": {
+      "weightG": { "value": 350, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 8, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.18, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.4, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.05, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "GST 2.0, Notification 9/2025-CT(R): apparel up to ₹2,500 a piece at 5% from 22 Sep 2025", "lastVerified": "2026-10-20", "status": "CITED" }
+    },
+    "kids": {
+      "weightG": { "value": 250, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 8, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.16, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.4, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.05, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "GST 2.0, Notification 9/2025-CT(R): apparel up to ₹2,500 a piece at 5% from 22 Sep 2025", "lastVerified": "2026-10-20", "status": "CITED" }
+    },
+    "footwear": {
+      "weightG": { "value": 800, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 20, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.2, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.35, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.05, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "GST 2.0, Notification 9/2025-CT(R): footwear up to ₹2,500 a pair at 5% from 22 Sep 2025", "lastVerified": "2026-10-20", "status": "CITED" }
+    },
+    "home_kitchen": {
+      "weightG": { "value": 900, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 25, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.1, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.6, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.18, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "Our estimate: rates vary by item (many kitchen goods moved to 5% under GST 2.0); seller picks their HSN rate", "lastVerified": "2026-10-20", "status": "ASSUMPTION" }
+    },
+    "beauty": {
+      "weightG": { "value": 200, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 10, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.05, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.8, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.18, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "Our estimate: cosmetics 18%, but soap, shampoo and hair oil moved to 5% under GST 2.0; seller picks their HSN rate", "lastVerified": "2026-10-20", "status": "ASSUMPTION" }
+    },
+    "jewellery": {
+      "weightG": { "value": 100, "unit": "g", "label_en": "Packed weight", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 6, "unit": "₹ per order", "label_en": "Packaging", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.12, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.3, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.03, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "Our estimate: imitation jewellery (HSN 7117) at 3%, as in the synthetic sample report; seller picks their HSN rate", "lastVerified": "2026-10-20", "status": "ASSUMPTION" }
+    }
+  }
+}

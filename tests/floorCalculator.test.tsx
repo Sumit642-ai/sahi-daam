@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { ExpandAllContext } from '../src/components/ShowWorking'
-import { FloorCalculator } from '../src/pages/FloorCalculator'
-import { AuthProvider } from '../src/auth'
-import { I18nProvider } from '../src/i18n'
-import { ProductInputsProvider } from '../src/state/productInputs'
+import { ExpandAllContext } from '../src/story/components/ShowWorking'
+import { FloorCalculator } from '../src/story/pages/FloorCalculator'
+import { AuthProvider } from '../src/story/auth'
+import { I18nProvider } from '../src/story/i18n'
+import { ProductInputsProvider } from '../src/story/state/productInputs'
 
 /**
  * Screen 1 render checks (spec section 9.2 and acceptance checklist items 1–3).

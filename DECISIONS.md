@@ -1073,3 +1073,501 @@ The cheapest NOT_VIABLE beauty product is now ₹152, not ₹120. In the journey
 seller instinct and Meesho range both make money; Sahi Daam leads on profit per
 unit. Across the 15-run robustness grid it beats instinct 15/15 and the Meesho
 range 12/15 — it loses all three seed-3 runs, by up to ₹3,815.
+
+---
+
+## MVP Phase 0 — engine v2 and fixtures
+
+Spec section numbers below refer to `SAHI_DAAM_MVP_SPEC.md` (v2).
+
+### 83. Engine v2 lives beside the prototype engine, not inside it
+
+`src/engine/keep.ts`, `saleLift.ts` and `report.ts` are new files. Nothing in
+`floor.ts`, `sale.ts` or `recommend.ts` changed, so every story-page default is
+untouched (section 6: "do not change existing default outputs"). A test checks
+that on the same inputs `keepPerSale().floor` equals `sellerFloor().floor` for
+both GST settings, so the two engines can't drift apart without a test failing.
+v2 takes RTO and return rates and shipping fees as direct inputs, because a
+report gives exactly those, while the prototype derives RTO from a COD mix.
+
+### 84. rates.json duplicates some prototype values; a test keeps them equal
+
+The story pages read `categories.json` / `fees.json` / `weightSlabs.json`; v2
+reads `rates.json`. Rather than rewire the story pages (and risk their
+outputs), the overlapping values are duplicated and `tests/rates.test.ts`
+fails if they differ. `lastVerified` is the date of the commit that entered a
+value from its source, or 2026-10-20 for the rates checked on the web in this
+phase (TCS 0.5%, TDS 0.1%, apparel/footwear GST 5% under GST 2.0). Deck-derived
+numbers (return rate 0.157, unsellable 0.46) are marked ASSUMPTION, not CITED:
+they come from our own worked example, not an outside source.
+
+### 85. Output GST: the spec's 12% choice no longer exists for apparel/footwear
+
+GST 2.0 (Notification 9/2025-Central Tax (Rate), from 22 Sep 2025) put apparel
+and footwear up to ₹2,500 at 5% and removed the 12% slab for them. The choice
+list keeps 12% because section 6.1 lists it, with a note in rates.json. Phase C
+should decide whether to drop it from the picker. Non-apparel defaults (home
+18%, beauty 18%, jewellery 3%) are ASSUMPTION; the seller confirms their HSN rate.
+
+### 86. The shop-setup RTO prior is built from the DICE rates
+
+Section 6.1 asks for a prior "from buyer region and prepaid discount" but gives
+no numbers. Mixed buyers with no discount reproduce the prototype's 17%
+(80% COD × 20% + 20% × 5%). A prepaid discount shifts 20 points of COD to
+prepaid (the prototype's existing prepaid fix), giving 14%. Big cities / small
+towns scale the COD RTO by 0.75 / 1.25. Those two multipliers are our
+estimates, marked ASSUMPTION, and a report replaces the whole prior.
+
+### 87. Prepaid push = RTO down 3 points, and it barely moves keep
+
+The prepaid push used by the sale check is the same 20-point COD shift priced
+at the COD/prepaid RTO gap: 0.2 × (20% − 5%) = 3 points, never below the
+prepaid RTO. Under Meesho's published policy an RTO costs the seller only
+packaging, so for the default kurti the push adds about ₹0.40 a sale. So
+"Join only with prepaid push" is rare unless the forward fee is charged on
+RTOs. The test case for it uses RTO 30% with `fwdOnRto` on. Phase C's "Push
+prepaid" action will show small rupee effects under the default policy. That
+is the honest number, but the team should know before the demo.
+
+### 88. Sale-check verdict order, and a fifth verdict
+
+Section 7.7 lists Join / Join only with prepaid push / Skip (keepAtSale ≤ 0)
+and "fix the price first". It doesn't say what happens when each sale still
+earns but the lift needed is over 30%. That is `SKIP_LIFT`. Order: fix price
+first → join → join with prepaid → skip (loss) → skip (lift). Prepaid comes
+before the loss skip, as in the prototype's sale check, because a sale price
+under today's floor can still clear the prepaid floor. Both lifts are computed
+under their own assumptions (the prepaid lift is keep ÷ keepAtSale with the push
+applied to both).
+
+### 89. Reconciliation compares payouts before TCS/TDS, and always calibrates
+
+The report's settlement has TCS and TDS taken out. They are claimable, so they
+are added back before comparing with the model, and the model doesn't need to
+estimate them. Hard rule 1 says the report's numbers replace estimates
+whenever a report exists. So `reconcile()` always returns the calibrated
+input; the ±5% result says whether our model was right, not whether to listen
+to the report. Gap lines come from swapping one input at a time from estimate to
+report and measuring the change in modelled payout. Below 20 dispatched orders
+the actual charges (price, shipping) still come from the report, but RTO and
+return rates stay estimated ("Low data").
+
+### 90. Fixture parsing uses exact synthetic headers until Phase B
+
+`tests/fixtures/reports/loadReport.ts` maps the synthetic files' column names
+by exact header. The engine takes already-mapped `OrderRow`s, so Phase B's
+keyword detection and mapping screen slot in front without engine changes.
+SheetJS is installed from the official CDN tarball (`xlsx-0.20.3`), because
+the npm registry copy is stale and has open advisories.
+
+### 91. The samples arrived in `private_reports/`, not `sample_reports/`
+
+They were copied to `tests/fixtures/reports/synthetic/` as the spec asks.
+`private_reports/` stays untracked for future real reports. Its `.gitignore`
+line had been appended in UTF-16, so git ignored nothing; it is now plain text.
+
+---
+
+## MVP Phase A — shell, onboarding, manual product, home
+
+### 92. The prototype moved to `src/story/` and runs under `/how-it-works/:screen`
+
+`pages/`, `components/`, `state/`, `auth.tsx`, `i18n.tsx` and `App.tsx` (now
+`StoryApp.tsx`) were moved with `git mv`, so history follows them. The only
+code changes in the story: each screen is now a URL (`/how-it-works/floor`
+etc.) instead of component state, so browser back works between screens. Its
+language provider also accepts the app's language on entry. Page content and
+engine outputs are unchanged, and all 280 prototype tests still pass. The
+story loads lazily, with Recharts, so it adds nothing to the seller app's
+first load. Its own sign-in gate stays, as it was. `?demo=ramesh` now goes
+on `/how-it-works`.
+
+### 93. One shop record per device; language lives on it
+
+Section 9's `shop` table holds a single row (`id: 'main'`). It is created at
+the first onboarding answer, and every answer autosaves to it, so back keeps
+answers (8.2). I added two fields the data model didn't list: `onboardedAt`,
+which gates the app and is set when shop setup is finished, and
+`storagePersisted`, the answer to `navigator.storage.persist()`, asked once
+on the first save. Before a shop exists, the landing page's language choice
+is kept in localStorage as a per-device convenience only.
+
+### 94. Panel charges are typed with GST; the engine works before GST
+
+The seller copies "shipping charge" from their supplier panel. The synthetic
+report labels these "(Incl. GST)", so the form asks for them with GST and the
+app divides by 1.18. Left blank, the field shows exactly what we'll use
+instead ("We'll use ₹59 · Typical for a 350 g parcel") with an Estimated chip.
+Verify against a real panel during the G1/G4 seller sessions.
+
+### 95. Status thresholds and leak-finder order
+
+Loss means keep < 0. Thin means a margin over the floor under 10% of the
+price, the same line as the prototype's verdict. Everything else is Healthy.
+Rows sort by status first (Loss, Thin, Healthy), then by money lost a month
+(known before unknown), then by keep per sale. Monthly = orders a week × 52/12
+× (1 − RTO) × (1 − returns) × keep. The top card counts only products with an
+order count and hides when there are none (7.5).
+
+### 96. A buyer-region change barely moves the floor, and that is correct
+
+While writing the "2 products changed status" test, a region switch from
+Mixed to Small towns changed no status. Under Meesho's published policy an
+RTO costs the seller only packaging (no forward or return fee), so 4 more
+points of RTO move the kurti's floor by paise. The GST setting moves it
+more (₹268.74 vs ₹270.64), so the test uses that. This is the same finding as
+decision 87, seen from the shop-setup side.
+
+### 97. Layout: bottom nav up to 1023 px, sidebar from 1024 px
+
+This follows the amended Section 13. Tablet keeps the bottom nav (the spec
+allows that or a rail) and gets a two-column home (list + "at a glance").
+Laptop gets the sidebar and a list–detail split on Products. Forms hide the
+bottom nav and use a sticky save bar. The phone frame is an iframe of the
+same URL at 390 × 844 px, so the real phone breakpoints apply inside it.
+It is sized in px rather than rem, because a device doesn't grow with Hindi
+text size. Hindi raises the root size to 106.25% (17 px). Everything else is
+rem, so the phone's own larger-text setting scales the whole app.
+
+### 98. Self-hosted, subset fonts; ₹ comes from Noto Sans Devanagari
+
+Fontsource Latin Poppins (4 weights) and Devanagari Noto Sans (2 weights),
+no Google Fonts request, so the app also works offline later. The ₹ sign is
+outside Poppins' Latin subset, so it renders from the Devanagari font (about
+50 KB, cached). A metric-matched Arial fallback (`Poppins Fallback`) limits
+layout shift while fonts load.
+
+### 99. Initial JS is 125 KB gzipped (budget 250 KB)
+
+`npm run check:bundle` enforces this. The app avoids `src/data/index.ts`,
+which drags in the prototype's eight synthetic listing files. A small
+`categoryNames.ts` gives it just the names.
+
+### 100. Report upload is behind a flag; Contact link omitted
+
+The landing's primary button ("Upload my Meesho report") is required by 7.1,
+so it stays and leads to `/upload`. With `FLAGS.reportUpload` off, that page
+says upload is coming and offers manual entry. Phase B turns it on. The
+footer has Privacy and How it works but no Contact link yet: the team hasn't
+given a contact address, and I didn't want to invent one.
+
+### 101. UI tests run React Router in jsdom with a one-line Request shim
+
+The data router builds a `Request` with jsdom's AbortSignal, which Node's
+`Request` rejects, so every navigation silently failed in tests.
+`tests/app/domShim.ts` drops the signal; the app has no loaders, so nothing
+reads it. Back buttons decide "go back or go to the parent?" from React
+Router's location key (`'default'` = first entry), not from
+`window.history`, so they behave the same in the browser and in tests.
+
+---
+
+## MVP Phase B — report upload and reconciliation
+
+### 102. The app's reconciliation tests our fee model, not our category defaults
+
+Phase 0's `reconcile()` compared the report with full estimates, so a seller
+whose returns differ from the category default "differed". That says nothing
+about whether our model is right. `reconcileReport()` instead applies our fee
+rules (shipping by weight, 18% fee GST, who pays on RTOs and returns) to the
+report's own counts and price. A gap therefore means a fee or policy we have
+wrong, and the gap lines list only fee inputs. The report's numbers are used
+from then on either way (hard rule 1). `reconcile()` is unchanged, and so are
+its Phase 0 tests.
+
+### 103. Synthetic fixtures reconcile at 0.0%, and that proves less than it looks
+
+All five products in both weeks (xlsx and csv) match to the paisa, because
+the synthetic files were generated with the same fee rules. That validates
+parsing, totals and the reconciliation arithmetic. It does **not** validate
+the model against Meesho. Only real reports (G1) and sellers' own payouts
+(G5) can, and the pitch must not claim a match on synthetic data.
+
+### 104. Detection: normalised headers, scored keywords, one header per field
+
+Headers are lower-cased with punctuation stripped, then scored against
+keyword patterns with exclusions (e.g. "Total Sale Amount (Incl. Shipping &
+GST)" can never be the shipping charge, and "Payment Status" loses to
+"Live Order Status"). Values break ties for the status column. Each header
+is used once, best score first. The header row is the most header-like of
+the first 15 rows, so title rows above it are fine. Required fields are SKU,
+status and settlement; anything else missing is optional. If a required
+field is missing, the mapping screen opens. The mapping is saved against a
+signature of the file's headers and reused automatically for the same layout.
+
+### 105. Personal columns are dropped by header, before any value is read
+
+Buyer name, phone, mobile, address, email and PIN code columns are found by
+header and removed when the header row is found. After that point no code
+can reach their values, and the mapping screen can't offer them. "Customer
+State" is a region, not a person, so it stays (unused for now). The raw
+grid exists in memory only during that first step. Tests assert that no
+buyer name, sub-order id or order line ends up anywhere in IndexedDB.
+
+### 106. Ads without a SKU are split by orders; compensation lowers costs
+
+The sample Ads sheet has campaign totals with no SKU. Rather than drop ads
+(which would overstate keep), the total is split across products by their
+share of dispatched orders, and the result screen says so (estimated). With
+a SKU column, ads go to that SKU. Compensation and Recovery rows are linked
+to products through Sub Order No. Money paid to the seller counts as a
+negative cost and money recovered as a positive one, so calibration now
+takes `penaltiesTotal` signed (previously `Math.abs`, which would have
+turned compensation into a cost). A CSV export has no side sheets, so ads
+and penalties stay `null` (not 0) and the estimates keep their chips.
+
+### 107. Products match reports by SKU; new SKUs get one cost field
+
+Matching is case- and space-insensitive on the product's SKU. The product
+form gained an optional SKU field so hand-added products can match. An
+unmatched SKU gets one quick cost field (spec 7.3). If the seller already
+typed products in without a SKU, a "same as" dropdown links the SKU instead
+of creating a duplicate. New products start at the shop category's default
+weight. The report's own shipping charges are used anyway, but the
+fee-model check uses the weight, so a heavier item (the 600 g saree) shows
+"differs: shipping ₹59 vs ₹82.60" with a hint to correct the weight.
+
+### 108. The latest report per SKU wins; monthly figures come from its period
+
+Latest = the latest period end, then the latest upload. Monthly = clean
+sales in that report × 30.44 ÷ the report's days, from Order Date. Without
+dates, the typed orders per week are used if present. Week-on-week checks
+(C2/C3) will compare consecutive reports in Phase D.
+
+### 109. Duplicate = same SHA-256; Web Crypto with a plain-JS fallback
+
+Web Crypto doesn't exist on plain-http LAN testing, so a plain-JS SHA-256
+gives the identical hash there (tested against the FIPS "abc" vector and
+against Web Crypto on a fixture). The `reports.fileHash` index is unique, so
+the database itself refuses a second copy.
+
+### 110. Upload instructions are generic until G1 sellers describe theirs
+
+"Supplier Panel → Payments → download the payment file" is a best guess.
+Spec 7.3 asks for steps written from what real sellers describe, with their
+screenshots. Replace the four `upload.step*` strings after the G1 calls.
+
+### 111. Me → Reports → Remove is in Phase B
+
+Spec 8.2 lists it as a backward flow, and it only makes sense once reports
+exist. Removing deletes the report and its totals (products fall back to
+estimates), with a 10-second Undo.
+
+### 112. Test timeout raised to 30 s
+
+Fixture parsing and jsdom upload flows ran past the 5 s default when all 23
+files ran in parallel on this machine. Parsed fixtures are now cached per
+run, and the per-test timeout is 30 s.
+
+---
+
+## MVP Phase C — floor card, price helper, sale check
+
+### 113. Floor card, price helper and sale check are three routes
+
+`/products/:id` is the floor card, `/products/:id/price` the price helper and
+`/products/:id/sale` the sale check. Each screen has one big answer (section
+13), browser back works between them, and on a laptop they all open in the
+right-hand pane. All three read one `buildProductModel()`, so they can never
+disagree about a product's numbers.
+
+### 114. "Why" lines are per clean sale; the working shows the per-100 arithmetic
+
+Each line is its total on 100 dispatched ÷ clean sales, with the source chip
+of the input that drives it. The lines add up to "each sale must bring in"
+(the net floor); a GST-registered seller then adds the GST inside the price
+to reach the floor. "Show working" shows paise, e.g. "83 × ₹50.00 = ₹4,150.00
+on 100 orders sent ÷ 69.97 clean sales", plus the rate list with sources. Fee
+GST appears as ₹0 "claimed back as input credit" for registered sellers
+rather than vanishing. No Meesho-cost lines (hard rule 4; tested).
+
+### 115. "What to do" leaves out actions worth under ₹1 a sale
+
+Spec 7.6 says "push prepaid when COD-heavy". Under Meesho's published policy
+an RTO costs the seller only packaging, so for the default kurti the push is
+worth about ₹0.40 a sale. Listing that as the seller's first action would be
+noise, so an action must be worth at least ₹1 to appear. Push prepaid shows
+up when it matters: RTO charged a forward fee, or very high RTO.
+"COD-heavy" is "no prepaid discount" in shop setup, because the report
+doesn't carry the COD share. "Fix the listing" appears when returns are
+above the category's default rate.
+
+### 116. A price set after the latest report beats the report's price
+
+Spec 6.1 puts the report's price ahead of the seller's. But "Use this price"
+must visibly change the answer. Products now carry `priceSetAt`: a price the
+seller sets after the latest report was uploaded wins; otherwise the
+report's average price wins. A newer report wins again, since by then it
+reflects the new price. Products created from a report have no `priceSetAt`.
+
+### 117. Growing doesn't ratchet: one ₹10 step, then hold until it's judged
+
+Applying the Growing suggestion (₹300 → ₹310) made the helper immediately
+suggest ₹320, and so on, every visit. Spec 7.9 judges a step on real orders
+before the next. So if the price changed in the last 14 days (about two
+weekly reports), Growing holds and says why, and "What to do" drops the
+price action. Phase D's price-step planner will judge the step itself.
+
+### 118. Stage rules, and why "listed since" looks at reports
+
+Under 30 days listed → Launch; 30–90 → Growing; over 90 → Steady; over 90
+with orders per day down 30%+ between the last two reports → Clearing. The
+spec gives the inputs ("listed since and order trend") but no thresholds;
+these are ours, and the stage is always editable ("Use the automatic stage"
+undoes an override). A product created today from a report that started in
+June isn't a launch, so "listed since" takes the earliest of the typed date,
+`createdAt` and the first report's start.
+
+### 119. Outliers are left out of everything, including "not viable"
+
+A price under 30% or over 300% of the median is flagged "Outlier?" (one tap
+removes it) and excluded from the median, the quarters and the not-viable
+test. Otherwise one ₹1,500 typo would make an unviable product look viable.
+"Fewer than 3 prices" counts usable prices only, and fades the range for
+every stage, because the visibility warning needs the market whatever the
+stage.
+
+### 120. The lighter-parcel fix subtracts the slab difference from what the seller pays
+
+When shipping comes from a report, replacing it with our slab estimate
+would mix sources. The fix instead lowers the seller's actual charge by the
+difference between their slab and the next one down. In the lightest slab,
+it halves packaging, as the prototype does.
+
+### 121. Competitor prices are added in a transaction
+
+Two quick taps on "Add" lost a price, because each wrote the list from a
+stale copy. Adds and removes now read and write inside one Dexie
+transaction. Deleting a product also removes its competitor prices, and
+Undo restores them.
+
+### 122. `updateProduct` keeps fields the form doesn't edit
+
+An edit used to rebuild the product from form fields only, which would have
+dropped `stageOverride` and `priceSetAt`. They now survive, and a changed
+price stamps `priceSetAt`.
+
+### 123. Sale-check share is a plain wa.me link for now
+
+Spec 7.7 asks for a WhatsApp share. It sends the verdict line; the referral
+code (7.10) arrives with Phase D's sharing work.
+
+---
+
+## MVP Phase D — checks, learner, growth, privacy, PWA
+
+### 124. Checks are recomputed from data, and keyed by the facts that fired them
+
+`computeChecks()` is pure. The app shell recomputes it whenever any input
+changes (a report upload, an edit, opening the app), and `syncChecks()`
+writes only the difference. Each check's id is its rule, product and facts
+(e.g. `C2:<product>:<prev report>:<last report>`). That one choice gives all
+the dedupe rules: one active check per rule and product (a newer key closes
+the older one); a dismissed check stays dismissed while its facts are the
+same; a check whose facts disappear closes itself; one whose facts return is
+shown again.
+
+### 125. C6's COD share comes from shop setup
+
+The report doesn't carry the COD share, so C6 uses the shop prior: 80% COD,
+or 60% with a prepaid discount. Both are at the spec's 60% line, so in
+1 Oct–15 Nov every shop with products sees C6 once a year, as the spec's
+"push prepaid before the festive peak" intends.
+
+### 126. C4 needs the old cost, so products remember their last cost change
+
+`costChange: { from, at }` is stamped when an edit changes the cost. C4
+fires when the move is over 5%, and its key includes `at`, so a second change
+is a new check.
+
+### 127. Price steps: one open at a time; "too early" also covers small changes
+
+"Try ₹10 more" (Growing) applies the price and opens a step. While it's open,
+Growing holds. It closes when the seller taps Keep, Go back (which restores
+the old price, with Undo) or Stop. Spec 7.9 has three verdicts; a difference
+under 10% either way, once there is enough data, is reported as "too early
+to tell" with both profit-per-day figures shown, rather than inventing a
+fourth verdict. "Before" and "after" periods each come from a report's own
+calibrated numbers, and the catalogue trend comes from the other products in
+the same two reports.
+
+### 128. Events go through plain fetch to Supabase REST, not supabase-js
+
+Section 14 lists Supabase JS. For insert-only rows and one RPC call, plain
+`fetch` to the REST endpoints does the same job and keeps about 40 KB off
+low-end phones (the 250 KB budget). Swapping in supabase-js later changes one
+file (`telemetry.ts`).
+
+### 129. /stats reads totals through a database function, never a secret in code
+
+`public.sahi_daam_stats(key)` is `security definer`. It compares the key
+from the URL with `private.settings.stats_key` (the `private` schema isn't
+exposed by the API), sleeps half a second on a wrong key to slow guessing,
+and returns totals and by-day rows with team devices excluded. The anon key
+in the app can only insert (row-level security, column grants, no select
+policy), so it can't read events, the waitlist or feedback even if someone
+lifts it from the bundle. The page also strips the key from the address bar.
+The whole migration is tested in PGlite (real Postgres compiled to
+WebAssembly): insert-only access, the 200/day cap, a wrong key refused, team
+exclusion.
+
+### 130. Activation is an event the app sends once
+
+"Activated seller = onboarding done and ≥ 1 product with a report or an
+order count" (section 10). The app knows that; the server doesn't see
+products. So the app sends `activated` once per device when it first becomes
+true, and `/stats` counts distinct devices. Products checked = products in
+uploaded reports + products typed in; products losing = each device's latest
+leak-finder count, so a daily repeat isn't double-counted.
+
+### 131. The waitlist without a backend says so
+
+With no Supabase keys a sign-up can't reach the team. The card then says
+"this build isn't connected yet, so your sign-up is saved on this phone
+only" instead of a plain "you're on the list". Waitlist rows carry no device
+id, so they can't be linked to anyone's product data.
+
+### 132. Feedback text is sent; the privacy page says so
+
+Spec 7.11 asks for stars + text. The text is the seller's own words, so the
+card says it is sent, and the privacy page lists it. It is capped at 500
+characters and carries no product data.
+
+### 133. Private-window detection is a heuristic
+
+No browser API says "private window". A storage quota under 120 MB is
+treated as "probably temporary" and shows a soft banner pointing to backup.
+The wording says "looks temporary (a private window?)" because a phone with
+little free space can trip it too, and the advice (back up) is right either
+way.
+
+### 134. The service worker precaches everything, lazy chunks included
+
+Spec 8.3: "Everything works offline". The precache (about 1.8 MB, 35 files)
+includes the report reader and /how-it-works, so upload and the judge pages
+also work offline after one visit. Screens a new seller doesn't see first
+(product page, price helper, sale check, upload, checks, Me, concept, stats,
+privacy) load lazily, so the first load fell from 169 KB to 146 KB gzipped.
+
+### 135. Status colours one shade darker for AA contrast
+
+Lighthouse flagged the deck's amber (#C77700) on peach at 3.1:1, and greyed
+text at 4.47:1. The MVP's loss / thin / healthy text tokens are now the same
+hues one shade darker (#C8005F, #9A5A00, #17794F, all ≥ 4.7:1 on white and on
+their own tints), and secondary text is a solid #5E5E5E (6.5:1). The
+prototype's colours under /how-it-works are unchanged. Accessibility is now
+100 on every page measured.
+
+### 136. A crash shows a friendly screen, not React Router's default
+
+A real bug (creating the referral code inside a Dexie live query) surfaced as
+"Unexpected Application Error!". It's fixed, and the root route now has an
+error screen: "Something went wrong. Your products and reports are safe on
+this phone", with Reload.
+
+### 137. Branch pushed, not merged
+
+Hard rule 6: build on `mvp`, merge to `main` only when Section 20 passes.
+Several Section 20 items need people (usability test, Hindi review by a
+seller, rehearsals, every member explaining ENGINE.md) and real reports, so
+`mvp` is pushed and `main`, the judges' link, is untouched.

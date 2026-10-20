@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { runSimulation } from '../src/engine/simulator'
 import { TRIGGER_IDS } from '../src/engine/triggers'
-import { JOURNEY_WEEK } from '../src/pages/Alerts'
+import { JOURNEY_WEEK } from '../src/story/pages/Alerts'
 
 describe('Daam Badlo — every demo alert carries its real journey week', () => {
   const sim = runSimulation()

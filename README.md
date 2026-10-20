@@ -24,6 +24,39 @@ product's lifecycle, and tells the seller on WhatsApp when any of it changes.
 
 ---
 
+## The MVP (`mvp` branch)
+
+The `mvp` branch turns the prototype into a seller app ([`SAHI_DAAM_MVP_SPEC.md`](SAHI_DAAM_MVP_SPEC.md), v2). A seller uploads their Meesho payment report (or types in one product) and sees what they actually keep on every product, their floor, what to do, the price to charge next, whether to join a sale, and what changed since last week. Everything runs on the phone; the report never leaves it.
+
+- **Seller app** at `/`: landing, onboarding, profit leak finder, floor card, price helper, sale check, weekly checks, price step planner, Me (backup / restore, delete everything, opt-in sharing). English and Hindi; mobile-first and fully responsive; installable, and works offline.
+- **The prototype** for judges, unchanged, at `/how-it-works` (`?demo=ramesh` skips its sign-in).
+- **Concept**: how it could look inside a marketplace seller panel, at `/concept`.
+- **How the numbers work**: [`ENGINE.md`](ENGINE.md). Every judgement call: [`DECISIONS.md`](DECISIONS.md).
+
+Checks you can run:
+
+```bash
+npm test                 # unit, flow and backend-SQL tests
+npm run build && npm run check:bundle      # initial JS must stay under 250 KB gzipped
+npx vite preview --port 4173               # then, in another terminal:
+npm run check:layout     # phone / tablet / laptop, Hindi, landscape, 125% text
+npm run check:upload     # report upload end to end
+npm run check:pricing    # floor card, price helper, sale check
+npm run check:phase-d    # checks, Me, backup, delete everything, offline, manifest
+```
+
+### Optional backend (anonymous counters, Pro waitlist, `/stats`)
+
+The app works with no backend: nothing is sent and `/stats` says "not connected". To turn it on:
+
+1. Create a Supabase project and run [`supabase/migrations/0001_sahi_daam.sql`](supabase/migrations/0001_sahi_daam.sql) in its SQL editor. The public key can then only *insert* events, waitlist, feedback and opt-in benchmark rows; it can't read anything. Events are capped at 200 per device per day.
+2. Set the stats secret **inside the database**, never in the app:
+   `insert into private.settings (name, value) values ('stats_key', '<long random string>');`
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see [`.env.example`](.env.example)) in Vercel or `.env.local`.
+4. Open `/stats?key=<your secret>`. The key is checked by the database function `sahi_daam_stats`; the page removes it from the address bar.
+
+Team devices: open the app once with `?team=1` and that device's events are excluded from `/stats`.
+
 ## Running it
 
 Requires Node 20 or newer (built and tested on Node 24).
@@ -36,7 +69,11 @@ npm run dev          # http://localhost:5173
 That is the whole setup. There is no backend, no API key and no network call —
 every number comes from `src/data/*.json` or is computed in the browser.
 
-The app opens on a sign-in screen. Two demo logins are seeded so you never have
+On the `mvp` branch the app opens on the MVP seller app (spec v2): landing,
+onboarding, add a product, the leak finder. Its data lives in this browser's
+IndexedDB. The original prototype is at **`/how-it-works`**, unchanged.
+
+The prototype opens on a sign-in screen. Two demo logins are seeded so you never have
 to sign up first:
 
 | Role | Email | Password |
@@ -45,7 +82,8 @@ to sign up first:
 | Meesho admin | `admin@meesho.demo` | `sahidaam` |
 
 Or press **Enter as Ramesh**, the first button on the page — or open the app
-with `?demo=ramesh` (for example `http://localhost:5173/?demo=ramesh`) to skip
+with `?demo=ramesh` (for example `http://localhost:5173/how-it-works?demo=ramesh`;
+on `main`, `/?demo=ramesh`) to skip
 the sign-in screen entirely. Either way Ramesh's profile is reset to the seeded
 one: no prepaid discount, so 80% COD and the deck's ₹318 floor, with his ₹300
 planned price filled in. The admin console is reached by signing in as
