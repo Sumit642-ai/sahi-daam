@@ -1,12 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
-import { AuthProvider } from '../src/auth'
-import { ExpandAllContext } from '../src/components/ShowWorking'
+import { AuthProvider } from '../src/story/auth'
+import { ExpandAllContext } from '../src/story/components/ShowWorking'
 import { platformView, savingPerOnePercentCr, shiftSavingPerOrder } from '../src/engine/platform'
-import { I18nProvider } from '../src/i18n'
-import { MeeshoView } from '../src/pages/MeeshoView'
-import { ProductInputsProvider } from '../src/state/productInputs'
+import { I18nProvider } from '../src/story/i18n'
+import { MeeshoView } from '../src/story/pages/MeeshoView'
+import { ProductInputsProvider } from '../src/story/state/productInputs'
 
 describe('Meesho view — the platform lens', () => {
   const view = platformView()

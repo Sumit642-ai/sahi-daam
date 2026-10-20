@@ -7,8 +7,8 @@
  */
 import { renderToStaticMarkup } from 'react-dom/server'
 
-import { ExpandAllContext } from '../src/components/ShowWorking'
-import { FloorCalculator } from '../src/pages/FloorCalculator'
+import { ExpandAllContext } from '../src/story/components/ShowWorking'
+import { FloorCalculator } from '../src/story/pages/FloorCalculator'
 
 const html = renderToStaticMarkup(
   <ExpandAllContext.Provider value={false}>

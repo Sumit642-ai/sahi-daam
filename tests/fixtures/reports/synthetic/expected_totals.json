@@ -1,0 +1,116 @@
+{
+  "week1": {
+    "rows": 459,
+    "skus": {
+      "KURTI-BLUE-01": {
+        "dispatched": 120,
+        "delivered_kept": 84,
+        "customer_returns": 16,
+        "rto": 20,
+        "cancelled": 2,
+        "rto_pct": 16.67,
+        "return_pct_of_delivered": 16.0,
+        "net_settlement": 16889.08
+      },
+      "DUPATTA-COT-02": {
+        "dispatched": 80,
+        "delivered_kept": 58,
+        "customer_returns": 6,
+        "rto": 16,
+        "cancelled": 2,
+        "rto_pct": 20.0,
+        "return_pct_of_delivered": 9.38,
+        "net_settlement": 6849.7
+      },
+      "SAREE-PRT-03": {
+        "dispatched": 40,
+        "delivered_kept": 28,
+        "customer_returns": 6,
+        "rto": 6,
+        "cancelled": 1,
+        "rto_pct": 15.0,
+        "return_pct_of_delivered": 17.65,
+        "net_settlement": 11413.12
+      },
+      "JHUMKA-04": {
+        "dispatched": 150,
+        "delivered_kept": 108,
+        "customer_returns": 9,
+        "rto": 33,
+        "cancelled": 3,
+        "rto_pct": 22.0,
+        "return_pct_of_delivered": 7.69,
+        "net_settlement": 7820.64
+      },
+      "KURTISET-05": {
+        "dispatched": 60,
+        "delivered_kept": 40,
+        "customer_returns": 10,
+        "rto": 10,
+        "cancelled": 1,
+        "rto_pct": 16.67,
+        "return_pct_of_delivered": 20.0,
+        "net_settlement": 13490.4
+      }
+    },
+    "ads_total": -1800,
+    "compensation": 141.6
+  },
+  "week2": {
+    "rows": 459,
+    "skus": {
+      "KURTI-BLUE-01": {
+        "dispatched": 120,
+        "delivered_kept": 77,
+        "customer_returns": 23,
+        "rto": 20,
+        "cancelled": 2,
+        "rto_pct": 16.67,
+        "return_pct_of_delivered": 23.0,
+        "net_settlement": 13809.99
+      },
+      "DUPATTA-COT-02": {
+        "dispatched": 80,
+        "delivered_kept": 58,
+        "customer_returns": 6,
+        "rto": 16,
+        "cancelled": 2,
+        "rto_pct": 20.0,
+        "return_pct_of_delivered": 9.38,
+        "net_settlement": 6849.7
+      },
+      "SAREE-PRT-03": {
+        "dispatched": 40,
+        "delivered_kept": 28,
+        "customer_returns": 6,
+        "rto": 6,
+        "cancelled": 1,
+        "rto_pct": 15.0,
+        "return_pct_of_delivered": 17.65,
+        "net_settlement": 11413.12
+      },
+      "JHUMKA-04": {
+        "dispatched": 150,
+        "delivered_kept": 99,
+        "customer_returns": 9,
+        "rto": 42,
+        "cancelled": 3,
+        "rto_pct": 28.0,
+        "return_pct_of_delivered": 8.33,
+        "net_settlement": 7018.47
+      },
+      "KURTISET-05": {
+        "dispatched": 60,
+        "delivered_kept": 40,
+        "customer_returns": 10,
+        "rto": 10,
+        "cancelled": 1,
+        "rto_pct": 16.67,
+        "return_pct_of_delivered": 20.0,
+        "net_settlement": 13490.4
+      }
+    },
+    "ads_total": -2100,
+    "compensation": 141.6
+  }
+}

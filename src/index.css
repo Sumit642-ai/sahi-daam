@@ -2,8 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * A metric-matched local fallback, so text does not jump when Poppins arrives
+ * (font-display: swap). Overrides approximate Poppins on Arial.
+ */
+@font-face {
+  font-family: 'Poppins Fallback';
+  src: local('Arial');
+  ascent-override: 92.5%;
+  descent-override: 30.8%;
+  line-gap-override: 8.8%;
+  size-adjust: 113%;
+}
+
 @layer base {
+  html {
+    /* 100% keeps the phone's own larger-text setting; everything is in rem. */
+    font-size: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  /* Hindi body text at least 17 px (spec v2, section 13). */
+  html:lang(hi) {
+    font-size: 106.25%;
+  }
   body {
     @apply bg-white font-sans text-body;
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Room for the fixed bottom nav plus the home-indicator inset. */
+  .pb-nav {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+  .bottom-nav-offset {
+    bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

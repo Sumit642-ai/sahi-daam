@@ -10,15 +10,15 @@ import {
   codShareFor,
   demoSellerProfile,
   emptyProfile,
-} from '../src/auth'
-import { AuthProvider } from '../src/auth'
+} from '../src/story/auth'
+import { AuthProvider } from '../src/story/auth'
 import { costToServeRange, defaultFloorInput, floorRange } from '../src/engine/floor'
-import { I18nProvider } from '../src/i18n'
-import { AdminConsole } from '../src/pages/AdminConsole'
-import { SellerOnboarding } from '../src/pages/SellerOnboarding'
-import { SignIn } from '../src/pages/SignIn'
-import { inputsForProfile } from '../src/state/productInputs'
-import { PLATFORM_FALLBACK } from '../src/auth'
+import { I18nProvider } from '../src/story/i18n'
+import { AdminConsole } from '../src/story/pages/AdminConsole'
+import { SellerOnboarding } from '../src/story/pages/SellerOnboarding'
+import { SignIn } from '../src/story/pages/SignIn'
+import { inputsForProfile } from '../src/story/state/productInputs'
+import { PLATFORM_FALLBACK } from '../src/story/auth'
 
 /**
  * The signup answers exist to replace guesses with the seller's own numbers.
