@@ -5,11 +5,11 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { BACKUP_APP, deleteEverything, exportBackup, parseBackup, restoreBackup } from '../../src/app/backup'
-import { type Product, SahiDaamDb } from '../../src/app/db'
-import { computeChecks, inFestiveWindow } from '../../src/app/lib/checks'
+import { type Competitor, type Product, type Report, type SkuStatsRow, SahiDaamDb } from '../../src/app/db'
+import { computeChecks, inFestiveWindow, lastTwo } from '../../src/app/lib/checks'
 import { mondayReminderIcs, nextMonday } from '../../src/app/lib/ics'
 import { keepInputFor, linkFor, summarise } from '../../src/app/lib/products'
-import { judgeProductStep, stepReports } from '../../src/app/lib/steps'
+import { catalogueRatio, judgeProductStep, stepReports } from '../../src/app/lib/steps'
 import { sha256HexSync } from '../../src/app/report/hash'
 import { latestBySku, saveReport } from '../../src/app/report/store'
 import {
@@ -113,8 +113,55 @@ describe('weekly checks (7.8; Section 15, positive 7)', () => {
     expect(inFestiveWindow(Date.parse('2026-10-01T09:00:00'))).toBe(true)
     expect(inFestiveWindow(Date.parse('2026-11-15T23:00:00'))).toBe(true)
     expect(inFestiveWindow(Date.parse('2026-11-16T09:00:00'))).toBe(false)
-    expect((await checksNow(OCT_20)).some((c) => c.rule === 'C6')).toBe(true)
+    // No report with a payment mix: the estimate, labelled as one.
+    expect((await checksNow(OCT_20)).filter((c) => c.rule === 'C6')).toMatchObject([{ payload: { cod: 80, source: 'ESTIMATED' } }])
     expect((await checksNow(Date.parse('2026-12-20T12:00:00'))).some((c) => c.rule === 'C6')).toBe(false)
+  })
+
+  it('C6 uses the report\'s payment mix when it has one, and skips a seller who gives a prepaid discount', async () => {
+    const p = await addProduct({ name: 'K', category: 'ethnic_women', cost: 150, weightG: 350, price: 300 }, db, 0)
+    const base = { fileName: 'r', periodDays: 7, orderLines: 10, productCount: 1, synthetic: false, adsSplitByOrders: false }
+    await db.reports.add({ ...base, id: 'old', fileHash: 'h1', periodTo: '2026-09-07', uploadedAt: 1, codShare: 0.9 })
+    await db.reports.add({ ...base, id: 'new', fileHash: 'h2', periodTo: '2026-09-14', uploadedAt: 2, codShare: 0.72 })
+    const products = [p]
+    const summaries = new Map([[p.id, summarise(p, shop)]])
+    const c6 = (s: typeof shop, reports: Report[]) =>
+      computeChecks({ products, summaries, rows: [], reports, competitor: [], steps: [], shop: s, now: OCT_20 }).filter((c) => c.rule === 'C6')
+    const reports = await db.reports.toArray()
+    expect(c6(shop, reports)).toMatchObject([{ payload: { cod: 72, source: 'REPORT' } }])
+    expect(c6({ ...shop, prepaidDiscount: true }, reports)).toEqual([])
+    expect(c6(shop, [{ ...reports[1]!, codShare: 0.4 }])).toEqual([])
+  })
+
+  it('the same period uploaded twice is one report: C2/C3 compare different periods', () => {
+    const report = (id: string, from: string, to: string, uploadedAt: number): Report => ({ id, fileHash: id, fileName: id, periodFrom: from, periodTo: to, periodDays: 7, uploadedAt, orderLines: 0, productCount: 1, synthetic: false, adsSplitByOrders: false })
+    const row = (reportId: string): SkuStatsRow => ({
+      id: reportId, reportId, productId: '', sku: 'K-1', productName: 'K', orders: 30, delivered: 30, deliveredKept: 25, rto: 0, returns: 5, cancelled: 0,
+      avgPrice: 300, avgShip: null, avgReturnShip: null, forwardChargedOnRto: false, ads: null, penalties: null, tcsTds: 0, netSettlement: 0, avgSettlement: null,
+    })
+    const reports = [report('w1', '2026-09-01', '2026-09-07', 1), report('w2', '2026-09-08', '2026-09-14', 2), report('w2again', '2026-09-08', '2026-09-14', 3)]
+    const two = lastTwo('K-1', ['w1', 'w2', 'w2again'].map(row), new Map(reports.map((r) => [r.id, r])))!
+    expect(two.map((x) => x.report.id)).toEqual(['w1', 'w2again'])
+    expect(lastTwo('K-1', ['w2', 'w2again'].map(row), new Map(reports.map((r) => [r.id, r])))).toBeNull()
+  })
+
+  it('C2/C3 need 20 delivered orders in both reports; C5 needs 3 usable prices', async () => {
+    const p = await addProduct({ name: 'K', sku: 'K-1', category: 'ethnic_women', cost: 150, weightG: 350, price: 300 }, db, 0)
+    const report = (id: string, to: string): Report => ({ id, fileHash: id, fileName: id, periodTo: to, periodDays: 7, uploadedAt: 1, orderLines: 0, productCount: 1, synthetic: false, adsSplitByOrders: false })
+    const row = (reportId: string, delivered: number, returns: number): SkuStatsRow => ({
+      id: reportId, reportId, productId: p.id, sku: 'K-1', productName: 'K', orders: delivered, delivered, deliveredKept: delivered - returns, rto: 0, returns, cancelled: 0,
+      avgPrice: 300, avgShip: null, avgReturnShip: null, forwardChargedOnRto: false, ads: null, penalties: null, tcsTds: 0, netSettlement: 0, avgSettlement: null,
+    })
+    const reports = [report('a', '2026-09-07'), report('b', '2026-09-14')]
+    const summaries = new Map([[p.id, summarise(p, shop)]])
+    const rules = (rows: SkuStatsRow[], competitor: Competitor[] = []) =>
+      computeChecks({ products: [p], summaries, rows, reports, competitor, steps: [], shop: { ...shop, prepaidDiscount: true }, now: OCT_20 }).map((c) => c.rule)
+    // 10% → 50% returns, but on 10 delivered orders: noise.
+    expect(rules([row('a', 10, 1), row('b', 10, 5)])).toEqual([])
+    expect(rules([row('a', 20, 2), row('b', 20, 10)])).toEqual(['C2'])
+    const prices = (list: number[]): Competitor[] => [{ id: p.id, productId: p.id, prices: list, enteredAt: 0 }]
+    expect(rules([], prices([200, 210]))).toEqual([])
+    expect(rules([], prices([200, 210, 220]))).toEqual(['C5'])
   })
 
   it('dedupe: one active per rule and product; dismissed stays dismissed; resolved closes itself', async () => {
@@ -157,6 +204,30 @@ describe('price step planner (7.9; Section 15, positive 8)', () => {
     expect(judgeStep({ before, after: { cleanSales: 50, days: 7, keep: 39 } })).toMatchObject({ verdict: 'TOO_EARLY', reason: 'SMALL_CHANGE' }) // −7%
   })
 
+  it('only judges reports that show the step: before within ₹1 of the old price, after within ₹1 of the new', () => {
+    const before = { cleanSales: 70, days: 7, keep: 30, avgPrice: 300.4 }
+    const after = { cleanSales: 66, days: 7, keep: 39, avgPrice: 309.2 }
+    const prices = { oldPrice: 300, newPrice: 310 }
+    expect(judgeStep({ before, after, prices }).verdict).toBe('KEEP')
+    expect(judgeStep({ before, after: { ...after, avgPrice: 305 }, prices })).toMatchObject({ verdict: 'TOO_EARLY', reason: 'PRICE_NOT_SEEN' })
+    expect(judgeStep({ before: { ...before, avgPrice: 310 }, after, prices })).toMatchObject({ verdict: 'TOO_EARLY', reason: 'PRICE_NOT_SEEN' })
+    expect(judgeStep({ before: { ...before, avgPrice: null }, after, prices })).toMatchObject({ verdict: 'TOO_EARLY', reason: 'PRICE_NOT_SEEN' })
+  })
+
+  it('the catalogue trend is held to 0.67–1.5, and needs 20 orders of other products in each period', () => {
+    const before = { cleanSales: 70, days: 7, keep: 30 }
+    const after = { cleanSales: 77, days: 7, keep: 33 }
+    expect(judgeStep({ before, after, catalogueRatio: 4 }).catalogueRatio).toBe(1.5)
+    expect(judgeStep({ before, after, catalogueRatio: 0.1 }).catalogueRatio).toBe(0.67)
+    const report = (id: string, from: string) =>
+      ({ id, fileHash: id, fileName: id, periodFrom: from, periodTo: from, periodDays: 7, uploadedAt: 1, orderLines: 0, productCount: 2, synthetic: false, adsSplitByOrders: false }) as const
+    const row = (reportId: string, sku: string, orders: number) =>
+      ({ id: `${reportId}${sku}`, reportId, productId: '', sku, productName: sku, orders, delivered: orders, deliveredKept: orders, rto: 0, returns: 0, cancelled: 0, avgPrice: 300, avgShip: null, avgReturnShip: null, forwardChargedOnRto: false, ads: null, penalties: null, tcsTds: 0, netSettlement: 0, avgSettlement: null })
+    const reports = [report('a', '2026-09-01'), report('b', '2026-09-08')]
+    expect(catalogueRatio('K', 'a', 'b', [row('a', 'X', 19), row('b', 'X', 40)], reports)).toBeNull()
+    expect(catalogueRatio('K', 'a', 'b', [row('a', 'X', 20), row('b', 'X', 40)], reports)).toBe(2)
+  })
+
   it('…and the catalogue trend is taken out', () => {
     const before = { cleanSales: 70, days: 7, keep: 30 }
     const after = { cleanSales: 77, days: 7, keep: 33 } // +21% raw
@@ -169,6 +240,7 @@ describe('price step planner (7.9; Section 15, positive 8)', () => {
 
   it('a step started between the two fixture weeks is judged on them, and C7 fires', async () => {
     const [kurti] = await fixtureProducts()
+    await db.products.update(kurti!.id, { price: 300 })
     await upload('SAMPLE_SYNTHETIC_PAYMENT_FILE_week1.xlsx', 1000)
     await startPriceStep(kurti!.id, 310, db, Date.parse('2026-10-05T08:00:00'))
     const step = (await db.priceSteps.toArray())[0]!
@@ -180,15 +252,26 @@ describe('price step planner (7.9; Section 15, positive 8)', () => {
     const { before, after } = stepReports(step, kurti!.sku, rows, reports)
     expect(before!.report.periodFrom).toBe('2026-09-28')
     expect(after!.report.periodFrom).toBe('2026-10-05')
-    const j = judgeProductStep({ step, sku: kurti!.sku, base: keepInputFor(kurti!, shop), rows, reports })
-    // Week 2 returns jumped 16% → 23%: profit per day fell well over 10%.
+    // Week 2 still sold at ₹300: the new price never reached Meesho, so nothing is judged.
+    expect(judgeProductStep({ step, sku: kurti!.sku, base: keepInputFor(kurti!, shop), rows, reports })).toMatchObject({
+      verdict: 'TOO_EARLY',
+      reason: 'PRICE_NOT_SEEN',
+    })
+    expect((await checksNow()).filter((c) => c.rule === 'C7')).toEqual([])
+
+    // Once week 2 shows ₹310 it is judged.
+    const week2 = rows.find((r) => r.reportId === after!.report.id && r.sku === kurti!.sku)!
+    await db.skuStats.update(week2.id, { avgPrice: 310 })
+    const shown = await db.skuStats.toArray()
+    const j = judgeProductStep({ step, sku: kurti!.sku, base: keepInputFor(kurti!, shop), rows: shown, reports })
+    // Week 2 returns jumped 16% → 23%: profit per day fell well over 10%, ₹10 more a sale or not.
     expect(j.verdict).toBe('GO_BACK')
     const c7 = (await checksNow()).filter((c) => c.rule === 'C7')
-    expect(c7).toMatchObject([{ productId: kurti!.id, payload: { verdict: 'GO_BACK', from: 1, to: 310 } }])
+    expect(c7).toMatchObject([{ productId: kurti!.id, payload: { verdict: 'GO_BACK', from: 300, to: 310 } }])
 
     // Going back restores the old price and closes the step.
     await closePriceStep(step.id, 'GO_BACK', db)
-    expect((await db.products.get(kurti!.id))!.price).toBe(1)
+    expect((await db.products.get(kurti!.id))!.price).toBe(300)
     expect((await checksNow()).filter((c) => c.rule === 'C7')).toEqual([])
   })
 })
@@ -221,8 +304,8 @@ describe('events, team exclusion and referral (Section 10; Section 15 test 11, n
   })
 
   it('once-only, daily and the 200-a-day cap', async () => {
-    expect(await track('onboarding_done', {}, db)).toBe(true)
-    expect(await track('onboarding_done', {}, db)).toBe(false)
+    expect(await track('onboarding_done', {}, db, OCT_20)).toBe(true)
+    expect(await track('onboarding_done', {}, db, OCT_20)).toBe(false)
     expect(await track('leak_found', { losing: 2 }, db, OCT_20)).toBe(true)
     expect(await track('leak_found', { losing: 2 }, db, OCT_20 + 3600_000)).toBe(false)
     for (let i = 0; i < DAILY_EVENT_CAP + 5; i++) await track('share_clicked', {}, db, OCT_20)
@@ -282,12 +365,21 @@ describe('backup, restore and delete everything (7.11; Section 15, negative 11)'
     expect(parseBackup(JSON.stringify({ ...backup, schema: 99 }), db.verno)).toBe('newerSchema')
   })
 
-  it('delete everything leaves every table empty, the device id and queue included', async () => {
+  it('delete everything empties every table, the queue included, but keeps the device id and team flag', async () => {
     await saveShop({ language: 'en', onboardedAt: 5 }, db)
     await fixtureProducts()
+    await readLaunchParams('?team=1&ref=XK7P2Q', db)
     await track('onboarding_done', {}, db)
+    const id = (await db.kv.get('anonId'))!.value
     await deleteEverything(db)
-    for (const t of db.tables) expect(await t.count(), t.name).toBe(0)
+    for (const t of db.tables) if (t.name !== 'kv') expect(await t.count(), t.name).toBe(0)
+    expect((await db.kv.toArray()).sort((a, b) => (a.key < b.key ? -1 : 1))).toEqual([
+      { key: 'anonId', value: id },
+      { key: 'team', value: true },
+    ])
+    // So a team device's events after a reset are still left out of /stats.
+    await track('report_uploaded', {}, db)
+    expect((await db.outbox.toArray())[0]!.payload).toMatchObject({ anon_id: id, team: true })
   })
 })
 

@@ -52,8 +52,10 @@ describe('landing (7.1)', () => {
     expect(await screen.findByRole('heading', { name: /Most sellers price on profit they never see/ })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Upload my Meesho report' }).getAttribute('href')).toBe('/start/language?next=upload')
     expect(screen.getByRole('link', { name: 'Type in one product' }).getAttribute('href')).toBe('/start/language?next=product')
+    expect(screen.getByRole('link', { name: 'Try with a sample report' }).getAttribute('href')).toBe('/start/language?next=sample')
     expect(screen.getByText('Example with typical rates')).toBeTruthy()
     expect(screen.getByText('Independent tool. Not affiliated with Meesho.')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Contact' }).getAttribute('href')).toBe('mailto:TEAM_EMAIL_HERE')
     // Social proof stays hidden until ≥ 10 activated sellers.
     expect(screen.queryByText(/sellers ·/)).toBeNull()
   })
@@ -96,6 +98,36 @@ describe('onboarding (7.2) and its back flow (8.2)', () => {
     const shop = await db.shop.get('main')
     expect(shop).toMatchObject({ language: 'hi', buyerRegion: 'small_towns', gstRegistered: false })
     expect(shop!.onboardedAt).toBeGreaterThan(0)
+  })
+
+  it('after the first product is saved, Back goes home, never into the setup steps (8.2)', async () => {
+    const router = renderApp('/start/language?next=product')
+    fireEvent.click(await screen.findByRole('button', { name: 'English' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/start/shop'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Next' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/products/new'))
+
+    fireEvent.change(await screen.findByLabelText(/Product name/), { target: { value: 'Blue kurti' } })
+    fireEvent.change(field(/Product cost/), { target: { value: '150' } })
+    fireEvent.change(field(/Packed weight/), { target: { value: '350' } })
+    fireEvent.change(field(/Current price/), { target: { value: '300' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save product' }))
+    expect(await screen.findByText('At ₹300 you keep ₹30 per sale')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: /Back/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
+    // And the setup steps behind it are replaced by home as well.
+    await act(() => router.navigate(-1))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
+  })
+
+  it('"Other" asks which GST rate is in the price', async () => {
+    const router = renderApp('/start/shop')
+    fireEvent.click(await screen.findByRole('radio', { name: 'Other' }))
+    const rate = await screen.findByRole('group', { name: 'Which GST rate is inside your price?' })
+    fireEvent.click(within(rate).getByRole('radio', { name: '5%' }))
+    await waitFor(async () => expect(await db.shop.get('main')).toMatchObject({ category: 'other', gstRate: 0.05 }))
+    expect(router.state.location.pathname).toBe('/start/shop')
   })
 
   it('without a ?next, step 3 offers upload / type one product / skip', async () => {
@@ -144,6 +176,32 @@ describe('add product by hand (7.4)', () => {
     await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/products\/[^/]+$/))
     expect(await screen.findByText(/At ₹300 you lose ₹\d+ per sale/)).toBeTruthy()
     expect(await db.products.count()).toBe(1)
+  })
+
+  it('"When did you list it?" is optional: blank saves no date (Steady); "Just now" saves today (Launch)', async () => {
+    const fill = async (name: string) => {
+      fireEvent.change(await screen.findByLabelText(/Product name/), { target: { value: name } })
+      fireEvent.change(field(/Product cost/), { target: { value: '150' } })
+      fireEvent.change(field(/Packed weight/), { target: { value: '350' } })
+      fireEvent.change(field(/Current price/), { target: { value: '300' } })
+    }
+    const router = renderApp('/products/new')
+    expect(await screen.findByRole('group', { name: /When did you list it\?/ })).toBeTruthy()
+    await fill('Old kurti')
+    fireEvent.click(screen.getByRole('button', { name: 'Save product' }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/products\/[^/]+$/))
+    expect((await db.products.toArray())[0]!.listedSince).toBeUndefined()
+    expect(await screen.findByText('At ₹300 you keep ₹30 per sale')).toBeTruthy()
+
+    await act(() => router.navigate('/products/new'))
+    await fill('New kurti')
+    fireEvent.click(screen.getByRole('radio', { name: 'Just now' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save product' }))
+    await waitFor(async () => expect(await db.products.count()).toBe(2))
+    const fresh = (await db.products.toArray()).find((p) => p.name === 'New kurti')!
+    const d = new Date()
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    expect(fresh.listedSince).toBe(today)
   })
 
   it('shows the estimate each blank optional field will use', async () => {
@@ -243,6 +301,26 @@ describe('product detail: delete with undo (8.2)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     await waitFor(async () => expect(await db.products.get(p.id)).toBeTruthy())
+  })
+
+  it('goes home after a delete, wherever the product was opened from', async () => {
+    await onboarded()
+    const p = await addProduct(kurti)
+    const router = createMemoryRouter(routes, { initialEntries: ['/me', `/products/${p.id}`], initialIndex: 1 })
+    render(
+      <I18nProvider>
+        <RouterProvider router={router} />
+      </I18nProvider>,
+    )
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/home'))
+  })
+
+  it('an "Other" product says its estimates need checking', async () => {
+    await onboarded()
+    const p = await addProduct({ ...kurti, category: 'other' })
+    renderApp(`/products/${p.id}`)
+    expect(await screen.findByText(/Other category: weight, packaging, returns and unsellable returns are rough guesses/)).toBeTruthy()
   })
 })
 

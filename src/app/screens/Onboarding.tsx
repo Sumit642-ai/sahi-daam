@@ -3,15 +3,21 @@
  *
  * Every step is a real route, so browser back and in-app back behave the
  * same, and every answer is saved the moment it is chosen (spec 8.2: back
- * keeps answers). `?next=product|upload` carries the landing button's choice
- * through, skipping step 3.
+ * keeps answers). `?next=product|upload|sample` carries the landing button's
+ * choice through, skipping step 3.
+ *
+ * Once the shop is set up and has its first product, onboarding is over: its
+ * steps replace themselves with /home, so Back from that first product (and
+ * any Back after it) lands on home, never on a setup step again.
  */
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { categoryNames as categories } from '../../data/categoryNames'
-import type { BuyerRegion } from '../../data/rates'
+import { type BuyerRegion, rates } from '../../data/rates'
+import { pct } from '../../engine/format'
 import { useI18n, useT } from '../../i18n'
-import type { Lang, Shop } from '../db'
+import { type Lang, type Shop, db } from '../db'
 import { useBack, useShop } from '../hooks'
 import { newShop, saveShop } from '../repo'
 import { getKv, track } from '../telemetry'
@@ -20,8 +26,13 @@ import { BackButton, Button, Card, Choice, LoadingPage, StickyActions, buttonCla
 function useNext(): { next: string | null; suffix: string } {
   const [params] = useSearchParams()
   const next = params.get('next')
-  const valid = next === 'product' || next === 'upload' ? next : null
+  const valid = next === 'product' || next === 'upload' || next === 'sample' ? next : null
   return { next: valid, suffix: valid ? `?next=${valid}` : '' }
+}
+
+/** True once onboarding is finished and the first product exists. */
+function useOnboardingOver(): boolean {
+  return useLiveQuery(async () => Boolean((await db.shop.get('main'))?.onboardedAt) && (await db.products.count()) > 0, []) ?? false
 }
 
 function StepHeader({ step, onBack }: { step: 1 | 2 | 3; onBack: () => void }) {
@@ -39,6 +50,9 @@ export function OnbLanguage() {
   const navigate = useNavigate()
   const back = useBack('/')
   const { suffix } = useNext()
+  const over = useOnboardingOver()
+
+  if (over) return <Navigate to="/home" replace />
 
   const choose = async (l: Lang) => {
     setLang(l)
@@ -96,7 +110,6 @@ export function ShopFields({ value, onChange }: { value: ShopAnswers; onChange: 
       />
       <Choice
         legend={t('onb.shop.gst')}
-        hint={t('onb.shop.gstHint')}
         value={value.gstRegistered ? 'yes' : 'no'}
         onChange={(v) => onChange({ gstRegistered: v === 'yes' })}
         options={yesNo}
@@ -125,7 +138,9 @@ export function OnbShop() {
   const back = useBack('/start/language')
   const { next, suffix } = useNext()
   const shop = useShop()
+  const over = useOnboardingOver()
 
+  if (over) return <Navigate to="/home" replace />
   if (shop === undefined) return <LoadingPage />
   const current = shop ?? newShop(lang)
 
@@ -134,7 +149,9 @@ export function OnbShop() {
     void track('onboarding_done')
     const ref = await getKv<string>('referredBy')
     if (ref) void track('referral_signup', { ref })
-    navigate(next === 'product' ? '/products/new' : next === 'upload' ? '/upload' : `/start/choose${suffix}`)
+    navigate(
+      next === 'product' ? '/products/new' : next === 'upload' ? '/upload' : next === 'sample' ? '/upload?sample=1' : `/start/choose${suffix}`,
+    )
   }
 
   return (
@@ -144,6 +161,19 @@ export function OnbShop() {
       <p className="mt-2 text-base text-body/80">{t('onb.shop.hint')}</p>
       <div className="mt-6">
         <ShopFields value={current} onChange={(patch) => void saveShop(patch)} />
+        {current.category === 'other' && current.gstRegistered ? (
+          // "Other" has no typical GST rate: the seller picks theirs.
+          <div className="mt-7">
+            <Choice<string>
+              legend={t('onb.shop.gstRateOther')}
+              hint={t('me.gstRateHint')}
+              columns={3}
+              value={current.gstRate === null ? '' : String(current.gstRate)}
+              onChange={(v) => void saveShop({ gstRate: Number(v) })}
+              options={rates.outputGstChoices.map((r) => ({ value: String(r), label: pct(r, 0) }))}
+            />
+          </div>
+        ) : null}
       </div>
       <p className="mt-6 text-sm text-muted">{t('onb.shop.reportNote')}</p>
       <StickyActions>
@@ -158,6 +188,8 @@ export function OnbShop() {
 export function OnbChoose() {
   const t = useT()
   const back = useBack('/start/shop')
+  const over = useOnboardingOver()
+  if (over) return <Navigate to="/home" replace />
   const options = [
     { to: '/upload', title: t('onb.choose.upload'), hint: t('onb.choose.uploadHint'), primary: true },
     { to: '/products/new', title: t('onb.choose.manual'), hint: t('onb.choose.manualHint'), primary: false },

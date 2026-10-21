@@ -11,7 +11,7 @@ import { useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { rates } from '../../data/rates'
-import { pct } from '../../engine/format'
+import { formatDate, pct } from '../../engine/format'
 import { useI18n, useT } from '../../i18n'
 import { type Backup, backupFileName, deleteEverything, exportBackup, parseBackup, restoreBackup } from '../backup'
 import { queueBenchmarks } from '../benchmarks'
@@ -161,7 +161,7 @@ function ReportsCard({ reports }: { reports: Report[] }) {
                   {r.fileName}
                 </Link>
                 <p className="text-sm text-muted">
-                  {t('me.reportLine', { date: fmt.format(new Date(r.uploadedAt)) })}
+                  {t('me.reportLine', { date: formatDate(fmt, r.uploadedAt) })}
                   {r.synthetic ? ` · ${t('done.sampleChip')}` : ''}
                 </p>
               </div>
@@ -209,7 +209,7 @@ function BackupCard({ shop }: { shop: Shop }) {
     <Card className="flex flex-col gap-3">
       <h2 className="text-lg font-semibold text-ink">{t('backup.title')}</h2>
       <p className="text-base text-body">{t('backup.body')}</p>
-      <p className="text-sm text-muted">{last ? t('backup.last', { date: fmt.format(new Date(last)) }) : t('backup.never')}</p>
+      <p className="text-sm text-muted">{last ? t('backup.last', { date: formatDate(fmt, last) }) : t('backup.never')}</p>
       {shop.storagePersisted === false ? <p className="text-sm font-medium text-thin">{t('backup.atRisk')}</p> : null}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button onClick={() => void download()}>{t('backup.download')}</Button>
@@ -226,7 +226,7 @@ function BackupCard({ shop }: { shop: Shop }) {
       <ConfirmDialog
         open={pending !== null}
         title={t('backup.confirmTitle')}
-        body={pending ? t('backup.confirmBody', { date: fmt.format(new Date(pending.exportedAt)) }) : ''}
+        body={pending ? t('backup.confirmBody', { date: formatDate(fmt, pending.exportedAt) }) : ''}
         confirmLabel={t('backup.confirm')}
         cancelLabel={t('common.cancel')}
         onConfirm={() => {

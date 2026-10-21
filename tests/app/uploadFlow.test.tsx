@@ -56,7 +56,7 @@ describe('uploading a Meesho report', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
     expect(await screen.findByRole('heading', { name: 'Your report is in' })).toBeTruthy()
-    expect(screen.getByText("Sample report: synthetic data, not a real seller's.")).toBeTruthy()
+    expect(screen.getByText("SAMPLE report: synthetic data, not a real seller's.")).toBeTruthy()
     expect(screen.getByText(/5 products · 459 order lines/)).toBeTruthy()
     expect(screen.getByRole('heading', { name: 'We found 5 products. Add their cost to see what you keep.' })).toBeTruthy()
     expect(screen.getAllByText(/Matches your report ✓/).length).toBeGreaterThan(0)
@@ -88,12 +88,84 @@ describe('uploading a Meesho report', () => {
     expect(await db.reports.count()).toBe(1)
   })
 
+  it('refuses the same report under different bytes (the CSV of an uploaded week)', async () => {
+    renderApp('/upload')
+    await pick(fixture('SAMPLE_SYNTHETIC_PAYMENT_FILE_week1.xlsx'))
+    await screen.findByRole('heading', { name: 'Your report is in' }, { timeout: 5000 })
+    cleanup()
+
+    renderApp('/upload')
+    await pick(fixture('SAMPLE_SYNTHETIC_PAYMENT_FILE_week1_order_payments.csv'))
+    expect(await screen.findByText(/^Already uploaded on /, {}, { timeout: 5000 })).toBeTruthy()
+    expect(await db.reports.count()).toBe(1)
+  })
+
   it('rejects a PDF with a clear message (negative 6)', async () => {
     renderApp('/upload')
     await pick(new File(['%PDF-1.7 fake'], 'payments.pdf', { type: 'application/pdf' }))
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringMatching(/This is a PDF/))
     await pick(new File(['%PDF-1.7 fake'], 'renamed.xlsx'))
     expect((await screen.findByRole('alert')).textContent).toMatch(/This is a PDF/)
+    expect(await db.reports.count()).toBe(0)
+  })
+})
+
+describe('"Try with a sample report" (demo)', () => {
+  /** The app fetches /samples/*.xlsx; here they come straight from public/samples. */
+  const servePublic = () =>
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const m = /^\/samples\/([\w.]+)$/.exec(url)
+        if (!m) return new Response(null, { status: 404 })
+        return new Response(readFileSync(join(__dirname, '..', '..', 'public', 'samples', m[1]!)))
+      }),
+    )
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('loads both sample weeks, labelled SAMPLE, sends sample:true, and never counts as activated', async () => {
+    servePublic()
+    const router = renderApp('/upload')
+    fireEvent.click(await screen.findByRole('button', { name: 'Try with a sample report' }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
+    expect(await screen.findByText("SAMPLE report: synthetic data, not a real seller's.")).toBeTruthy()
+
+    const reports = await db.reports.toArray()
+    expect(reports.map((r) => [r.fileName, r.synthetic]).sort()).toEqual([
+      ['SAMPLE_SYNTHETIC_PAYMENT_FILE_week1.xlsx', true],
+      ['SAMPLE_SYNTHETIC_PAYMENT_FILE_week2.xlsx', true],
+    ])
+    expect(router.state.location.pathname).toBe(`/upload/done/${reports.find((r) => r.fileName.includes('week2'))!.id}`)
+    await waitFor(async () => {
+      const uploads = (await db.outbox.toArray()).filter((r) => r.payload.name === 'report_uploaded')
+      expect(uploads.map((r) => r.payload.props)).toEqual([
+        { products: 5, sample: true },
+        { products: 5, sample: true },
+      ])
+    })
+
+    // Adding a cost makes a product with (sample) report numbers: still not an activated seller.
+    const kurtiCard = screen.getByText('Blue Rayon Kurti').closest('li')!
+    fireEvent.change(within(kurtiCard).getByLabelText('Your cost (₹ per piece)'), { target: { value: '150' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save and see what I keep' }))
+    expect(await screen.findByText('1 product saved')).toBeTruthy()
+    await act(() => router.navigate('/home'))
+    expect(await screen.findByText('Blue Rayon Kurti')).toBeTruthy()
+    expect(screen.getByText('Sample')).toBeTruthy()
+    expect(await db.kv.get('once:activated')).toBeUndefined()
+
+    // Trying again reuses what's loaded.
+    await act(() => router.navigate('/upload'))
+    fireEvent.click(await screen.findByRole('button', { name: 'Try with a sample report' }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
+    expect(await db.reports.count()).toBe(2)
+  })
+
+  it('says so when the sample can\'t be fetched', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 503 })))
+    renderApp('/upload')
+    fireEvent.click(await screen.findByRole('button', { name: 'Try with a sample report' }))
+    expect((await screen.findByRole('alert')).textContent).toMatch(/sample report couldn't be loaded/)
     expect(await db.reports.count()).toBe(0)
   })
 })
@@ -144,6 +216,44 @@ describe('renamed columns → mapping screen → correct result (negative 7)', (
     const router2 = renderApp('/upload')
     await pick(new File([csv.replace(/239\.27/g, '240.00')], 'export-2.csv', { type: 'text/csv' }))
     await waitFor(() => expect(router2.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
+  })
+
+  it('shows the rows it ignored, and "Check columns" reopens the mapping pre-filled and re-reads the file', async () => {
+    const file = [
+      'Sub Order No,Supplier SKU,Live Order Status,Final Settlement Amount,Order Date',
+      'S1,K-1,Delivered,239.27,2026-09-28',
+      'S2,K-1,Delivered,239.27,2026-09-29',
+      'S3,K-1,In transit,239.27,2026-09-30',
+      'S4,K-1,RTO,0,2026-09-30',
+    ].join('\n')
+    const router = renderApp('/upload')
+    await pick(new File([file], 'week.csv', { type: 'text/csv' }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
+    expect(await screen.findByText('1 row ignored: In transit')).toBeTruthy()
+    expect(screen.getByText(/1 products · 3 order lines/)).toBeTruthy()
+    const firstId = (await db.reports.toArray())[0]!.id
+
+    fireEvent.click(screen.getByRole('link', { name: 'Check columns' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/upload/map'))
+    expect(screen.getByText(/These are the columns we read/)).toBeTruthy()
+    const sku = screen.getByLabelText('Which column is the product SKU?') as HTMLSelectElement
+    expect(sku.options[sku.selectedIndex]!.textContent).toBe('Supplier SKU')
+
+    // Back returns to the same report, file still in memory.
+    fireEvent.click(screen.getByRole('button', { name: /Back/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/upload/done/${firstId}`))
+    fireEvent.click(await screen.findByRole('link', { name: 'Check columns' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/upload/map'))
+
+    // Re-reading without the date column replaces the saved report.
+    const date = screen.getByLabelText('Which column is the order date?') as HTMLSelectElement
+    fireEvent.change(date, { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Use these columns' }))
+    await waitFor(() => expect(router.state.location.pathname).toMatch(/^\/upload\/done\//), { timeout: 5000 })
+    expect(router.state.location.pathname).not.toBe(`/upload/done/${firstId}`)
+    const reports = await db.reports.toArray()
+    expect(reports).toHaveLength(1)
+    expect(reports[0]!.periodFrom).toBeUndefined()
   })
 
   it('Back from the mapping screen returns to upload and discards the file (8.2)', async () => {

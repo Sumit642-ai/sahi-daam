@@ -29,6 +29,9 @@ export function Landing() {
             {t('landing.manual')}
           </Link>
         </div>
+        <Link to="/start/language?next=sample" className={buttonClass('ghost', 'self-start')}>
+          {t('landing.sample')}
+        </Link>
         <Link to="/how-it-works" className="inline-flex min-h-tap items-center self-start text-base font-medium text-plum underline underline-offset-4">
           {t('landing.how')}
         </Link>

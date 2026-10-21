@@ -25,8 +25,8 @@ export function Home() {
   const [filter, setFilter] = useState<LeakFilter>('ALL')
   const [query, setQuery] = useState('')
   const lf = shop && products && links ? leakFinder(products, shop, links) : null
-  const losing = lf?.losingCount ?? 0
-  // "Products found losing money": counted once a day per device (section 10).
+  // "Products found losing money": counted once a day per device (section 10), sample data left out.
+  const losing = lf?.rows.filter((r) => r.monthly !== null && r.monthly < 0 && !r.report?.report.synthetic).length ?? 0
   useEffect(() => {
     if (losing > 0) void track('leak_found', { losing })
   }, [losing])

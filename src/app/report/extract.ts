@@ -11,7 +11,7 @@
  * columns are gone before any value is read, and nothing downstream can
  * reach them.
  */
-import { type SkuStats, type OrderRow, summariseOrders } from '../../engine/report'
+import { type OrderStatus, type SkuStats, type OrderRow, normaliseStatus, summariseOrders } from '../../engine/report'
 import {
   type ReportField,
   detectColumns,
@@ -161,7 +161,11 @@ export function previewValues(order: Table, col: number, n = 5): string[] {
 }
 
 export interface ReportData {
+  /** Orders counted (after grouping by sub-order); rows still in transit etc. are not. */
   orderLines: number
+  /** Rows left out because their status isn't final or isn't known, and those statuses. */
+  ignoredRows: number
+  ignoredStatuses: string[]
   stats: Map<string, SkuStats>
   names: Map<string, string>
   /** Ads charged per SKU, ₹ (positive); null when the file has no Ads sheet. */
@@ -173,6 +177,8 @@ export interface ReportData {
   periodFrom: string | null
   periodTo: string | null
   periodDays: number | null
+  /** Share of orders paid cash on delivery; null without a payment-mode column. */
+  codShare: number | null
   /** False when no order was delivered or returned (spec 8.3). */
   hasOrders: boolean
 }
@@ -184,29 +190,81 @@ function amountColumn(table: Table, preferred: RegExp): number {
 }
 
 export interface ExtractedOrders {
+  /** One per order: lines of the same sub-order are already merged. */
   orderRows: OrderRow[]
   names: Map<string, string>
   skuOfSubOrder: Map<string, string>
   from: string | null
   to: string | null
+  /** Orders by payment mode, from the payment-mode column when mapped. */
+  cod: number
+  prepaid: number
+}
+
+/** "COD", "Cash on delivery" → COD; "Prepaid", "Online", "UPI", "Card" → prepaid; anything else isn't counted. */
+export function paymentKind(raw: string): 'COD' | 'PREPAID' | null {
+  const s = raw.trim().toLowerCase()
+  if (/\bcod\b|cash/.test(s)) return 'COD'
+  if (/prepaid|online|upi|card|net ?banking|wallet/.test(s)) return 'PREPAID'
+  return null
+}
+
+type Line = OrderRow & { sub: string; payment: string }
+
+/** Which status wins when one sub-order's lines disagree: the most final one. */
+const STATUS_RANK: Record<OrderStatus, number> = { RTO: 4, RETURN: 3, CANCELLED: 2, DELIVERED: 1, OTHER: 0 }
+
+const addMoney = (a: number | undefined, b: number | undefined) => (a === undefined && b === undefined ? undefined : (a ?? 0) + (b ?? 0))
+
+/**
+ * One sub-order can take several lines (the payment, then a return
+ * adjustment). Each becomes one order: money summed, the most final status,
+ * and its quantity counted once. Lines without a sub-order number stay as they are.
+ */
+function groupBySubOrder(lines: Line[]): Line[] {
+  const out: Line[] = []
+  const bySub = new Map<string, Line>()
+  for (const line of lines) {
+    const group = line.sub === '' ? undefined : bySub.get(line.sub)
+    if (!group) {
+      const copy = { ...line }
+      if (line.sub !== '') bySub.set(line.sub, copy)
+      out.push(copy)
+      continue
+    }
+    group.settlement += line.settlement
+    group.shipping = addMoney(group.shipping, line.shipping)
+    group.returnShipping = addMoney(group.returnShipping, line.returnShipping)
+    group.tcs = addMoney(group.tcs, line.tcs)
+    group.tds = addMoney(group.tds, line.tds)
+    group.quantity ??= line.quantity
+    group.listingPrice ??= line.listingPrice
+    group.payment ||= line.payment
+    if (STATUS_RANK[normaliseStatus(line.status)] > STATUS_RANK[normaliseStatus(group.status)]) group.status = line.status
+  }
+  return out
 }
 
 /** The order lines as engine rows, read only through the chosen columns. */
 export function extractOrders(analysis: Analysis, columns: Columns): ExtractedOrders {
   const get = (row: unknown[], f: ReportField) => (columns[f] === undefined ? undefined : row[columns[f]!])
 
-  const orderRows: OrderRow[] = []
+  const lines: Line[] = []
   const names = new Map<string, string>()
   const skuOfSubOrder = new Map<string, string>()
   let from: string | null = null
   let to: string | null = null
+  let cod = 0
+  let prepaid = 0
 
   for (const row of analysis.order.rows) {
     const sku = cellText(get(row, 'sku'))
     const status = cellText(get(row, 'status'))
     // Totals and notes rows at the bottom have no SKU or status.
     if (sku === '' || status === '') continue
-    orderRows.push({
+    lines.push({
+      sub: cellText(get(row, 'subOrderNo')),
+      payment: cellText(get(row, 'paymentMode')),
       sku,
       status,
       quantity: toNumber(get(row, 'quantity')),
@@ -227,12 +285,26 @@ export function extractOrders(analysis: Analysis, columns: Columns): ExtractedOr
       if (to === null || d > to) to = d
     }
   }
-  return { orderRows, names, skuOfSubOrder, from, to }
+  const orders = columns.subOrderNo === undefined ? lines : groupBySubOrder(lines)
+  const orderRows: OrderRow[] = []
+  for (const { sub: _sub, payment, ...order } of orders) {
+    orderRows.push(order)
+    if (normaliseStatus(order.status) === 'OTHER') continue
+    const kind = paymentKind(payment)
+    if (kind === 'COD') cod += 1
+    else if (kind === 'PREPAID') prepaid += 1
+  }
+  return { orderRows, names, skuOfSubOrder, from, to, cod, prepaid }
 }
 
 export function buildReport(analysis: Analysis, columns: Columns): ReportData {
-  const { orderRows, names, skuOfSubOrder, from, to } = extractOrders(analysis, columns)
+  const { orderRows, names, skuOfSubOrder, from, to, cod, prepaid } = extractOrders(analysis, columns)
   const stats = summariseOrders(orderRows)
+  const ignored = orderRows.filter((r) => normaliseStatus(r.status) === 'OTHER')
+  // Each status once, as first written ("In transit" and "In Transit" are one).
+  const seen = new Map<string, string>()
+  for (const r of ignored) if (!seen.has(r.status.toLowerCase())) seen.set(r.status.toLowerCase(), r.status)
+  const ignoredStatuses = [...seen.values()]
 
   let adsBySku: Map<string, number> | null = null
   let adsSplitByOrders = false
@@ -274,7 +346,9 @@ export function buildReport(analysis: Analysis, columns: Columns): ReportData {
   }
 
   return {
-    orderLines: orderRows.length,
+    orderLines: orderRows.length - ignored.length,
+    ignoredRows: ignored.length,
+    ignoredStatuses,
     stats,
     names,
     adsBySku,
@@ -283,6 +357,7 @@ export function buildReport(analysis: Analysis, columns: Columns): ReportData {
     periodFrom: from,
     periodTo: to,
     periodDays: from && to ? daysInclusive(from, to) : null,
+    codShare: cod + prepaid > 0 ? cod / (cod + prepaid) : null,
     hasOrders: [...stats.values()].some((x) => x.delivered > 0),
   }
 }

@@ -166,8 +166,8 @@ try {
     const sale = card(page, 'Should I join this sale?')
     await sale.waitFor()
     const text = await sale.innerText()
-    if (!text.includes('Skip — every sale order loses ₹31.')) {
-      throw new Error('The sale check does not show the default example (Skip — every sale order loses ₹31).')
+    if (!text.includes('Skip — every sale loses ₹31.')) {
+      throw new Error('The sale check does not show the default example (Skip — every sale loses ₹31).')
     }
     written.push(await shootUnion(page, [sale], 'sale_check.png'))
     await context.close()

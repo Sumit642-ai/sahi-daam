@@ -20,6 +20,22 @@ export function findDuplicate(fileHash: string, db: SahiDaamDb = appDb): Promise
   return db.reports.where('fileHash').equals(fileHash).first()
 }
 
+/**
+ * The same report saved again under different bytes (downloaded twice,
+ * opened and re-saved): same period, same number of order lines, same total
+ * payout as one already uploaded. `exceptId` skips the report being replaced.
+ */
+export async function findSameReport(data: ReportData, exceptId?: string, db: SahiDaamDb = appDb): Promise<Report | undefined> {
+  const total = [...data.stats.values()].reduce((s, x) => s + x.netSettlement, 0)
+  for (const r of await db.reports.toArray()) {
+    if (r.id === exceptId) continue
+    if ((r.periodFrom ?? null) !== data.periodFrom || (r.periodTo ?? null) !== data.periodTo || r.orderLines !== data.orderLines) continue
+    const saved = (await db.skuStats.where('reportId').equals(r.id).toArray()).reduce((s, x) => s + x.netSettlement, 0)
+    if (Math.abs(saved - total) < 0.01) return r
+  }
+  return undefined
+}
+
 /** Remembers a column choice for this report layout (the id is the layout signature). */
 export async function saveMapping(signature: string, columns: Record<string, string>, db: SahiDaamDb = appDb): Promise<void> {
   await db.mappings.put({ id: signature, columns })
@@ -48,6 +64,8 @@ export async function saveReport(args: SaveReportArgs, db: SahiDaamDb = appDb, n
     productCount: data.stats.size,
     synthetic: args.synthetic,
     adsSplitByOrders: data.adsSplitByOrders,
+    ...(data.codShare !== null ? { codShare: data.codShare } : {}),
+    ...(data.ignoredRows > 0 ? { ignoredRows: data.ignoredRows, ignoredStatuses: data.ignoredStatuses } : {}),
   }
 
   await db.transaction('rw', db.reports, db.skuStats, db.products, async () => {

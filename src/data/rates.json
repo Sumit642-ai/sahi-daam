@@ -225,6 +225,13 @@
       "returnRate": { "value": 0.12, "unit": "share of delivered", "label_en": "Customer return rate", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
       "unsellableShare": { "value": 0.3, "unit": "share of returns", "label_en": "Unsellable share of returns", "source": "Our estimate", "lastVerified": "2026-10-01", "status": "ASSUMPTION" },
       "outputGstRate": { "value": 0.03, "unit": "share of listed price", "label_en": "Output GST (check your HSN rate)", "source": "Our estimate: imitation jewellery (HSN 7117) at 3%, as in the synthetic sample report; seller picks their HSN rate", "lastVerified": "2026-10-20", "status": "ASSUMPTION" }
+    },
+    "other": {
+      "weightG": { "value": 500, "unit": "g", "label_en": "Packed weight (please check)", "source": "Our estimate, no category data behind it: please check", "lastVerified": "2026-10-21", "status": "ASSUMPTION" },
+      "packagingPerOrder": { "value": 10, "unit": "₹ per order", "label_en": "Packaging (please check)", "source": "Our estimate, no category data behind it: please check", "lastVerified": "2026-10-21", "status": "ASSUMPTION" },
+      "returnRate": { "value": 0.1, "unit": "share of delivered", "label_en": "Customer return rate (please check)", "source": "Our estimate, no category data behind it: please check", "lastVerified": "2026-10-21", "status": "ASSUMPTION" },
+      "unsellableShare": { "value": 0.4, "unit": "share of returns", "label_en": "Unsellable share of returns (please check)", "source": "Our estimate, no category data behind it: please check", "lastVerified": "2026-10-21", "status": "ASSUMPTION" },
+      "outputGstRate": { "value": 0.18, "unit": "share of listed price", "label_en": "Output GST: chosen by the seller (please check)", "source": "Our estimate: the seller picks their HSN rate in shop setup; 18% (the standard rate, so the floor errs high) only until they do", "lastVerified": "2026-10-21", "status": "ASSUMPTION" }
     }
   }
 }

@@ -47,6 +47,7 @@ afterEach(() => cleanup())
 describe('floor card (7.6)', () => {
   it('shows the answer, what to do with a rupee effect, and the why table with working', async () => {
     const p = await seed()
+    await saveCompetitorPrices(p.id, [280, 300, 320, 340, 350])
     renderApp(`/products/${p.id}`)
     expect(await screen.findByText('At ₹300 you keep ₹30 per sale')).toBeTruthy()
     expect(screen.getByText('You think you make ₹150 (price − cost)')).toBeTruthy()
@@ -81,12 +82,15 @@ describe('price helper (7.6)', () => {
 
     add('300')
     add('320')
-    expect(await screen.findByText(/Add at least 3 prices for a reliable range/)).toBeTruthy()
+    expect(await screen.findByText("Add 3 similar products' prices to get a suggestion.")).toBeTruthy()
     expect(await screen.findByText('2 of 10 prices')).toBeTruthy()
+    // No suggestion yet: the price holds, and there is nothing to apply.
+    expect(screen.getByText('At ₹300 you keep ₹30 per sale')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Use this price|Try ₹10 more/ })).toBeNull()
 
     add('340')
     add('1500') // over 300% of the median
-    await waitFor(() => expect(screen.queryByText(/Add at least 3 prices/)).toBeNull())
+    await waitFor(() => expect(screen.queryByText(/to get a suggestion/)).toBeNull())
     expect(await screen.findByText('Outlier?')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Remove ₹1,500' }))
     await waitFor(() => expect(screen.queryByText('Outlier?')).toBeNull())
@@ -129,6 +133,7 @@ describe('price helper (7.6)', () => {
 
   it('Growing: "Try ₹10 more" starts a price step; Undo removes it (7.9)', async () => {
     const p = await seed()
+    await saveCompetitorPrices(p.id, [280, 300, 320, 340, 350])
     renderApp(`/products/${p.id}/price`)
     fireEvent.click(await screen.findByRole('button', { name: 'Try ₹10 more: ₹310' }))
     expect(await screen.findByText(/^Trying ₹310/)).toBeTruthy()
@@ -157,13 +162,32 @@ describe('price helper (7.6)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }))
     await waitFor(async () => expect((await db.products.get(p.id))!.price).toBe(300))
   })
+
+  it('a double tap on "Use this price" applies it once', async () => {
+    const p = await seed()
+    await saveCompetitorPrices(p.id, [280, 300, 320, 340, 350])
+    renderApp(`/products/${p.id}/price`)
+    fireEvent.click(await screen.findByRole('radio', { name: 'Launch' }))
+    const button = await screen.findByRole('button', { name: 'Use this price: ₹320' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(await screen.findByText('Price changed to ₹320')).toBeTruthy()
+    await waitFor(async () => expect((await db.products.get(p.id))!.price).toBe(320))
+    expect(await db.priceHistory.count()).toBe(1)
+  })
+
+  it('shows the floor rounded up, never down (₹268.74 → ₹269)', async () => {
+    const p = await seed()
+    renderApp(`/products/${p.id}/price`)
+    expect(await screen.findByText(/now ₹300 · floor ₹269/)).toBeTruthy()
+  })
 })
 
 describe('sale check (7.7; Section 15, positive 6)', () => {
-  it('default ₹300 kurti, 20% off: skip, every sale order loses ₹27', async () => {
+  it('default ₹300 kurti, 20% off: skip, every sale loses ₹27', async () => {
     const p = await seed()
     renderApp(`/products/${p.id}/sale`)
-    expect(await screen.findByText('Skip: every sale order loses ₹27')).toBeTruthy()
+    expect(await screen.findByText('Skip: every sale loses ₹27')).toBeTruthy()
     expect(screen.getAllByText('You lose ₹27 per sale at ₹240')).toHaveLength(2) // plain and with prepaid
     expect(screen.getByRole('link', { name: 'Share on WhatsApp' }).getAttribute('href')).toMatch(/^https:\/\/wa\.me\/\?text=/)
   })

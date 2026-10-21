@@ -8,7 +8,7 @@
  */
 import { useState } from 'react'
 
-import { inr } from '../../engine/format'
+import { floorInr, inr } from '../../engine/format'
 import { DEFAULT_SHOP, defaultKeepInput, keepPerSale } from '../../engine/keep'
 import { type MessageKey, useT } from '../../i18n'
 import { parseAmount } from '../lib/validate'
@@ -73,11 +73,11 @@ export function Concept() {
                 <div className="absolute inset-x-0 top-4 h-2 rounded-full bg-slate-200" />
                 <div className="absolute top-4 h-2 rounded-full bg-blue-300" style={{ left: pos(BAND.low), width: `calc(${pos(BAND.high)} - ${pos(BAND.low)})` }} />
                 <div className="absolute -top-6 bottom-0 w-0.5 bg-red-600" style={{ left: pos(result.floor) }}>
-                  <span className="absolute -top-1 left-1 whitespace-nowrap text-xs font-semibold text-red-700">{t('concept.floorLine', { floor: inr(result.floor) })}</span>
+                  <span className="absolute -top-1 left-1 whitespace-nowrap text-xs font-semibold text-red-700">{t('concept.floorLine', { floor: floorInr(result.floor) })}</span>
                 </div>
                 <div className="absolute top-2 h-6 w-6 -translate-x-1/2 rounded-full border-4 border-white bg-slate-900" style={{ left: pos(PRICE) }} />
               </div>
-              <p className="sr-only">{t('concept.floorLine', { floor: inr(result.floor) })}</p>
+              <p className="sr-only">{t('concept.floorLine', { floor: floorInr(result.floor) })}</p>
               <p className={`mt-3 text-xl font-bold ${keeps ? 'text-green-700' : 'text-red-700'}`}>
                 {keeps ? t('concept.keep', { price: inr(PRICE), keep: inr(result.keep) }) : t('concept.lose', { price: inr(PRICE), loss: inr(-result.keep) })}
               </p>

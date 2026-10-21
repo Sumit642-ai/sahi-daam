@@ -5,6 +5,8 @@
  * navigation fails silently. The app has no loaders or actions, so the signal
  * is never read; dropping it here changes nothing the tests check.
  */
+import { configure } from '@testing-library/react'
+
 const NodeRequest = globalThis.Request
 
 class TestRequest extends NodeRequest {
@@ -19,3 +21,10 @@ class TestRequest extends NodeRequest {
 }
 
 globalThis.Request = TestRequest as typeof Request
+
+/**
+ * Screens are lazy routes. The first import of one under jsdom transforms the
+ * module on the spot, which on a busy machine (every test file in parallel)
+ * can take longer than Testing Library's 1 s default for findBy / waitFor.
+ */
+configure({ asyncUtilTimeout: 5_000 })

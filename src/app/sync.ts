@@ -46,8 +46,10 @@ export function useAppSync(): void {
     })
     void syncChecks(computeChecks({ products, summaries, rows, reports, competitor, steps: judged, shop, now: Date.now() }))
 
-    // Activated seller (section 10): onboarded, and a product with a report or an order count.
-    const hasReportProduct = products.some((p) => linkFor(p, links))
+    // Activated seller (section 10): onboarded, and a product with a real report or an order count.
+    // Sample reports never count.
+    const realLinks = latestBySku(rows, reports.filter((r) => !r.synthetic))
+    const hasReportProduct = products.some((p) => linkFor(p, realLinks))
     if (hasReportProduct || products.some((p) => p.ordersPerWeek !== undefined)) void track('activated')
   }, [snap])
 

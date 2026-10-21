@@ -5,7 +5,7 @@
 import { useEffect, useId, useState } from 'react'
 
 import { useI18n } from '../../i18n'
-import { backendConfig, enqueue, referralCode, shareUrl, track, whatsappLink } from '../telemetry'
+import { backendConfig, enqueue, getKv, referralCode, shareUrl, track, whatsappLink } from '../telemetry'
 import { Button, Card, buttonClass } from '../ui'
 
 export function ShareCard() {
@@ -57,7 +57,8 @@ export function ProWaitlistCard() {
       setError(true)
       return
     }
-    await enqueue('waitlist', { contact: contact.trim(), consent: true, lang })
+    // Team devices (?team=1) are tagged so /stats leaves their test sign-ups out.
+    await enqueue('waitlist', { contact: contact.trim(), consent: true, lang, team: (await getKv<boolean>('team')) === true })
     void track('pro_waitlist_joined')
     setDone(true)
   }

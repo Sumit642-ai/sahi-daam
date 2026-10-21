@@ -13,7 +13,7 @@ describe('sale check — "Should I join this sale?"', () => {
     expect(check.salePrice).toBe(240)
     expect(check.verdict).toBe('SKIP_LOSS')
     expect(Math.round(check.lossPerSaleOrder)).toBe(31) // ₹270.64 − ₹240
-    expect(check.headline).toBe('Skip — every sale order loses ₹31.')
+    expect(check.headline).toBe('Skip — every sale loses ₹31.')
     expect(check.weekJoining).toBeLessThan(0)
     expect(check.weekNotJoining).toBeGreaterThan(0)
   })

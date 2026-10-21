@@ -65,10 +65,15 @@ export async function restoreBackup(backup: Backup, db: SahiDaamDb = appDb): Pro
   })
 }
 
+/** What delete everything keeps: the device's anonymous id and team flag, so counts stay honest. */
+const KV_KEPT_ON_DELETE = ['anonId', 'team']
+
 /** Delete everything (spec 7.11): every table, and this app's local storage keys. */
 export async function deleteEverything(db: SahiDaamDb = appDb): Promise<void> {
   await db.transaction('rw', db.tables, async () => {
+    const kept = (await db.kv.bulkGet(KV_KEPT_ON_DELETE)).filter((r) => r !== undefined)
     for (const t of db.tables) await t.clear()
+    if (kept.length > 0) await db.kv.bulkPut(kept)
   })
   try {
     for (const key of Object.keys(globalThis.localStorage ?? {})) if (key.startsWith('sahi-daam')) localStorage.removeItem(key)

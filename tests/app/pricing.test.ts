@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import type { Product, Report, SkuStatsRow } from '../../src/app/db'
 import { whatToDo, whyTable } from '../../src/app/lib/floorCard'
 import { autoStage, listedSince, orderTrend } from '../../src/app/lib/stage'
+import { listedSinceFor } from '../../src/app/lib/validate'
 import { buildProductModel } from '../../src/app/productModel'
 import { newShop } from '../../src/app/repo'
 import { DEFAULT_SHOP, type KeepInput, defaultKeepInput, keepPerSale } from '../../src/engine/keep'
@@ -62,9 +63,24 @@ describe('stage ranges (spec 7.6)', () => {
     expect(r.lifted).toBe(true)
   })
 
-  it('Launch with no prices yet still answers from the floor', () => {
+  it('Launch with no prices yet holds the current price and suggests nothing', () => {
     const r = priceRange({ input: kurti(), currentPrice: 300, stage: 'LAUNCH', market: null })
-    expect([r.low, r.high]).toEqual([SAFE, SAFE])
+    expect([r.low, r.high, r.target, r.suggest]).toEqual([300, 300, 300, false])
+    // Under floor + margin it is still lifted.
+    const below = priceRange({ input: kurti(), currentPrice: 260, stage: 'LAUNCH', market: null })
+    expect([below.target, below.lifted, below.suggest]).toEqual([SAFE, true, false])
+  })
+
+  it('under 3 market prices no stage recommends below the current price', () => {
+    for (const m of [null, market([200, 210]), market([200, 210, 2000, 9000])]) {
+      for (const stage of STAGES) {
+        const r = priceRange({ input: kurti(), currentPrice: 330.4, stage, market: m })
+        expect([r.target, r.low, r.high, r.ladder, r.suggest], stage).toEqual([331, 331, 331, [], false])
+      }
+    }
+    // With 3, Launch may go below it.
+    const launch = priceRange({ input: kurti(), currentPrice: 330, stage: 'LAUNCH', market: MARKET })
+    expect([launch.target, launch.suggest]).toEqual([320, true])
   })
 
   it('Growing: current → +₹10', () => {
@@ -121,11 +137,12 @@ describe('Section 15, positive 5: range ≥ floor; visibility warning above the 
 })
 
 describe('Section 15, negative 3: two competitor prices → faded range', () => {
-  it('is not reliable, and the range falls back to the floor', () => {
+  it('is not reliable, so there is no suggestion: target = max(current, floor + margin)', () => {
     const m = market([300, 320])
     expect(m.reliable).toBe(false)
     const r = priceRange({ input: kurti(), currentPrice: 300, stage: 'LAUNCH', market: m })
-    expect(r.low).toBe(SAFE)
+    expect([r.target, r.suggest]).toEqual([300, false])
+    expect(priceRange({ input: kurti(), currentPrice: 200, stage: 'CLEARING', market: m }).target).toBe(SAFE)
   })
 })
 
@@ -285,6 +302,23 @@ describe('stage, auto-set and editable', () => {
   it('a product added today from an old report is not a launch', () => {
     const p = { id: 'p', name: 'K', sku: 'K-1', category: 'ethnic_women', cost: 150, weightG: 350, price: 300, createdAt: now, updatedAt: now } as Product
     expect(listedSince(p, [row('r1', 100)], reports)).toBe(Date.parse('2026-06-01T00:00:00'))
+  })
+
+  it('a hand-added product with no listing date is Steady, not Launch', () => {
+    const p = { id: 'p', name: 'K', category: 'ethnic_women', cost: 150, weightG: 350, price: 300, createdAt: now, updatedAt: now } as Product
+    expect(listedSince(p, [], reports)).toBeNull()
+    expect(autoStage({ since: null, trend: null, now })).toBe('STEADY')
+    expect(autoStage({ since: listedSince({ ...p, listedSince: '2026-10-20' }, [], reports), trend: null, now })).toBe('LAUNCH')
+  })
+
+  it('"When did you list it?" answers become a listed-since date at the start of each band', () => {
+    const today = new Date(2026, 9, 20)
+    expect(listedSinceFor('NOW', today)).toBe('2026-10-20')
+    expect(listedSinceFor('MONTHS_1_3', today)).toBe('2026-09-20')
+    expect(listedSinceFor('MONTHS_3_PLUS', today)).toBe('2026-07-22')
+    const stageOf = (age: Parameters<typeof listedSinceFor>[0]) =>
+      autoStage({ since: Date.parse(`${listedSinceFor(age, today)}T00:00:00`), trend: null, now: today.getTime() })
+    expect([stageOf('NOW'), stageOf('MONTHS_1_3'), stageOf('MONTHS_3_PLUS')]).toEqual(['LAUNCH', 'GROWING', 'STEADY'])
   })
 })
 

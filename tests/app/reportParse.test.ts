@@ -13,6 +13,8 @@ import {
 } from '../../src/app/report/extract'
 import { sha256Hex, sha256HexSync } from '../../src/app/report/hash'
 import type { Grid } from '../../src/app/report/read'
+import { formatDate } from '../../src/engine/format'
+import { normaliseStatus } from '../../src/engine/report'
 import { daysInclusive, toIsoDate, toNumber } from '../../src/app/report/values'
 import { REAL_DIR, SYNTHETIC_DIR, analyseFile, loadReport, reportFilesIn } from '../fixtures/reports/loadReport'
 
@@ -188,6 +190,89 @@ describe('per-product totals through the whole pipeline (Section 15, positive 2)
     if ('error' in a) throw new Error()
     expect(buildReport(a, a.columns).hasOrders).toBe(false)
   })
+
+  it('reads the COD share from a payment-mode column, and has none without one', () => {
+    const a = analyseWorkbook(
+      grid([
+        ['Supplier SKU', 'Live Order Status', 'Payment Mode', 'Final Settlement Amount'],
+        ['K-1', 'Delivered', 'COD', '239'],
+        ['K-1', 'Delivered', 'Cash on Delivery', '239'],
+        ['K-1', 'RTO', 'COD', '0'],
+        ['K-1', 'Delivered', 'Prepaid', '239'],
+        ['K-1', 'Delivered', '', '239'],
+      ]),
+      'x.csv',
+    )
+    if ('error' in a) throw new Error()
+    expect(columnsByName(a.order, a.columns).paymentMode).toBe('Payment Mode')
+    expect(buildReport(a, a.columns).codShare).toBe(0.75)
+    expect(loadReport(join(SYNTHETIC_DIR, 'SAMPLE_SYNTHETIC_PAYMENT_FILE_week1.xlsx')).data.codShare).toBeNull()
+  })
+})
+
+describe('statuses', () => {
+  it.each([
+    ['Delivered', 'DELIVERED'],
+    ['delivered', 'DELIVERED'],
+    ['RTO_COMPLETE', 'RTO'],
+    ['rto-initiated', 'RTO'],
+    ['Return to origin', 'RTO'],
+    ['customer_return', 'RETURN'],
+    ['Cancelled', 'CANCELLED'],
+    ['Out for delivery', 'OTHER'],
+    ['out_for_delivery', 'OTHER'],
+    ['Not Delivered', 'OTHER'],
+    ['UNDELIVERED', 'OTHER'],
+    ['In-Transit', 'OTHER'],
+    ['Delivery failed', 'OTHER'],
+    ['Shipped', 'OTHER'],
+    ['Ready to ship', 'OTHER'],
+  ])('%s → %s', (raw, status) => expect(normaliseStatus(raw)).toBe(status))
+
+  it('leaves rows that are not final out of every count and every rupee, and lists them', () => {
+    const a = analyseWorkbook(
+      grid([
+        ['Supplier SKU', 'Live Order Status', 'Final Settlement Amount'],
+        ['K-1', 'Delivered', '239'],
+        ['K-1', 'In transit', '239'],
+        ['K-1', 'out_for_delivery', '239'],
+        ['K-1', 'In Transit', '239'],
+        ['K-2', 'Shipped', '100'],
+      ]),
+      'x.csv',
+    )
+    if ('error' in a) throw new Error()
+    const data = buildReport(a, a.columns)
+    expect(data.orderLines).toBe(1)
+    expect(data.ignoredRows).toBe(4)
+    expect(data.ignoredStatuses).toEqual(['In transit', 'out_for_delivery', 'Shipped'])
+    expect([...data.stats.keys()]).toEqual(['K-1'])
+    expect(data.stats.get('K-1')).toMatchObject({ rows: 1, dispatched: 1, delivered: 1, netSettlement: 239 })
+  })
+
+  it('with Sub Order No mapped, one sub-order is one order: money summed, the final status, quantity once', () => {
+    const a = analyseWorkbook(
+      grid([
+        ['Sub Order No', 'Supplier SKU', 'Live Order Status', 'Quantity', 'Shipping Charge', 'Final Settlement Amount'],
+        ['S1', 'K-1', 'Delivered', '2', '-59', '480'],
+        ['S1', 'K-1', 'Return', '2', '-59', '-560'],
+        ['S2', 'K-1', 'Delivered', '1', '-59', '240'],
+      ]),
+      'x.csv',
+    )
+    if ('error' in a) throw new Error()
+    const data = buildReport(a, a.columns)
+    expect(data.orderLines).toBe(2)
+    expect(data.stats.get('K-1')).toMatchObject({ rows: 2, delivered: 3, returns: 2, deliveredKept: 1, netSettlement: 160 })
+    // Without the sub-order column every line counts on its own.
+    const { subOrderNo: _s, ...cols } = a.columns
+    expect(buildReport(a, cols).orderLines).toBe(3)
+  })
+
+  it('never reads a TCS or TDS rate as the amount deducted', () => {
+    const cols = detectColumns(['TCS Rate', 'TCS', 'TDS %', 'TDS'])
+    expect([cols.tcs, cols.tds]).toEqual([1, 3])
+  })
 })
 
 describe('file checks (Section 15, negative 6)', () => {
@@ -231,7 +316,25 @@ describe('cell values', () => {
     [46293, '2026-09-28'],
     [new Date(2026, 8, 28), '2026-09-28'],
     ['soon', undefined],
+    // A first number over 12 is the day; a second over 12 means the first is the month.
+    ['09/28/2026', '2026-09-28'],
+    ['05-10-2026', '2026-10-05'],
+    ['2026/09/28', '2026-09-28'],
+    // Impossible dates are rejected, not rolled over.
+    ['31-09-2026', undefined],
+    ['2026-02-30', undefined],
+    ['13/13/2026', undefined],
+    ['00-09-2026', undefined],
+    [new Date(Number.NaN), undefined],
   ])('toIsoDate(%j) = %j', (v, d) => expect(toIsoDate(v)).toBe(d))
+
+  it('formatDate never throws on a bad date', () => {
+    const fmt = new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' })
+    expect(formatDate(fmt, '2026-09-28')).toBe('28 Sept')
+    expect(formatDate(fmt, 'not a date')).toBe('—')
+    expect(formatDate(fmt, Number.NaN)).toBe('—')
+    expect(formatDate(fmt, undefined)).toBe('—')
+  })
 
   it('counts days inclusively', () => {
     expect(daysInclusive('2026-09-28', '2026-10-04')).toBe(7)

@@ -86,7 +86,7 @@ export function checkLine(t: (k: MessageKey, v?: Record<string, string | number>
     case 'C5':
       return t('check.C5.line', { product, median: money(p.median), gap: String(p.gap), price: money(p.price) })
     case 'C6':
-      return t('check.C6.line', { cod: String(p.cod) })
+      return p.source === 'REPORT' ? t('check.C6.lineReport', { cod: String(p.cod) }) : t('check.C6.line')
     case 'C7':
       return p.verdict === 'KEEP'
         ? t('check.C7.keep', { product, from: money(p.from), to: money(p.to) })

@@ -5,11 +5,13 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { type Product, SahiDaamDb } from '../../src/app/db'
+import { whyTable } from '../../src/app/lib/floorCard'
 import { DAYS_PER_MONTH, compareWorstFirst, leakFinder, linkFor, summarise } from '../../src/app/lib/products'
 import { sha256HexSync } from '../../src/app/report/hash'
 import {
   addFromReport,
   findDuplicate,
+  findSameReport,
   latestBySku,
   removeReport,
   restoreReport,
@@ -128,6 +130,15 @@ describe('duplicates (Section 15, negative 8)', () => {
     expect(await db.reports.count()).toBe(1)
     expect(await db.skuStats.count()).toBe(5)
   })
+
+  it('finds the same report under different bytes: same period, order lines and total payout', async () => {
+    const first = await upload(W1, 1000)
+    const csv = loadReport(join(SYNTHETIC_DIR, 'SAMPLE_SYNTHETIC_PAYMENT_FILE_week1_order_payments.csv')).data
+    expect((await findSameReport(csv, undefined, db))!.id).toBe(first.id)
+    expect(await findSameReport(loadReport(W2).data, undefined, db)).toBeUndefined()
+    // Replacing a report (Check columns) doesn't count itself.
+    expect(await findSameReport(csv, first.id, db)).toBeUndefined()
+  })
 })
 
 describe('personal data is never stored (Section 15, negative 9)', () => {
@@ -224,6 +235,32 @@ describe('reconciliation on the fixtures (Section 15, positive 3)', () => {
     expect(s.report!.reconciliation.gapLines[0]!.field).toBe('fwdPerDelivered')
     // And the report's own number is used from here on.
     expect(s.input.fwdPerDelivered).toBeCloseTo(89 / 1.18, 6)
+  })
+})
+
+describe('other deductions from your report', () => {
+  it('a payout the fees don\'t explain is carried into keep, and shown in the Why table', async () => {
+    const products = await addFixtureProducts()
+    const p = products.find((x) => x.sku === 'kurti-blue-01')!
+    await upload(W1, 1000)
+    const before = summarise(p, shop, linkFor(p, await links()))
+    expect(before.input.otherPerDelivered).toBeCloseTo(0, 6)
+    expect(whyTable(before.input, before.result).lines.map((l) => l.key)).not.toContain('other')
+
+    await db.reports.clear()
+    await db.skuStats.clear()
+    const { analysis, data } = loadReport(W1)
+    const kurti = data.stats.get('KURTI-BLUE-01')!
+    data.stats.set('KURTI-BLUE-01', { ...kurti, avgSettlementPerDelivered: kurti.avgSettlementPerDelivered! - 10 })
+    await saveReport({ fileName: 'x.xlsx', fileHash: 'less', data, mappingId: 'auto', synthetic: analysis.synthetic }, db)
+    const after = summarise(p, shop, linkFor(p, await links()))
+    expect(after.input.otherPerDelivered).toBeCloseTo(10, 6)
+    // ₹10 on each of 100 delivered, spread over 84 clean sales, out of a price net of 5% GST.
+    expect(before.result.keep - after.result.keep).toBeCloseTo(1000 / 84, 6)
+    const other = whyTable(after.input, after.result).lines.find((l) => l.key === 'other')!
+    expect(other).toMatchObject({ source: 'FROM_REPORT' })
+    expect(other.perSale).toBeCloseTo(1000 / 84, 6)
+    expect(after.report!.reconciliation.difference).toBeLessThan(0) // Meesho paid less than estimated
   })
 })
 

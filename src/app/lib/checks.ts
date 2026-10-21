@@ -8,6 +8,7 @@
  *   - a dismissed check stays dismissed while its facts are the same
  *   - when the facts go away, the check closes itself
  */
+import { rates } from '../../data/rates'
 import { market } from '../../engine/priceHelper'
 import type { Competitor, PriceStep, Product, Report, Shop, SkuStatsRow } from '../db'
 import { normSku, toEngineStats } from '../report/store'
@@ -24,12 +25,22 @@ export interface CheckCandidate {
 
 /** C2/C3 fire on a rise of this many points between consecutive reports. */
 export const RISE_POINTS = 0.05
+/** …and only when both reports have at least this many delivered orders of the product: below that a rate is noise. */
+export const MIN_DELIVERED_FOR_RISE = 20
 /** C4: product cost moved more than this. */
 export const COST_CHANGE = 0.05
 /** C5: market middle this far below your price. */
 export const UNDERCUT = 0.08
 /** C6: COD share at or above this in the festive window. */
 export const COD_HEAVY = 0.6
+
+/** The COD share in the most recent report that has a payment-mode column, or null. */
+export function reportCodShare(reports: Report[]): number | null {
+  const withMix = reports
+    .filter((r) => typeof r.codShare === 'number')
+    .sort((a, b) => ((a.periodTo ?? '') + String(a.uploadedAt).padStart(15, '0') < (b.periodTo ?? '') + String(b.uploadedAt).padStart(15, '0') ? 1 : -1))
+  return withMix[0]?.codShare ?? null
+}
 
 /** 1 October – 15 November (inclusive), the festive run-up. */
 export function inFestiveWindow(now: number): boolean {
@@ -39,18 +50,27 @@ export function inFestiveWindow(now: number): boolean {
   return m === 10 || (m === 11 && day <= 15)
 }
 
-/** Each product's last two dated reports, oldest first. */
-function lastTwo(sku: string | undefined, rows: SkuStatsRow[], byId: Map<string, Report>) {
+/**
+ * Each product's last two reports for different periods, oldest first. The
+ * same period uploaded twice is one report, not a change: the later upload counts.
+ */
+export function lastTwo(sku: string | undefined, rows: SkuStatsRow[], byId: Map<string, Report>) {
   if (!sku) return null
-  const dated = rows
+  const sorted = rows
     .filter((r) => normSku(r.sku) === normSku(sku))
     .map((row) => ({ row, report: byId.get(row.reportId)! }))
     .filter((x) => x.report)
     .sort((a, b) => {
-      const ka = `${a.report.periodTo ?? ''}|${a.report.uploadedAt}`
-      const kb = `${b.report.periodTo ?? ''}|${b.report.uploadedAt}`
+      const ka = `${a.report.periodTo ?? ''}|${String(a.report.uploadedAt).padStart(15, '0')}`
+      const kb = `${b.report.periodTo ?? ''}|${String(b.report.uploadedAt).padStart(15, '0')}`
       return ka < kb ? -1 : 1
     })
+  const byPeriod = new Map<string, (typeof sorted)[number]>()
+  for (const x of sorted) {
+    const { periodFrom, periodTo } = x.report
+    byPeriod.set(periodFrom && periodTo ? `${periodFrom}|${periodTo}` : x.report.id, x)
+  }
+  const dated = [...byPeriod.values()]
   return dated.length >= 2 ? ([dated[dated.length - 2]!, dated[dated.length - 1]!] as const) : null
 }
 
@@ -81,9 +101,9 @@ export function computeChecks(args: {
       out.push({ key: `C1:${p.id}:${price}:${floor}`, rule: 'C1', productId: p.id, payload: { price, floor } })
     }
 
-    // C2 / C3: returns or RTO up ≥ 5 points between the last two reports.
+    // C2 / C3: returns or RTO up ≥ 5 points between the last two reports, each with ≥ 20 delivered.
     const two = lastTwo(p.sku, rows, byId)
-    if (two) {
+    if (two && two[0].row.delivered >= MIN_DELIVERED_FOR_RISE && two[1].row.delivered >= MIN_DELIVERED_FOR_RISE) {
       const prev = toEngineStats(two[0].row)
       const last = toEngineStats(two[1].row)
       const pair = `${two[0].report.id}:${two[1].report.id}`
@@ -100,21 +120,27 @@ export function computeChecks(args: {
       out.push({ key: `C4:${p.id}:${p.costChange.at}`, rule: 'C4', productId: p.id, payload: { from: p.costChange.from, to: p.cost } })
     }
 
-    // C5: the market middle the seller entered is more than 8% below their price.
+    // C5: the market middle the seller entered is more than 8% below their price (3+ usable prices).
     const entered = competitor.find((c) => c.productId === p.id)
     if (entered && entered.prices.length > 0) {
       const m = market(entered.prices)
-      if (m.used.length > 0 && m.median < price * (1 - UNDERCUT)) {
+      if (m.reliable && m.median < price * (1 - UNDERCUT)) {
         const median = Math.round(m.median)
         out.push({ key: `C5:${p.id}:${median}:${price}`, rule: 'C5', productId: p.id, payload: { median, price, gap: Math.round((1 - m.median / price) * 100) } })
       }
     }
   }
 
-  // C6: festive run-up and COD-heavy (shop setup: 80% COD, or 60% with a prepaid discount).
-  const codShare = shop.prepaidDiscount ? 0.6 : 0.8
-  if (inFestiveWindow(now) && codShare >= COD_HEAVY && products.length > 0) {
-    out.push({ key: `C6:${new Date(now).getFullYear()}`, rule: 'C6', payload: { cod: Math.round(codShare * 100) } })
+  // C6: festive run-up and COD-heavy. The payment mix comes from the latest report that has
+  // one; otherwise it is the published estimate. A seller who already gives a prepaid discount
+  // has done what C6 would ask.
+  if (inFestiveWindow(now) && !shop.prepaidDiscount && products.length > 0) {
+    const fromReport = reportCodShare(reports)
+    const codShare = fromReport ?? rates.rtoPrior.codShare
+    const source = fromReport === null ? 'ESTIMATED' : 'REPORT'
+    if (codShare >= COD_HEAVY) {
+      out.push({ key: `C6:${new Date(now).getFullYear()}:${source}`, rule: 'C6', payload: { cod: Math.round(codShare * 100), source } })
+    }
   }
 
   // C7: a price step has enough data to judge.
