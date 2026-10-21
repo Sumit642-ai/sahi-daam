@@ -26,6 +26,29 @@ export function inr(amount: number, decimals = 0): string {
 }
 
 /**
+ * A floor: whole rupees rounded up, so ₹268.40 shows as ₹269 and never as a
+ * ₹268 that loses money. With decimals it shows the exact amount.
+ */
+export function floorInr(amount: number, decimals = 0): string {
+  return decimals > 0 ? inr(amount, decimals) : inr(Math.ceil(amount))
+}
+
+/**
+ * A date through `fmt`, or an em dash when it isn't a real date (Intl throws
+ * a RangeError on those). Takes a timestamp, a Date, or "yyyy-mm-dd" (read as local).
+ */
+export function formatDate(fmt: Intl.DateTimeFormat, value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—'
+  const d =
+    value instanceof Date
+      ? value
+      : typeof value === 'number'
+        ? new Date(value)
+        : new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value)
+  return Number.isNaN(d.getTime()) ? '—' : fmt.format(d)
+}
+
+/**
  * Cache by decimal count. Building an Intl.NumberFormat is expensive, and the
  * engine formats a `working` string for every cost line of every floor it
  * computes — thousands of calls in the guardrail test alone.

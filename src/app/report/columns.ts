@@ -24,6 +24,7 @@ export type ReportField =
   | 'tcs'
   | 'tds'
   | 'orderDate'
+  | 'paymentMode'
 
 /** Without these there is nothing to total. */
 export const REQUIRED_FIELDS: ReportField[] = ['sku', 'status', 'settlement']
@@ -42,6 +43,7 @@ export const ALL_FIELDS: ReportField[] = [
   'tcs',
   'tds',
   'orderDate',
+  'paymentMode',
 ]
 
 /** Lower case, punctuation to spaces, single spaces. "Final Settlement Amount (INR)" → "final settlement amount inr". */
@@ -128,8 +130,9 @@ const RULES: Rule[] = [
       [/\brto charges?\b/, 6],
     ],
   },
-  { field: 'tcs', patterns: [[/\btcs\b/, 10]], exclude: /\btds\b/ },
-  { field: 'tds', patterns: [[/\btds\b/, 10]], exclude: /\btcs\b/ },
+  // "TCS Rate" or "TDS %" is the rate, not the amount deducted.
+  { field: 'tcs', patterns: [[/\btcs\b/, 10]], exclude: /\btds\b|rate|%/ },
+  { field: 'tds', patterns: [[/\btds\b/, 10]], exclude: /\btcs\b|rate|%/ },
   {
     field: 'settlement',
     patterns: [
@@ -146,6 +149,13 @@ const RULES: Rule[] = [
     patterns: [
       [/\border date\b/, 10],
       [/\border placed\b/, 8],
+    ],
+  },
+  {
+    field: 'paymentMode',
+    patterns: [
+      [/\bpayment (mode|method|type)\b|\bmode of payment\b/, 10],
+      [/\bcod prepaid\b|\bprepaid cod\b/, 8],
     ],
   },
 ]

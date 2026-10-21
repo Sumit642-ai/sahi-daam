@@ -99,6 +99,11 @@ export interface Report {
   synthetic: boolean
   /** The Ads sheet had no SKU, so ads were split across products by orders. */
   adsSplitByOrders: boolean
+  /** Share of orders paid cash on delivery, from the payment-mode column; absent when the file has none. */
+  codShare?: number
+  /** Rows left out because their status wasn't final (in transit, shipped…), and which statuses. */
+  ignoredRows?: number
+  ignoredStatuses?: string[]
 }
 
 export interface Mapping {

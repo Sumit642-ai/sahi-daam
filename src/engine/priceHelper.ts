@@ -9,6 +9,10 @@
  *   Steady    hold; don't match undercuts below the floor
  *   Clearing  markdown ladder in 5% steps that stops at the floor
  *
+ * With fewer than 3 usable market prices there is no suggestion: the price
+ * holds at the current price (lifted to floor + minimum margin when it is
+ * under that), so nothing ever recommends a cut on too little evidence.
+ *
  * THE GUARDRAIL (hard rule 3): no number this file recommends is below the
  * floor. Launch, Growing and Steady stay at or above floor + minimum margin;
  * the Clearing ladder may rest on the floor itself (rounded up to a whole
@@ -95,6 +99,8 @@ export interface PriceRange {
   viable: boolean
   /** Growing only: holding because the last price step is still being judged. */
   waitingOnStep: boolean
+  /** False under 3 usable market prices: the target only holds (or lifts to the floor), and "Use this price" is hidden. */
+  suggest: boolean
 }
 
 export interface PriceRangeArgs {
@@ -111,12 +117,17 @@ export function priceRange({ input, currentPrice, stage, market: m, recentStep =
   const result = keepPerSale(input)
   const floor = result.floor
   if (!result.viable || !Number.isFinite(floor)) {
-    return { stage, floor, low: Number.NaN, high: Number.NaN, target: Number.NaN, ladder: [], lifted: false, viable: false, waitingOnStep: false }
+    return { stage, floor, low: Number.NaN, high: Number.NaN, target: Number.NaN, ladder: [], lifted: false, viable: false, waitingOnStep: false, suggest: false }
   }
   const atFloor = Math.ceil(floor)
   const safe = Math.ceil(floor + minMargin(floor))
+  // Too few prices to suggest anything: hold, never cut.
+  if (!m?.reliable) {
+    const hold = Math.max(Math.ceil(currentPrice), safe)
+    return { stage, floor, low: hold, high: hold, target: hold, ladder: [], lifted: currentPrice < safe, viable: true, waitingOnStep: false, suggest: false }
+  }
   const lift = (p: number) => Math.max(safe, Math.round(p))
-  const middle = m && m.used.length > 0 ? m.median : Number.NaN
+  const middle = m.median
 
   let low: number
   let high: number
@@ -128,8 +139,8 @@ export function priceRange({ input, currentPrice, stage, market: m, recentStep =
   switch (stage) {
     case 'LAUNCH': {
       low = safe
-      high = Number.isFinite(middle) ? lift(middle) : safe
-      lifted = Number.isFinite(middle) && middle < safe
+      high = lift(middle)
+      lifted = middle < safe
       target = high
       break
     }
@@ -165,7 +176,7 @@ export function priceRange({ input, currentPrice, stage, market: m, recentStep =
       break
     }
   }
-  return { stage, floor, low, high, target, ladder, lifted, viable: true, waitingOnStep }
+  return { stage, floor, low, high, target, ladder, lifted, viable: true, waitingOnStep, suggest: true }
 }
 
 /** "Higher than most similar products": above the top quarter of the entered prices. */

@@ -2,7 +2,7 @@
  * Report upload (spec v2, 7.3): the hero.
  *
  *   /upload               pick a file (button or drag-and-drop), read it on the phone
- *   /upload/map           only when a required column wasn't found
+ *   /upload/map           when a required column wasn't found, or from "Check columns"
  *   /upload/done/:id      reconciliation per product, and cost entry for new ones
  *
  * The file is parsed in memory with SheetJS (loaded on demand) and never
@@ -12,10 +12,10 @@
  */
 import { useLiveQuery } from 'dexie-react-hooks'
 import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
-import { Link, Navigate, Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 
 import { categoryNames } from '../../data/categoryNames'
-import { inr, pct } from '../../engine/format'
+import { formatDate, inr, pct } from '../../engine/format'
 import { defaultKeepInput } from '../../engine/keep'
 import { type Reconciliation, reconcileReport } from '../../engine/report'
 import { type MessageKey, useI18n, useT } from '../../i18n'
@@ -35,7 +35,17 @@ import {
   previewValues,
 } from '../report/extract'
 import { sha256Hex } from '../report/hash'
-import { type QuickEntry, addFromReport, findDuplicate, normSku, saveMapping, saveReport, toEngineStats } from '../report/store'
+import {
+  type QuickEntry,
+  addFromReport,
+  findDuplicate,
+  findSameReport,
+  normSku,
+  removeReport,
+  saveMapping,
+  saveReport,
+  toEngineStats,
+} from '../report/store'
 import { queueBenchmarks } from '../benchmarks'
 import { track } from '../telemetry'
 import { useToast } from '../toast'
@@ -47,7 +57,14 @@ interface Pending {
   fileName: string
   fileHash: string
   analysis: Analysis
+  /** Once saved: the columns it was read with, and the report it became ("Check columns" reopens them). */
+  columns?: Columns
+  reportId?: string
+  /** While checking columns: the saved report a new reading replaces. */
+  replaces?: string
 }
+
+type FinishResult = { kind: 'error'; key: MessageKey } | { kind: 'duplicate'; report: Report } | null
 
 const PendingContext = createContext<{ pending: Pending | null; setPending: (p: Pending | null) => void }>({
   pending: null,
@@ -64,13 +81,21 @@ export function UploadLayout() {
   )
 }
 
-/** Totals the file with the chosen columns, saves it, and opens the result. */
-function useFinish(): (p: Pending, columns: Columns, mappingId: string) => Promise<MessageKey | null> {
+/**
+ * Totals the file with the chosen columns, saves it, and opens the result.
+ * The same report under different bytes is refused like the same file. When
+ * checking columns, the new reading replaces the saved report.
+ */
+function useFinish(): (p: Pending, columns: Columns, mappingId: string) => Promise<FinishResult> {
   const navigate = useNavigate()
+  const { setPending } = useContext(PendingContext)
   return async (p, columns, mappingId) => {
     const data = buildReport(p.analysis, columns)
-    if (data.orderLines === 0) return 'upload.err.empty'
-    if (!data.hasOrders) return 'upload.err.noOrders'
+    if (data.orderLines + data.ignoredRows === 0) return { kind: 'error', key: 'upload.err.empty' }
+    if (!data.hasOrders) return { kind: 'error', key: 'upload.err.noOrders' }
+    const same = await findSameReport(data, p.replaces)
+    if (same) return { kind: 'duplicate', report: same }
+    if (p.replaces) await removeReport(p.replaces)
     const report = await saveReport({
       fileName: p.fileName,
       fileHash: p.fileHash,
@@ -78,8 +103,14 @@ function useFinish(): (p: Pending, columns: Columns, mappingId: string) => Promi
       mappingId,
       synthetic: p.analysis.synthetic,
     })
-    void track('report_uploaded', { products: data.stats.size })
-    void queueBenchmarks(report.id)
+    // Re-reading the same file with other columns isn't a new upload.
+    if (!p.replaces) {
+      void track('report_uploaded', { products: data.stats.size, sample: p.analysis.synthetic })
+      // A sample's rates aren't a real seller's: never shared as a benchmark.
+      if (!p.analysis.synthetic) void queueBenchmarks(report.id)
+    }
+    // The file stays in memory (never stored) so "Check columns" can reopen these choices.
+    setPending({ fileName: p.fileName, fileHash: p.fileHash, analysis: p.analysis, columns, reportId: report.id })
     navigate(`/upload/done/${report.id}`, { replace: true })
     return null
   }
@@ -98,7 +129,62 @@ async function readBytes(file: File): Promise<Uint8Array> {
 function useDateFormat(): (iso: string | number) => string {
   const { lang } = useI18n()
   const fmt = new Intl.DateTimeFormat(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-  return (v) => fmt.format(typeof v === 'number' ? new Date(v) : new Date(`${v}T00:00:00`))
+  return (v) => formatDate(fmt, v)
+}
+
+// ------------------------------------------------------------ sample data
+
+/** The two synthetic weeks (week 2: kurti returns and jhumka RTO rise), served from public/samples. */
+export const SAMPLE_FILES = ['SAMPLE_SYNTHETIC_PAYMENT_FILE_week1.xlsx', 'SAMPLE_SYNTHETIC_PAYMENT_FILE_week2.xlsx']
+
+/**
+ * "Try with a sample report": loads both sample weeks through the same
+ * pipeline as an upload, always saved as SAMPLE (never a real seller's data,
+ * never shared as a benchmark, sent as sample:true). Weeks already loaded are
+ * reused. Returns the last week's report.
+ */
+export async function loadSampleReports(fetchFn: typeof fetch = globalThis.fetch): Promise<Report> {
+  const { readWorkbook } = await import('../report/read')
+  let last: Report | undefined
+  for (const name of SAMPLE_FILES) {
+    const res = await fetchFn(`/samples/${name}`)
+    if (!res.ok) throw new Error(`sample ${name}: ${res.status}`)
+    const bytes = new Uint8Array(await res.arrayBuffer())
+    const fileHash = await sha256Hex(bytes)
+    const existing = await findDuplicate(fileHash)
+    if (existing) {
+      last = existing
+      continue
+    }
+    const analysis = analyseWorkbook(readWorkbook(bytes, name), name)
+    if ('error' in analysis || analysis.missing.length > 0) throw new Error(`sample ${name} unreadable`)
+    const data = buildReport(analysis, analysis.columns)
+    last = await saveReport({ fileName: name, fileHash, data, mappingId: 'auto', synthetic: true })
+    void track('report_uploaded', { products: data.stats.size, sample: true })
+  }
+  return last!
+}
+
+export function SampleButton({ onError }: { onError: () => void }) {
+  const t = useT()
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(false)
+  const run = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      const report = await loadSampleReports()
+      navigate(`/upload/done/${report.id}`)
+    } catch {
+      setBusy(false)
+      onError()
+    }
+  }
+  return (
+    <Button variant="secondary" className="self-start" disabled={busy} onClick={() => void run()}>
+      {busy ? t('upload.sampleLoading') : t('upload.trySample')}
+    </Button>
+  )
 }
 
 // ------------------------------------------------------------- 1. choose
@@ -118,9 +204,22 @@ export function UploadStart() {
   const [state, setState] = useState<StartState>({ kind: 'idle' })
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [params] = useSearchParams()
+  const autoSample = params.get('sample') === '1'
 
   // Arriving here (including Back from the mapping screen) discards any file in progress.
   useEffect(() => setPending(null), [setPending])
+
+  // Landing → "Try with a sample report" → onboarding → here with ?sample=1: load it straight away.
+  const sampleStarted = useRef(false)
+  useEffect(() => {
+    if (!autoSample || sampleStarted.current) return
+    sampleStarted.current = true
+    setState({ kind: 'reading' })
+    loadSampleReports()
+      .then((report) => navigate(`/upload/done/${report.id}`, { replace: true }))
+      .catch(() => setState({ kind: 'error', key: 'upload.err.sample' }))
+  }, [autoSample, navigate])
 
   const handle = async (file: File) => {
     const metaError = checkFileMeta(file.name, file.size)
@@ -144,8 +243,9 @@ export function UploadStart() {
         navigate('/upload/map')
         return
       }
-      const error = await finish(pending, analysis.columns, analysis.mappingSource === 'saved' ? analysis.signature : 'auto')
-      if (error) setState({ kind: 'error', key: error })
+      const result = await finish(pending, analysis.columns, analysis.mappingSource === 'saved' ? analysis.signature : 'auto')
+      if (result?.kind === 'error') setState({ kind: 'error', key: result.key })
+      else if (result?.kind === 'duplicate') setState({ kind: 'duplicate', report: result.report })
     } catch {
       setState({ kind: 'error', key: 'upload.err.unreadable' })
     }
@@ -192,6 +292,11 @@ export function UploadStart() {
           <span className="text-sm text-muted">{t('upload.accepts')}</span>
         </label>
 
+        <div className="flex flex-col gap-1">
+          <SampleButton onError={() => setState({ kind: 'error', key: 'upload.err.sample' })} />
+          <p className="text-sm text-muted">{t('upload.sampleHint')}</p>
+        </div>
+
         <div aria-live="polite">
           {state.kind === 'reading' ? <p className="text-base font-medium text-plum">{t('upload.reading')}</p> : null}
           {state.kind === 'error' ? (
@@ -235,33 +340,43 @@ export function MapColumns() {
   const t = useT()
   const navigate = useNavigate()
   const finish = useFinish()
-  const { pending } = useContext(PendingContext)
-  const [columns, setColumns] = useState<Columns>(() => pending?.analysis.columns ?? {})
-  const [error, setError] = useState<MessageKey | null>(null)
+  const formatDate = useDateFormat()
+  const { pending, setPending } = useContext(PendingContext)
+  // Pre-filled with what was found, or with what the saved report was read with ("Check columns").
+  const [columns, setColumns] = useState<Columns>(() => pending?.columns ?? pending?.analysis.columns ?? {})
+  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   if (!pending) return <Navigate to="/upload" replace />
   const { order, personalHeaders, signature } = pending.analysis
   const missing = REQUIRED_FIELDS.filter((f) => columns[f] === undefined)
   const chosen = ALL_FIELDS.filter((f) => columns[f] !== undefined)
+  const checking = pending.replaces !== undefined
 
   const submit = async () => {
     setSaving(true)
     await saveMapping(signature, columnsByName(order, columns))
-    const err = await finish(pending, columns, signature)
-    if (err) {
-      setError(err)
+    const result = await finish(pending, columns, signature)
+    if (result) {
+      setError(result.kind === 'error' ? t(result.key) : t('upload.duplicate', { date: formatDate(result.report.uploadedAt) }))
       setSaving(false)
     }
+  }
+
+  const back = () => {
+    if (!checking) return navigate('/upload')
+    // Checking columns: back to the report as it was, file still in memory.
+    setPending({ ...pending, replaces: undefined })
+    navigate(`/upload/done/${pending.replaces}`)
   }
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-5">
       <div>
-        <BackButton onClick={() => navigate('/upload')} />
+        <BackButton onClick={back} />
       </div>
       <PageTitle>{t('map.title')}</PageTitle>
-      <p className="text-base text-body">{t('map.lead')}</p>
+      <p className="text-base text-body">{checking ? t('map.leadCheck') : t('map.lead')}</p>
       {personalHeaders.length > 0 ? <p className="text-sm text-muted">{t('map.personalNote')}</p> : null}
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -319,7 +434,7 @@ export function MapColumns() {
 
       {error ? (
         <p role="alert" className="rounded-card border-2 border-loss bg-loss/5 p-3 text-base font-medium text-loss">
-          {t(error)}
+          {error}
         </p>
       ) : null}
 
@@ -388,6 +503,7 @@ export function UploadDone() {
   const t = useT()
   const { reportId } = useParams()
   const formatDate = useDateFormat()
+  const { pending, setPending } = useContext(PendingContext)
   const report = useLiveQuery(async () => (reportId ? ((await db.reports.get(reportId)) ?? null) : null), [reportId])
   const rows = useLiveQuery(() => (reportId ? db.skuStats.where('reportId').equals(reportId).toArray() : []), [reportId])
   const products = useProducts()
@@ -419,7 +535,21 @@ export function UploadDone() {
         {t('done.summary', { products: rows.length, orders: report.orderLines })}
         {period ? ` · ${period}` : ''}
       </p>
+      {report.ignoredRows ? (
+        <p className="text-sm text-muted">
+          {t(report.ignoredRows === 1 ? 'done.ignoredOne' : 'done.ignored', { n: report.ignoredRows, statuses: (report.ignoredStatuses ?? []).join(', ') })}
+        </p>
+      ) : null}
       {report.adsSplitByOrders ? <p className="text-sm text-muted">{t('done.adsSplit')}</p> : null}
+      {pending?.reportId === report.id ? (
+        <Link
+          to="/upload/map"
+          onClick={() => setPending({ ...pending, replaces: report.id })}
+          className="self-start text-base font-semibold text-plum underline underline-offset-2"
+        >
+          {t('done.checkColumns')}
+        </Link>
+      ) : null}
 
       {unmatched.length > 0 ? <QuickCostEntry rows={unmatched} products={products} shop={shop} /> : null}
 
@@ -490,6 +620,8 @@ export function ReconciliationNote({ rec, lowData }: { rec: Reconciliation; lowD
   const t = useT()
   if (rec.status === 'NO_DELIVERIES') return <p className="text-sm text-muted">{t('done.noDeliveries')}</p>
   const g = 1.18
+  // Carried into what you keep as "Other deductions from your report" (engine/report.ts calibrate).
+  const other = rec.calibrated.otherPerDelivered ?? 0
   const fmt = (field: string, v: number | boolean) => {
     if (typeof v === 'boolean') return v ? t('common.yes') : t('common.no')
     if (field === 'fwdPerDelivered' || field === 'revPerReturn') return inr(v * g, 2)
@@ -501,11 +633,17 @@ export function ReconciliationNote({ rec, lowData }: { rec: Reconciliation; lowD
       {rec.status === 'MATCHES' ? (
         <p className="text-base font-semibold text-healthy">
           {t('done.matches')}{' '}
-          <span className="font-normal text-body/80">{t('done.matchesDetail', { pct: pct(Math.abs(rec.differencePct), 1) })}</span>
+          <span className="font-normal text-body/80">
+            {t(rec.difference > 0 ? 'done.matchesMore' : rec.difference < 0 ? 'done.matchesLess' : 'done.matchesDetail', {
+              pct: pct(Math.abs(rec.differencePct), 1),
+            })}
+          </span>
         </p>
       ) : (
         <>
-          <p className="text-base font-semibold text-thin">{t('done.differs', { amount: inr(Math.abs(rec.difference), 2) })}</p>
+          <p className="text-base font-semibold text-thin">
+            {t(rec.difference > 0 ? 'done.paidMore' : 'done.paidLess', { amount: inr(Math.abs(rec.difference), 2) })}
+          </p>
           {rec.gapLines.length > 0 ? (
             <ul className="list-disc pl-5 text-sm text-body">
               {rec.gapLines.map((g2) => (
@@ -524,6 +662,9 @@ export function ReconciliationNote({ rec, lowData }: { rec: Reconciliation; lowD
           ) : null}
         </>
       )}
+      {Math.abs(other) >= 0.5 ? (
+        <p className="text-sm text-body">{t(other > 0 ? 'done.otherDeductions' : 'done.otherExtra', { amount: inr(Math.abs(other), 2) })}</p>
+      ) : null}
       {lowData ? <p className="text-sm text-thin">{t('done.lowData')}</p> : null}
     </div>
   )

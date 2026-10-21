@@ -28,6 +28,7 @@
  *   ads       = N × adPerOrder
  *   writeOff  = Q × unsellableShare × c
  *   penalties = N × penaltiesPerOrder
+ *   other     = D × otherPerDelivered       from a report: deductions no line above explains
  *
  *   pNet  = registered ? p ÷ (1 + gstRate) : p
  *   keep  = pNet − c − costs ÷ C
@@ -73,6 +74,12 @@ export interface KeepInput {
    * claimable"; never a cost, so it never moves `keep` (spec 6.3).
    */
   tcsTdsPerDelivered?: number
+  /**
+   * "Other deductions from your report", ₹ per delivered order: how much less
+   * Meesho paid than price, shipping and rates explain (negative when it paid
+   * more). Set only by report calibration.
+   */
+  otherPerDelivered?: number
   /** For the monthly figure. */
   cleanSalesPerMonth?: number
   /** Where each input came from. Anything missing reads as ESTIMATED. */
@@ -108,6 +115,8 @@ export interface KeepLines {
   ads: number
   writeOff: number
   penalties: number
+  /** Other deductions from a report (negative when Meesho paid more). */
+  other: number
 }
 
 export interface KeepResult {
@@ -156,8 +165,9 @@ export function keepPerSale(input: KeepInput): KeepResult {
   const ads = N * input.adPerOrder
   const writeOff = Q * input.unsellableShare * input.cost
   const penalties = N * input.penaltiesPerOrder
+  const other = D * (input.otherPerDelivered ?? 0)
 
-  const costs = forward + reverse + feeGstCost + packaging + ads + writeOff + penalties
+  const costs = forward + reverse + feeGstCost + packaging + ads + writeOff + penalties + other
   const outputGstRate = input.gstRegistered ? input.outputGstRate : 0
   const pNet = input.price / (1 + outputGstRate)
 
@@ -173,7 +183,7 @@ export function keepPerSale(input: KeepInput): KeepResult {
     D,
     Q,
     C,
-    lines: { forward, reverse, feeGst, feeGstCost, packaging, ads, writeOff, penalties },
+    lines: { forward, reverse, feeGst, feeGstCost, packaging, ads, writeOff, penalties, other },
     costs,
     costsPerCleanSale,
     pNet,

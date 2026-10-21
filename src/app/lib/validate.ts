@@ -28,6 +28,22 @@ export interface ProductDraft {
 
 export type DraftField = keyof ProductDraft
 
+/**
+ * "When did you list it?" (optional, next to the required fields). Each
+ * answer is saved as a "listed since" date at the start of its band, so the
+ * stage moves on by itself as time passes. Blank means Steady (lib/stage).
+ */
+export type ListedAge = 'NOW' | 'MONTHS_1_3' | 'MONTHS_3_PLUS'
+export const LISTED_AGES: readonly ListedAge[] = ['NOW', 'MONTHS_1_3', 'MONTHS_3_PLUS'] as const
+const LISTED_AGE_DAYS: Record<ListedAge, number> = { NOW: 0, MONTHS_1_3: 30, MONTHS_3_PLUS: 90 }
+
+/** The "listed since" date (yyyy-mm-dd, local) an answer stands for. */
+export function listedSinceFor(age: ListedAge, today: Date = new Date()): string {
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - LISTED_AGE_DAYS[age])
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 /** i18n keys under "error.*". */
 export type ErrorKey =
   | 'error.nameRequired'

@@ -2,7 +2,7 @@
  * Price step planner, app side (spec v2, 7.9): finds the report before a
  * step and the report after it, and judges the step with the engine.
  */
-import { type StepJudgement, type StepPeriod, judgeStep } from '../../engine/priceStep'
+import { MIN_CATALOGUE_ORDERS, type StepJudgement, type StepPeriod, judgeStep } from '../../engine/priceStep'
 import { type KeepInput, keepPerSale } from '../../engine/keep'
 import { calibrate } from '../../engine/report'
 import type { PriceStep, Report, SkuStatsRow } from '../db'
@@ -32,18 +32,23 @@ export function stepReports(step: PriceStep, sku: string | undefined, rows: SkuS
 function period(loc: Located, base: KeepInput): StepPeriod {
   const stats = toEngineStats(loc.row)
   const input = calibrate(base, stats, { adsTotal: loc.row.ads ?? undefined, penaltiesTotal: loc.row.penalties ?? undefined })
-  return { cleanSales: loc.row.deliveredKept, days: loc.report.periodDays!, keep: keepPerSale(input).keep }
+  return { cleanSales: loc.row.deliveredKept, days: loc.report.periodDays!, keep: keepPerSale(input).keep, avgPrice: loc.row.avgPrice }
 }
 
-/** Other products' orders a day in the "after" report ÷ the "before" report. */
+/**
+ * Other products' orders a day in the "after" report ÷ the "before" report;
+ * null unless the other products have at least MIN_CATALOGUE_ORDERS orders
+ * in each (the engine clamps what comes back).
+ */
 export function catalogueRatio(sku: string, beforeId: string, afterId: string, rows: SkuStatsRow[], reports: Report[]): number | null {
   const byId = new Map(reports.map((r) => [r.id, r]))
   const perDay = (reportId: string) => {
     const days = byId.get(reportId)?.periodDays
     if (!days) return null
     const others = rows.filter((r) => r.reportId === reportId && normSku(r.sku) !== normSku(sku))
-    if (others.length === 0) return null
-    return others.reduce((s, r) => s + r.orders, 0) / days
+    const orders = others.reduce((s, r) => s + r.orders, 0)
+    if (orders < MIN_CATALOGUE_ORDERS) return null
+    return orders / days
   }
   const b = perDay(beforeId)
   const a = perDay(afterId)
@@ -63,6 +68,7 @@ export function judgeProductStep(args: {
     before: before ? period(before, base) : null,
     after: after ? period(after, base) : null,
     catalogueRatio: before && after && sku ? catalogueRatio(sku, before.report.id, after.report.id, rows, reports) : null,
+    prices: { oldPrice: step.oldPrice, newPrice: step.newPrice },
   })
 }
 

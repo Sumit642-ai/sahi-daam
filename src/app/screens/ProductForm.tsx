@@ -1,6 +1,6 @@
 /**
- * Add / edit a product by hand (spec v2, 7.4): four required fields, the rest
- * folded under "More details". Every blank optional field shows the estimate
+ * Add / edit a product by hand (spec v2, 7.4): four required fields and an
+ * optional "When did you list it?", the rest folded under "More details". Every blank optional field shows the estimate
  * we'll use instead, with an "Estimated" chip saying where it comes from.
  *
  * Leaving with unsaved changes asks "Discard changes?" (spec 8.2), whether
@@ -9,18 +9,30 @@
 import { useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 
-import { categoryNames as categories } from '../../data/categoryNames'
+import { OTHER_CATEGORY, categoryNames as categories } from '../../data/categoryNames'
 import { categoryRates, rates } from '../../data/rates'
 import { shippingFor } from '../../engine/keep'
 import { inr } from '../../engine/format'
 import { useI18n } from '../../i18n'
 import type { Product, Shop } from '../db'
 import { useBack, useProduct, useShop } from '../hooks'
-import { type DraftField, type ProductDraft, draftFromProduct, emptyDraft, parseAmount, validateProduct, WEIGHT_MAX_G, WEIGHT_MIN_G } from '../lib/validate'
+import {
+  type DraftField,
+  type ListedAge,
+  type ProductDraft,
+  LISTED_AGES,
+  draftFromProduct,
+  emptyDraft,
+  listedSinceFor,
+  parseAmount,
+  validateProduct,
+  WEIGHT_MAX_G,
+  WEIGHT_MIN_G,
+} from '../lib/validate'
 import { addProduct, updateProduct } from '../repo'
 import { track } from '../telemetry'
 import { useToast } from '../toast'
-import { BackButton, Card, ConfirmDialog, LoadingPage, PageTitle, SourceChip, StickyActions, TextField, buttonClass } from '../ui'
+import { BackButton, Card, Choice, ConfirmDialog, LoadingPage, PageTitle, SourceChip, StickyActions, TextField, buttonClass } from '../ui'
 
 export function ProductForm() {
   const { id } = useParams()
@@ -55,6 +67,8 @@ function ProductFormInner({ shop, product }: { shop: Shop; product: Product | nu
   const [touched, setTouched] = useState<Partial<Record<DraftField, boolean>>>({})
   const [moreOpen, setMoreOpen] = useState(() => OPTIONAL_FIELDS.some((f) => initial[f] !== ''))
   const [saving, setSaving] = useState(false)
+  // The "When did you list it?" answer; it fills in the "Listed since" date under More details.
+  const [listedAge, setListedAge] = useState<ListedAge | ''>('')
   const saved = useRef(false)
 
   const validation = validateProduct(draft)
@@ -65,7 +79,14 @@ function ProductFormInner({ shop, product }: { shop: Shop; product: Product | nu
       dirty && !saved.current && currentLocation.pathname !== nextLocation.pathname,
   )
 
-  const set = (field: DraftField) => (value: string) => setDraft((d) => ({ ...d, [field]: value }))
+  const set = (field: DraftField) => (value: string) => {
+    if (field === 'listedSince') setListedAge('')
+    setDraft((d) => ({ ...d, [field]: value }))
+  }
+  const chooseAge = (age: ListedAge) => {
+    setListedAge(age)
+    setDraft((d) => ({ ...d, listedSince: listedSinceFor(age) }))
+  }
   const touch = (field: DraftField) => () => setTouched((s) => ({ ...s, [field]: true }))
   const errorFor = (field: DraftField) => {
     const key = validation.errors[field]
@@ -110,7 +131,10 @@ function ProductFormInner({ shop, product }: { shop: Shop; product: Product | nu
     const { value, reason } = {
       ship: { value: ship.forward * feeGst, reason: t('est.ship', { weight: weightForEstimate }) },
       returnShip: { value: ship.reverse * feeGst, reason: t('est.ship', { weight: weightForEstimate }) },
-      packaging: { value: categoryRates(draft.category).packagingPerOrder, reason: t('est.category', { category: categoryName }) },
+      packaging: {
+        value: categoryRates(draft.category).packagingPerOrder,
+        reason: draft.category === OTHER_CATEGORY ? t('est.other') : t('est.category', { category: categoryName }),
+      },
       adPerOrder: { value: rates.adPerOrder, reason: t('est.ads') },
     }[field]
     const entered = draft[field].trim() !== ''
@@ -176,6 +200,15 @@ function ProductFormInner({ shop, product }: { shop: Shop; product: Product | nu
           />
         </div>
 
+        <Choice<ListedAge | ''>
+          legend={`${t('product.listedAge')} (${t('common.optional')})`}
+          hint={t('product.listedAgeHint')}
+          columns={3}
+          value={listedAge}
+          onChange={(age) => age && chooseAge(age)}
+          options={LISTED_AGES.map((a) => ({ value: a, label: t(`product.listedAge.${a}`) }))}
+        />
+
         {validation.costAtLeastPrice ? (
           <p role="alert" className="rounded-card border-2 border-loss bg-loss/5 p-3 text-base font-medium text-loss">
             <span aria-hidden="true">✕ </span>
@@ -200,6 +233,9 @@ function ProductFormInner({ shop, product }: { shop: Shop; product: Product | nu
           </button>
           {moreOpen ? (
             <div className="grid gap-5 border-t border-plum/10 p-4 md:grid-cols-2">
+              {draft.category === OTHER_CATEGORY ? (
+                <p className="rounded-xl bg-peach p-3 text-sm font-medium text-thin md:col-span-2">{t('other.pleaseCheck')}</p>
+              ) : null}
               <CategorySelect value={draft.category} onChange={set('category')} />
               <TextField label={t('product.sku')} value={draft.sku} onChange={set('sku')} onBlur={touch('sku')} error={errorFor('sku')} help={t('product.skuHelp')} optional />
               <TextField label={t('product.ship')} value={draft.ship} onChange={set('ship')} onBlur={touch('ship')} error={errorFor('ship')} inputMode="decimal" {...estimate('ship')} />

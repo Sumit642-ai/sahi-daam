@@ -40,6 +40,9 @@ export function ProductRow({ row }: { row: ProductSummary }) {
           <p className="text-base text-body/80">{t('home.perMonth', { amount: inr(monthly) })}</p>
         ) : null}
         <span className="ml-auto flex flex-wrap gap-1">
+          {row.report?.report.synthetic ? (
+            <span className="rounded-full bg-peach px-2 py-0.5 text-xs font-semibold uppercase text-thin">{t('done.sampleChip')}</span>
+          ) : null}
           {row.report && row.report.row.orders < LOW_DATA_ORDERS ? (
             <span className="rounded-full bg-peach px-2 py-0.5 text-xs font-semibold text-thin">{t('done.lowDataChip')}</span>
           ) : null}

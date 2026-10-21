@@ -119,7 +119,7 @@ export function saleCheck(args: SaleCheckArgs): SaleCheck {
       `${Math.round(prepaidCodShare * 100)}% brings it to ${inr(prepaidFloor, 2)}.`
   } else {
     verdict = 'SKIP_LOSS'
-    headline = `Skip — every sale order loses ${inr(lossPerSaleOrder)}.`
+    headline = `Skip — every sale loses ${inr(lossPerSaleOrder)}.`
   }
 
   return {

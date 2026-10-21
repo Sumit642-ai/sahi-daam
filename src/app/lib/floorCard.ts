@@ -13,7 +13,7 @@ import {
   withPrepaidPush,
 } from '../../engine/keep'
 
-export type WhyKey = 'cost' | 'forward' | 'reverse' | 'feeGst' | 'packaging' | 'ads' | 'writeOff' | 'penalties' | 'outputGst'
+export type WhyKey = 'cost' | 'forward' | 'reverse' | 'feeGst' | 'packaging' | 'ads' | 'writeOff' | 'penalties' | 'other' | 'outputGst'
 
 export interface WhyLine {
   key: WhyKey
@@ -86,6 +86,16 @@ export function whyTable(input: KeepInput, r: KeepResult): WhyTable {
       per100: r.lines.penalties,
       parts: [r.N, input.penaltiesPerOrder],
       source: src(input, 'penaltiesPerOrder'),
+    })
+  }
+  // Shown once it is worth a paisa a sale either way.
+  if (Number.isFinite(per(r.lines.other)) && Math.abs(per(r.lines.other)) >= 0.005) {
+    lines.push({
+      key: 'other',
+      perSale: per(r.lines.other),
+      per100: r.lines.other,
+      parts: [r.D, input.otherPerDelivered ?? 0],
+      source: 'FROM_REPORT',
     })
   }
   if (r.outputGstRate > 0) {

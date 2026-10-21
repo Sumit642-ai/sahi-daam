@@ -11,11 +11,11 @@
  * helper and sale check are their own screens, one answer each.
  */
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
-import { categoryNames } from '../../data/categoryNames'
+import { OTHER_CATEGORY, categoryNames } from '../../data/categoryNames'
 import { rates } from '../../data/rates'
-import { inr, num, pct, units } from '../../engine/format'
+import { floorInr, formatDate, inr, num, pct, units } from '../../engine/format'
 import { keepIfReturnsRise, sourceOf } from '../../engine/keep'
 import { type MessageKey, useI18n, useT } from '../../i18n'
 import { useBack } from '../hooks'
@@ -28,11 +28,18 @@ import { useToast } from '../toast'
 import { BackButton, Button, Card, LoadingPage, STATUS_TEXT, SourceChip, StatusBadge, buttonClass } from '../ui'
 import { ReconciliationNote, SampleBanner } from './Upload'
 
+/** "Other" has no category data behind it: its typical numbers are rough guesses to check. */
+export function OtherCategoryNote() {
+  const t = useT()
+  return <p className="rounded-xl bg-peach p-3 text-sm font-medium text-thin">{t('other.pleaseCheck')}</p>
+}
+
 export function ProductDetail() {
   const t = useT()
   const { id } = useParams()
   const model = useProductModel(id)
   const back = useBack('/home')
+  const navigate = useNavigate()
   const toast = useToast()
 
   if (model === undefined) return <LoadingPage />
@@ -44,7 +51,8 @@ export function ProductDetail() {
 
   const remove = async () => {
     const deleted = await deleteProduct(product.id)
-    back()
+    // Home, never Back: Back could land on the form that made it, or a setup step.
+    navigate('/home', { replace: true })
     if (deleted) toast({ message: t('product.deleted', { name: product.name }), onUndo: () => void restoreProduct(deleted) })
   }
 
@@ -69,10 +77,11 @@ export function ProductDetail() {
           <span className="self-start rounded-full bg-peach px-2.5 py-0.5 text-sm font-semibold text-thin">{t('detail.adsNotIncluded')}</span>
         ) : null}
         <p className="text-lg font-semibold text-ink">
-          {result.viable ? t('detail.floor', { floor: inr(result.floor) }) : t('detail.noFloor')}
+          {result.viable ? t('detail.floor', { floor: floorInr(result.floor) }) : t('detail.noFloor')}
         </p>
-        {up.viable ? <p className="text-base text-body/80">{t('detail.returnsUp', { floor: inr(up.floor) })}</p> : null}
+        {up.viable ? <p className="text-base text-body/80">{t('detail.returnsUp', { floor: floorInr(up.floor) })}</p> : null}
         <p className="text-base text-body/80">{t('detail.funnel', { n: Math.round(result.C) })}</p>
+        {product.category === OTHER_CATEGORY && summary.estimated ? <OtherCategoryNote /> : null}
         {summary.monthly !== null ? (
           <p className="text-base font-medium text-ink">
             {summary.monthlySource === 'report'
@@ -145,13 +154,13 @@ function StepCard({ model }: { model: ProductModel }) {
     <Card tone="lilac" className="flex flex-col gap-2">
       <h2 className="text-lg font-semibold text-ink">{t('step.title')}</h2>
       <p className="text-base text-body">
-        {t('step.running', { to: inr(step.newPrice), from: inr(step.oldPrice), date: fmt.format(new Date(step.startAt)) })}
+        {t('step.running', { to: inr(step.newPrice), from: inr(step.oldPrice), date: formatDate(fmt, step.startAt) })}
       </p>
       {judgement.verdict === 'TOO_EARLY' ? (
         <p className="text-base font-medium text-plum">
           {judgement.reason === 'SMALL_CHANGE'
             ? t('step.small', { before: money(judgement.profitPerDayBefore), after: money(judgement.profitPerDayAfter) })
-            : t(`step.early.${judgement.reason ?? 'NO_AFTER'}` as MessageKey)}
+            : t(`step.early.${judgement.reason ?? 'NO_AFTER'}` as MessageKey, { from: inr(step.oldPrice), to: inr(step.newPrice) })}
         </p>
       ) : (
         <>
@@ -271,7 +280,7 @@ function WhyCard({ summary }: { summary: ProductSummary }) {
             <th scope="row" className="py-2 font-semibold text-ink">
               {t('why.netFloor')}
             </th>
-            <td className="py-2 text-right font-semibold text-ink">{inr(table.netFloor, working ? 2 : 0)}</td>
+            <td className="py-2 text-right font-semibold text-ink">{floorInr(table.netFloor, working ? 2 : 0)}</td>
           </tr>
           {table.lines
             .filter((l) => l.key === 'outputGst')
@@ -282,7 +291,7 @@ function WhyCard({ summary }: { summary: ProductSummary }) {
             <th scope="row" className="py-2 text-lg font-bold text-ink">
               {t('why.floor')}
             </th>
-            <td className="py-2 text-right text-lg font-bold text-ink">{inr(table.floor, working ? 2 : 0)}</td>
+            <td className="py-2 text-right text-lg font-bold text-ink">{floorInr(table.floor, working ? 2 : 0)}</td>
           </tr>
         </tbody>
       </table>
@@ -308,6 +317,7 @@ function WhyRow({ line, working, clean, gstRegistered }: { line: WhyLine; workin
       case 'packaging':
       case 'ads':
       case 'penalties':
+      case 'other':
         return `${count(a)} × ${inr(b, 2)}`
       case 'writeOff':
         return `${count(a)} × ${pct(b, 0)} × ${inr(c, 2)}`
@@ -387,7 +397,7 @@ function ReportCard({ link }: { link: NonNullable<ProductSummary['report']> }) {
   const { periodFrom, periodTo } = link.report
   const period =
     periodFrom && periodTo
-      ? `${fmt.format(new Date(`${periodFrom}T00:00:00`))} – ${fmt.format(new Date(`${periodTo}T00:00:00`))}`
+      ? `${formatDate(fmt, periodFrom)} – ${formatDate(fmt, periodTo)}`
       : link.report.fileName
   return (
     <Card tone="lilac" className="flex flex-col gap-2">

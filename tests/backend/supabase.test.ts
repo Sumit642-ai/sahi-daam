@@ -3,13 +3,19 @@
  * insert-only access for the public key, the per-device rate limit, the
  * protected stats function, and team exclusion (Section 15, negative 12).
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { PGlite } from '@electric-sql/pglite'
 import { beforeAll, describe, expect, it } from 'vitest'
 
-const SQL = readFileSync(join(__dirname, '..', '..', 'supabase', 'migrations', '0001_sahi_daam.sql'), 'utf8')
+// Every migration, in order, the way a project that ran each one when it shipped has them.
+const MIGRATIONS = join(__dirname, '..', '..', 'supabase', 'migrations')
+const SQL = readdirSync(MIGRATIONS)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .map((f) => readFileSync(join(MIGRATIONS, f), 'utf8'))
+  .join('\n')
 const SECRET = 'test-secret-0123456789abcdef'
 
 let pg: PGlite
@@ -108,6 +114,9 @@ describe('/stats through the protected function', () => {
       await event('team-device-001', 'activated', {}, true)
       await event('team-device-001', 'report_uploaded', { products: 9 }, true)
       await event('team-device-001', 'leak_found', { losing: 7 }, true)
+      await pg.query(`insert into public.waitlist (contact, consent, lang, team) values ('team@example.com', true, 'en', true)`)
+      // The built-in sample report: not a real upload.
+      await event('seller-real-0002', 'report_uploaded', { products: 5, sample: true })
     })
     const s = await asAnon(() => stats(SECRET))
     expect(s.totals).toMatchObject({

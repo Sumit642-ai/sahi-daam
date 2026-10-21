@@ -1,37 +1,59 @@
 # Sahi Daam — the right price
 
-Lifecycle pricing for the new-to-online Meesho seller. Team Taraazu's entry for
-the Meesho DICE Challenge 3.0, problem statement #4.
+A free, phone-first web app for the new-to-online Meesho seller. Upload your
+Meesho payment report (or type in one product) and it shows what you actually
+keep on every product after RTO, returns and shipping, your floor price, what
+to do about it, the price to charge next, whether to join a sale, and what
+changed since last week. Everything runs on the phone; the report never leaves
+it. English and Hindi, installable, works offline.
 
-An offline seller prices the way they did in their shop: cost plus a markup. A
-₹300 kurti costing ₹150 looks like ₹150 of profit. But out of 100 orders
-dispatched, ~17 never reach the buyer (RTO, mostly COD refusals) and ~13 come
-back after delivery. Under Meesho's published supplier policy the seller pays
-no COD fee and no shipping on RTOs — but does pay forward shipping and GST on
-delivered orders, reverse shipping and GST on customer returns, packaging on
-every order, and loses the product on unsellable returns. Spread that over the
-sales that actually survive and the seller's floor is **₹271** — so the ₹150
-they think they earn is really about **₹29**.
+Team Taraazu's entry for the Meesho DICE Challenge 3.0, problem statement #4.
 
-The full cost to serve that kurti — every shipping leg on every order plus COD
-handling, whoever pays it — is **₹318**, the deck's worked example. The ₹51 per
-clean sale between the two is what Meesho absorbs. Sahi Daam shows both,
-labelled, and prices on the seller floor.
+**Live:** [sahi-daam-beta.vercel.app](https://sahi-daam-beta.vercel.app)
 
-Sahi Daam computes that floor from the seller's own cost and RTO/return drag,
-places it against the market band, moves the recommendation through the
-product's lifecycle, and tells the seller on WhatsApp when any of it changes.
+## Try it with the sample report
 
----
+1. Open the live link (or run it locally, below) and tap **Try with a sample report**.
+2. Pick a language and answer the four shop questions.
+3. Two weeks of made-up orders for five products load, marked **SAMPLE** everywhere
+   they appear. Type a cost for a product (₹150 for the Blue Rayon Kurti) to see
+   what you keep on it.
+4. Open **Checks**: in week 2 the kurti's returns rose 16% → 23% and the
+   jhumka's RTO 22% → 28%.
 
-## The MVP (`mvp` branch)
+The sample files are in [`public/samples/`](public/samples/). They are synthetic:
+no real seller, order or buyer. Sample uploads are sent as `sample: true`, never
+count as an activated seller, and are left out of `/stats`.
 
-The `mvp` branch turns the prototype into a seller app ([`SAHI_DAAM_MVP_SPEC.md`](SAHI_DAAM_MVP_SPEC.md), v2). A seller uploads their Meesho payment report (or types in one product) and sees what they actually keep on every product, their floor, what to do, the price to charge next, whether to join a sale, and what changed since last week. Everything runs on the phone; the report never leaves it.
+## The worked example
 
-- **Seller app** at `/`: landing, onboarding, profit leak finder, floor card, price helper, sale check, weekly checks, price step planner, Me (backup / restore, delete everything, opt-in sharing). English and Hindi; mobile-first and fully responsive; installable, and works offline.
-- **The prototype** for judges, unchanged, at `/how-it-works` (`?demo=ramesh` skips its sign-in).
+A ₹300 kurti that costs ₹150, at typical rates (mixed buyers, no prepaid
+discount, 350 g parcel). The seller thinks they make ₹150 (price − cost):
+
+|                    | GST-registered | Not registered |
+| ------------------ | -------------: | -------------: |
+| You keep per sale  | **₹30**        | **₹29**        |
+| Your floor         | **₹269**       | **₹271**       |
+
+Out of 100 orders dispatched, about 17 never reach the buyer (RTO, mostly COD
+refusals) and about 13 come back after delivery. Under Meesho's published
+supplier policy the seller pays no COD fee and no shipping on RTOs, but does pay
+forward shipping on delivered orders, return shipping on customer returns,
+packaging on every order, and loses the product on unsellable returns. Spread
+over the ~70 sales that survive, that is the gap between ₹150 and ₹30. Floors
+are always shown rounded up, so a price at the floor never loses money. How the
+numbers work: [`ENGINE.md`](ENGINE.md). Every judgement call:
+[`DECISIONS.md`](DECISIONS.md).
+
+## What's in it
+
+- **Seller app** at `/`: landing, onboarding, report upload with column
+  matching, profit leak finder, floor card, price helper, sale check, weekly
+  checks, price step planner, Me (backup / restore, delete everything, opt-in
+  sharing). Spec: [`SAHI_DAAM_MVP_SPEC.md`](SAHI_DAAM_MVP_SPEC.md) (v2).
+- **The prototype** for judges, unchanged, at `/how-it-works`
+  (`?demo=ramesh` skips its sign-in).
 - **Concept**: how it could look inside a marketplace seller panel, at `/concept`.
-- **How the numbers work**: [`ENGINE.md`](ENGINE.md). Every judgement call: [`DECISIONS.md`](DECISIONS.md).
 
 Checks you can run:
 
@@ -47,15 +69,20 @@ npm run check:phase-d    # checks, Me, backup, delete everything, offline, manif
 
 ### Optional backend (anonymous counters, Pro waitlist, `/stats`)
 
-The app works with no backend: nothing is sent and `/stats` says "not connected". To turn it on:
+The app works fully without it: counters and waitlist sign-ups stay queued on
+the phone, and `/stats` says there are no shared numbers yet. To turn it on:
 
-1. Create a Supabase project and run [`supabase/migrations/0001_sahi_daam.sql`](supabase/migrations/0001_sahi_daam.sql) in its SQL editor. The public key can then only *insert* events, waitlist, feedback and opt-in benchmark rows; it can't read anything. Events are capped at 200 per device per day.
+1. Create a Supabase project and run the files in [`supabase/migrations/`](supabase/migrations/)
+   in order (`0001`, then `0002`) in its SQL editor. The public key can then
+   only *insert* events, waitlist, feedback and opt-in benchmark rows; it can't
+   read anything. Events are capped at 200 per device per day.
 2. Set the stats secret **inside the database**, never in the app:
    `insert into private.settings (name, value) values ('stats_key', '<long random string>');`
 3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see [`.env.example`](.env.example)) in Vercel or `.env.local`.
 4. Open `/stats?key=<your secret>`. The key is checked by the database function `sahi_daam_stats`; the page removes it from the address bar.
 
-Team devices: open the app once with `?team=1` and that device's events are excluded from `/stats`.
+Team devices: open the app once with `?team=1` and that device's events and
+waitlist sign-ups are excluded from `/stats` (the flag survives "Delete everything").
 
 ## Running it
 
@@ -66,35 +93,33 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-That is the whole setup. There is no backend, no API key and no network call —
-every number comes from `src/data/*.json` or is computed in the browser.
+No API key is needed: every number comes from `src/data/*.json`, the seller's
+own report, or is computed in the browser. The seller app's data lives in this
+browser's IndexedDB. The only network calls are the optional backend above.
 
-On the `mvp` branch the app opens on the MVP seller app (spec v2): landing,
-onboarding, add a product, the leak finder. Its data lives in this browser's
-IndexedDB. The original prototype is at **`/how-it-works`**, unchanged.
-
-The prototype opens on a sign-in screen. Two demo logins are seeded so you never have
-to sign up first:
+The prototype at **`/how-it-works`** opens on a sign-in screen. Two demo logins
+are seeded so you never have to sign up first:
 
 | Role | Email | Password |
 | --- | --- | --- |
 | Seller | `ramesh@demo.in` | `sahidaam` |
 | Meesho admin | `admin@meesho.demo` | `sahidaam` |
 
-Or press **Enter as Ramesh**, the first button on the page — or open the app
-with `?demo=ramesh` (for example `http://localhost:5173/how-it-works?demo=ramesh`;
-on `main`, `/?demo=ramesh`) to skip
-the sign-in screen entirely. Either way Ramesh's profile is reset to the seeded
-one: no prepaid discount, so 80% COD and the deck's ₹318 floor, with his ₹300
-planned price filled in. The admin console is reached by signing in as
-`admin@meesho.demo`.
+Or press **Enter as Ramesh**, the first button on the page — or open
+`/how-it-works?demo=ramesh` (for example
+`http://localhost:5173/how-it-works?demo=ramesh`) to skip the sign-in screen
+entirely. Either way Ramesh's profile is reset to the seeded one: no prepaid
+discount, so 80% COD and the deck's ₹318 floor, with his ₹300 planned price
+filled in (₹318 is the full cost to serve, including the ₹51 per sale Meesho
+absorbs; the seller app prices on the seller's own floor). The admin console is
+reached by signing in as `admin@meesho.demo`.
 
-> **This is not real authentication.** There is no server. Accounts live in this
-> browser's localStorage, the password is run through a non-cryptographic
-> digest, and anyone with the device can read them. It exists so the demo can
-> show *where a seller's numbers come from* — their own signup answers and the
-> platform defaults an admin sets — rather than hard-coding them. Do not reuse a
-> real password.
+> **This is not real authentication.** There is no server behind these accounts.
+> They live in this browser's localStorage, the password is run through a
+> non-cryptographic digest, and anyone with the device can read them. It exists
+> so the demo can show *where a seller's numbers come from* — their own signup
+> answers and the platform defaults an admin sets — rather than hard-coding
+> them. Do not reuse a real password.
 
 ### Everything else
 
@@ -142,7 +167,8 @@ fills in:
 | Install command | `npm install` |
 | Node version | 20.x or 22.x |
 
-Press **Deploy**. No environment variables are needed.
+Press **Deploy**. Environment variables are only needed for the optional
+backend: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (see above).
 
 **From the CLI.**
 
@@ -153,7 +179,7 @@ vercel --prod   # production
 ```
 
 `vercel.json` pins that build output and rewrites every path to `index.html`,
-which matters if routing is ever added — today the app is a single entry point.
+so deep links like `/products/…` or `/how-it-works` load the app.
 
 Any other static host works the same way: `npm run build`, then serve `dist/`.
 
@@ -260,8 +286,8 @@ Every configuration value in `src/data` carries a `source`: either a citation or
 the literal `ASSUMPTION`, and the Numbers & sources screen renders all of them.
 The competitor listings are **synthetic sample data** generated by
 `scripts/generate-listings.mjs` from a fixed seed — in production they come from
-Meesho's own similar-product search. Nothing here is scraped and nothing makes a
-network call.
+Meesho's own similar-product search. Nothing here is scraped, and the only network calls are the optional
+anonymous counters and waitlist (off unless a backend is configured).
 
 Where the spec and the deck disagreed, or a rule did not survive contact with
 real data, the call and its reasoning are written down in

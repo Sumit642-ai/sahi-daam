@@ -45,12 +45,18 @@ export interface OrderRow {
   settlement: number
 }
 
-/** Reads a status by keyword, so "RTO Complete" and "Return to origin" both land on RTO. */
+/**
+ * Reads a status by keyword, so "RTO Complete", "rto_complete" and "Return to
+ * origin" all land on RTO. Orders still on their way ("Shipped", "In transit",
+ * "Out for delivery") and failed or undelivered ones are OTHER: they are
+ * checked before "deliver", so none of them ever counts as delivered.
+ */
 export function normaliseStatus(raw: string): OrderStatus {
-  const s = raw.trim().toLowerCase()
+  const s = raw.trim().toLowerCase().replace(/[_-]+/g, ' ').replace(/\s+/g, ' ')
   if (/\brto\b/.test(s) || s.includes('origin')) return 'RTO'
   if (s.includes('cancel')) return 'CANCELLED'
   if (s.includes('return')) return 'RETURN'
+  if (/not delivered|undelivered|out for delivery|in transit|failed|shipped/.test(s)) return 'OTHER'
   if (s.includes('deliver')) return 'DELIVERED'
   return 'OTHER'
 }
@@ -125,10 +131,12 @@ export function summariseOrders(rows: OrderRow[]): Map<string, SkuStats> {
       returnShip: 0,
       shipOnRto: false,
     }
+    const status = normaliseStatus(row.status)
+    // Not final yet (or not a status we know): left out of every count and every rupee.
+    if (status === 'OTHER') continue
     acc.set(row.sku, a)
 
     const qty = row.quantity ?? 1
-    const status = normaliseStatus(row.status)
     a.rows += 1
     a.settlement += row.settlement
     a.tcsTds += Math.abs(row.tcs ?? 0) + Math.abs(row.tds ?? 0)
@@ -151,8 +159,6 @@ export function summariseOrders(rows: OrderRow[]): Map<string, SkuStats> {
         break
       case 'CANCELLED':
         a.cancelled += qty
-        break
-      case 'OTHER':
         break
     }
   }
@@ -230,6 +236,14 @@ export function calibrate(input: KeepInput, stats: SkuStats, extras: SkuExtras =
     take('penaltiesPerOrder', extras.penaltiesTotal / stats.dispatched)
   }
   if (stats.delivered > 0) next.tcsTdsPerDelivered = stats.tcsTds / stats.delivered
+  // Whatever the payout per delivered order still differs by once the report's own price,
+  // shipping and rates are in: deductions (or extra) the report shows that no input explains.
+  // Only when the report shows the TCS / TDS it deducted: otherwise that claimable tax would
+  // be indistinguishable from a deduction and wrongly counted as a cost.
+  if (stats.avgSettlementPerDelivered !== null && stats.avgPrice !== null && stats.tcsTds > 0) {
+    const explained = modelSettlementPerDelivered({ ...next, rtoRate: stats.rtoRate, returnRate: stats.returnRate })
+    next.otherPerDelivered = explained - stats.avgSettlementPerDelivered
+  }
 
   next.sources = sources
   return next

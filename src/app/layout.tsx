@@ -262,6 +262,9 @@ export function Footer({ className = '' }: { className?: string }) {
         <Link to="/how-it-works" className="inline-flex min-h-tap items-center underline underline-offset-2">
           {t('footer.howItWorks')}
         </Link>
+        <a href="mailto:TEAM_EMAIL_HERE" className="inline-flex min-h-tap items-center underline underline-offset-2">
+          {t('footer.contact')}
+        </a>
       </div>
     </footer>
   )

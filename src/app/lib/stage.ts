@@ -6,10 +6,13 @@
  *   30–90 days                            Growing
  *   over 90 days                          Steady
  *   over 90 days and orders down ≥ 30%    Clearing
+ *   not known                             Steady
  *
- * "Listed since" is the earliest of what the seller typed, when the product
- * was added, and the start of its first report, so a product created today
- * from a report full of orders isn't called a launch.
+ * "Listed since" is the earlier of what the seller told us and the start of
+ * the product's first report, so a product created today from a report full
+ * of orders isn't called a launch. When the app was told neither, the
+ * product is treated as established: adding it to the app today doesn't
+ * make it new on Meesho.
  */
 import type { Stage } from '../../engine/priceHelper'
 import type { Product, Report, SkuStatsRow } from '../db'
@@ -37,8 +40,9 @@ export function orderTrend(sku: string | undefined, rows: SkuStatsRow[], reports
   return prev > 0 ? last / prev - 1 : null
 }
 
-export function listedSince(product: Product, rows: SkuStatsRow[], reports: Report[]): number {
-  const candidates = [product.createdAt]
+/** When the product went on sale, or null when neither the seller nor a report says. */
+export function listedSince(product: Product, rows: SkuStatsRow[], reports: Report[]): number | null {
+  const candidates: number[] = []
   if (product.listedSince) candidates.push(Date.parse(`${product.listedSince}T00:00:00`))
   if (product.sku) {
     const byId = new Map(reports.map((r) => [r.id, r]))
@@ -47,10 +51,12 @@ export function listedSince(product: Product, rows: SkuStatsRow[], reports: Repo
       if (normSku(row.sku) === normSku(product.sku) && from) candidates.push(Date.parse(`${from}T00:00:00`))
     }
   }
-  return Math.min(...candidates.filter(Number.isFinite))
+  const known = candidates.filter(Number.isFinite)
+  return known.length > 0 ? Math.min(...known) : null
 }
 
-export function autoStage(args: { since: number; trend: number | null; now?: number }): Stage {
+export function autoStage(args: { since: number | null; trend: number | null; now?: number }): Stage {
+  if (args.since === null) return 'STEADY'
   const days = ((args.now ?? Date.now()) - args.since) / DAY
   if (days > GROWING_DAYS && args.trend !== null && args.trend <= FALLING_TREND) return 'CLEARING'
   if (days < LAUNCH_DAYS) return 'LAUNCH'

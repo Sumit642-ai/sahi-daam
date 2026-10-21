@@ -5,10 +5,10 @@
  * The guardrail (hard rule 3) lives in the engine: nothing here can show a
  * recommended price below the floor.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { inr, pct } from '../../engine/format'
+import { floorInr, inr, pct } from '../../engine/format'
 import { keepPerSale } from '../../engine/keep'
 import {
   MAX_PRICES,
@@ -44,7 +44,7 @@ function Header({ model, back, title }: { model: ProductModel; back: () => void;
       </div>
       <PageTitle>{title}</PageTitle>
       <p className="break-words text-base text-body">
-        {model.product.name} · {t('price.nowLine', { price: inr(summary.input.price), floor: inr(summary.result.floor) })}
+        {model.product.name} · {t('price.nowLine', { price: inr(summary.input.price), floor: floorInr(summary.result.floor) })}
       </p>
     </div>
   )
@@ -58,13 +58,15 @@ export function PriceHelper() {
   const { model, back } = useModel()
   const [draft, setDraft] = useState('')
   const [draftError, setDraftError] = useState<MessageKey | null>(null)
+  // A second tap while the first is still saving would apply the price (or start a step) twice.
+  const applying = useRef(false)
+  const [busy, setBusy] = useState(false)
 
   if (model === undefined) return <LoadingPage />
   if (model === null) return <ProductNotFound onBack={back} />
 
   const { product, summary, market: m, range, competitorPrices, stage, autoStage } = model
   const floor = summary.result.floor
-  const reliable = m?.reliable ?? false
   const outliers = new Set(m?.outliers ?? [])
   const notViableHere = summary.result.viable && notViable(floor, m)
   const keepAtTarget = range.viable ? keepPerSale({ ...summary.input, price: range.target }).keep : Number.NaN
@@ -85,13 +87,21 @@ export function PriceHelper() {
   // A Growing step is a price step to judge (spec 7.9); any other stage just sets the price.
   const isStep = stage === 'GROWING' && !range.waitingOnStep && !range.lifted && range.target > summary.input.price
   const usePrice = async () => {
-    void track('price_applied', { step: isStep })
-    if (isStep) {
-      const started = await startPriceStep(product.id, range.target)
-      toast({ message: t('price.tryDone', { price: inr(range.target) }), onUndo: () => void undoPriceStep(started) })
-    } else {
-      const change = await setPrice(product.id, range.target)
-      toast({ message: t('price.applied', { price: inr(range.target) }), onUndo: () => void undoPrice(change) })
+    if (applying.current) return
+    applying.current = true
+    setBusy(true)
+    try {
+      void track('price_applied', { step: isStep })
+      if (isStep) {
+        const started = await startPriceStep(product.id, range.target)
+        toast({ message: t('price.tryDone', { price: inr(range.target) }), onUndo: () => void undoPriceStep(started) })
+      } else {
+        const change = await setPrice(product.id, range.target)
+        toast({ message: t('price.applied', { price: inr(range.target) }), onUndo: () => void undoPrice(change) })
+      }
+    } finally {
+      applying.current = false
+      setBusy(false)
     }
   }
 
@@ -171,17 +181,17 @@ export function PriceHelper() {
       {notViableHere ? <NotViableCard model={model} /> : null}
 
       {range.viable ? (
-        <Card tone="lilac" className={`flex flex-col gap-2 ${reliable ? '' : 'opacity-70'}`}>
+        <Card tone="lilac" className={`flex flex-col gap-2 ${range.suggest ? '' : 'opacity-70'}`}>
           <p className="text-sm font-semibold uppercase tracking-wide text-plum">{t(`stage.${stage}` as MessageKey)}</p>
           <p className="text-3xl font-bold text-ink md:text-4xl">
             {range.low === range.high ? inr(range.low) : `${inr(range.low)} – ${inr(range.high)}`}
           </p>
           <p className="text-base text-body">{t(`stage.${stage}.aim` as MessageKey)}</p>
-          {!reliable ? <p className="text-base font-medium text-thin">{t('price.needThree')}</p> : null}
+          {!range.suggest ? <p className="text-base font-medium text-thin">{t('price.needThree')}</p> : null}
           {stage === 'CLEARING' && range.ladder.length > 0 ? (
             <p className="text-base text-body">{t('price.ladder', { steps: range.ladder.map((p) => inr(p)).join(' → ') })}</p>
           ) : null}
-          {range.lifted ? <p className="text-base text-body">{t('price.lifted', { floor: inr(floor) })}</p> : null}
+          {range.lifted ? <p className="text-base text-body">{t('price.lifted', { floor: floorInr(floor) })}</p> : null}
           {range.waitingOnStep ? <p className="text-base font-medium text-plum">{t('price.waitStep')}</p> : null}
           {warnFor !== undefined ? (
             <p role="note" className="rounded-xl bg-peach p-3 text-base text-thin">
@@ -191,9 +201,15 @@ export function PriceHelper() {
           <p className={`text-lg font-semibold ${keepAtTarget >= 0 ? 'text-healthy' : 'text-loss'}`}>
             {t('detail.keepHeadline', { price: inr(range.target), keep: inr(keepAtTarget) })}
           </p>
-          <Button className="mt-1 w-full sm:w-auto" disabled={Math.round(range.target) === Math.round(summary.input.price)} onClick={() => void usePrice()}>
-            {isStep ? t('price.try', { price: inr(range.target) }) : t('price.use', { price: inr(range.target) })}
-          </Button>
+          {range.suggest ? (
+            <Button
+              className="mt-1 w-full sm:w-auto"
+              disabled={busy || Math.round(range.target) === Math.round(summary.input.price)}
+              onClick={() => void usePrice()}
+            >
+              {isStep ? t('price.try', { price: inr(range.target) }) : t('price.use', { price: inr(range.target) })}
+            </Button>
+          ) : null}
         </Card>
       ) : (
         <Card>
@@ -211,21 +227,21 @@ function NotViableCard({ model }: { model: ProductModel }) {
   const text = (id: string, d: Record<string, number>, floor: number) => {
     switch (id) {
       case 'prepaid':
-        return t('fix.prepaid', { from: pct(d.rtoFrom!, 0), to: pct(d.rtoTo!, 0), floor: inr(floor) })
+        return t('fix.prepaid', { from: pct(d.rtoFrom!, 0), to: pct(d.rtoTo!, 0), floor: floorInr(floor) })
       case 'lighter':
         return d.targetG !== undefined
-          ? t('fix.lighterSlab', { grams: d.shedG!, target: d.targetG, floor: inr(floor) })
-          : t('fix.lighterPack', { from: inr(d.packagingFrom!), to: inr(d.packagingTo!), floor: inr(floor) })
+          ? t('fix.lighterSlab', { grams: d.shedG!, target: d.targetG, floor: floorInr(floor) })
+          : t('fix.lighterPack', { from: inr(d.packagingFrom!), to: inr(d.packagingTo!), floor: floorInr(floor) })
       case 'bundle':
-        return t('fix.bundle', { pair: inr(d.pairPrice!), floor: inr(floor) })
+        return t('fix.bundle', { pair: inr(d.pairPrice!), floor: floorInr(floor) })
       default:
-        return t('fix.cost', { cost: inr(d.costTo!), floor: inr(floor) })
+        return t('fix.cost', { cost: inr(d.costTo!), floor: floorInr(floor) })
     }
   }
   return (
     <Card tone="peach" className="flex flex-col gap-2">
       <h2 className="text-lg font-semibold text-loss">{t('price.notViableTitle')}</h2>
-      <p className="text-base text-body">{t('price.notViable', { floor: inr(summary.result.floor) })}</p>
+      <p className="text-base text-body">{t('price.notViable', { floor: floorInr(summary.result.floor) })}</p>
       <ul className="flex flex-col gap-2">
         {fixes.map((f) => (
           <li key={f.id} className="rounded-xl bg-white p-3 text-base text-ink">
