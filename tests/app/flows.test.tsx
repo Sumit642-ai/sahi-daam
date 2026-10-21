@@ -36,8 +36,8 @@ const kurti: ProductInput = { name: 'Blue kurti', category: 'ethnic_women', cost
 beforeEach(async () => {
   window.scrollTo = vi.fn() as never
   localStorage.clear()
-  await db.delete()
-  await db.open()
+  if (!db.isOpen()) await db.open()
+  for (const table of db.tables) await table.clear()
 })
 
 afterEach(() => {

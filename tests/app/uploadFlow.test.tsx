@@ -42,8 +42,8 @@ async function pick(file: File) {
 beforeEach(async () => {
   window.scrollTo = vi.fn() as never
   localStorage.clear()
-  await db.delete()
-  await db.open()
+  if (!db.isOpen()) await db.open()
+  for (const table of db.tables) await table.clear()
   await saveShop({ language: 'en', onboardedAt: 1 })
 })
 
